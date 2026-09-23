@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>itmo-m3102</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%93%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#f4f5fa;--card:#ffffff;--text:#1a1c24;--muted:#6b7280;--border:#e6e7ee;--accent:#5b5fef;--accent2:#7c7ffb;--radius:16px;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1016;--card:#1a1c26;--text:#eef0f7;--muted:#9599ab;--border:#2b2e3c;}}
+:root[data-theme="dark"]{--bg:#0f1016;--card:#1a1c26;--text:#eef0f7;--muted:#9599ab;--border:#2b2e3c;}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+.wrap{max-width:960px;margin:0 auto;padding:22px 18px 60px;}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.brand{font-weight:700;font-size:1.05rem;text-decoration:none;color:var(--text);cursor:pointer;}
+.navlinks{display:flex;gap:14px;}
+.navlinks a{color:var(--muted);font-size:.82rem;text-decoration:none;}
+.navlinks a:hover{color:var(--accent);}
+.intro{margin:14px 0 6px;}
+h1{font-size:1.7rem;margin:0 0 6px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.sub{color:var(--muted);font-size:.95rem;max-width:600px;margin:0 0 18px;}
+.crumbs{font-size:.85rem;color:var(--muted);margin:10px 0 16px;}
+.crumbs a{color:var(--muted);text-decoration:none;cursor:pointer;}
+.crumbs a:hover{color:var(--accent);}
+.grid{display:grid;gap:14px;grid-template-columns:1fr;}
+@media(min-width:600px){.grid{grid-template-columns:1fr 1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none;color:var(--text);}
+.card:hover{border-color:var(--accent);}
+.card .ic{font-size:1.6rem;line-height:1;}
+.card .meta{min-width:0;flex:1;}
+.card .name{font-weight:600;font-size:.95rem;word-break:break-word;}
+.card .desc{color:var(--muted);font-size:.78rem;margin-top:2px;}
+.card .btn{border:1px solid var(--border);background:var(--bg);padding:6px 12px;border-radius:8px;font-size:.78rem;white-space:nowrap;text-decoration:none;color:var(--text);}
+.card .btn:hover{border-color:var(--accent);}
+.state{color:var(--muted);font-size:.9rem;padding:20px 0;}
+.viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.btn2{border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 14px;border-radius:10px;font-size:.85rem;cursor:pointer;text-decoration:none;}
+.btn2:hover{border-color:var(--accent);}
+.viewname{font-weight:600;flex:1;min-width:0;word-break:break-word;}
+.pdfframe{width:100%;height:82vh;border:1px solid var(--border);border-radius:12px;}
+footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="brand" id="home-link">🎓 itmo-m3102</span>
+    <div class="navlinks">
+      <a href="https://github.com/RedstoneLord/itmo-m3102" target="_blank" rel="noopener">GitHub ↗</a>
+      <a href="Дедлайны/">🗓️ Дедлайны</a>
+    </div>
+  </header>
+  <div id="content"><p class="state">Загрузка…</p></div>
+  <footer>Файлы загружаются напрямую из GitHub-репозитория RedstoneLord/itmo-m3102</footer>
+</div>
+<script>
+const OWNER='RedstoneLord', REPO='itmo-m3102', BRANCH='master';
+const SUBTITLES={
+  'Записи лекций':'Аудиозаписи лекций',
+  'Конспекты':'Конспекты лекций и практик по предметам',
+  'Лабораторные':'Лабораторные работы и отчёты по ним',
+  'Материалы':'Учебники и вспомогательные материалы'
+};
+const EXT_ICON={pdf:'📕',docx:'📝',doc:'📝',md:'📄',html:'🌐',htm:'🌐',mp3:'🎵',wav:'🎵',djvu:'📚',txt:'📄'};
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function ext(name){const i=name.lastIndexOf('.');return i<0?'':name.slice(i+1).toLowerCase();}
+function fmtSize(b){if(b<1024)return b+' Б';if(b<1048576)return (b/1024).toFixed(0)+' КБ';return (b/1048576).toFixed(1)+' МБ';}
+function encodePath(p){return p?p.split('/').map(encodeURIComponent).join('/'):'';}
+function decodePath(p){return p?p.split('/').map(decodeURIComponent).join('/'):'';}
+function apiUrl(path){const p=encodePath(path);return `https://api.github.com/repos/${OWNER}/${REPO}/contents${p?'/'+p:''}?ref=${BRANCH}`;}
+function rawUrl(path){return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodePath(path)}`;}
+
+function goto(path){location.hash='#/'+encodePath(path);}
+function gotoView(path){location.hash='#/view/'+encodePath(path);}
+document.getElementById('home-link').onclick=()=>goto('');
+
+function parseHash(){
+  let h=location.hash.replace(/^#\/?/,'');
+  if(h.startsWith('view/'))return{mode:'view',path:decodePath(h.slice(5))};
+  return{mode:'browse',path:decodePath(h)};
+}
+
+function breadcrumbs(path){
+  const parts=path?path.split('/'):[];
+  let html='<div class="crumbs"><a data-p="">Главная</a>';
+  let acc='';
+  parts.forEach(p=>{acc=acc?acc+'/'+p:p;html+=' / <a data-p="'+esc(acc)+'">'+esc(p)+'</a>';});
+  html+='</div>';
+  return html;
+}
+
+async function renderBrowse(path){
+  const c=document.getElementById('content');
+  let intro='';
+  if(!path){
+    intro='<div class="intro"><h1>Материалы группы М3102</h1><p class="sub">Конспекты, записи лекций, лабораторные и учебники по дисциплинам первого курса ИТМО. Выберите раздел, затем — предмет и нужный файл. PDF открываются прямо в браузере.</p></div>';
+  }
+  c.innerHTML=intro+breadcrumbs(path)+'<p class="state">Загрузка…</p>';
+  try{
+    const res=await fetch(apiUrl(path));
+    if(!res.ok){
+      const msg=res.status===403?'Превышен лимит запросов к GitHub API. Подождите немного и обновите страницу.':'Не удалось загрузить содержимое папки.';
+      c.innerHTML=intro+breadcrumbs(path)+'<p class="state">'+msg+'</p>';return;
+    }
+    let items=await res.json();
+    if(!Array.isArray(items))items=[items];
+    items.sort((a,b)=>a.type!==b.type?(a.type==='dir'?-1:1):a.name.localeCompare(b.name,'ru'));
+    let grid='<div class="grid">';
+    items.forEach(it=>{
+      if(it.type==='dir'){
+        const sub=path?'':(SUBTITLES[it.name]||'Папка');
+        grid+=`<a class="card" data-nav="${esc(it.path)}"><div class="ic">📁</div><div class="meta"><div class="name">${esc(it.name)}</div><div class="desc">${esc(sub)}</div></div></a>`;
+      }else{
+        const e=ext(it.name),icon=EXT_ICON[e]||'📄',isPdf=e==='pdf';
+        grid+=`<div class="card" style="cursor:default;">${isPdf?`<a class="card" style="padding:0;border:none;flex:1;" data-view="${esc(it.path)}"><div class="ic">${icon}</div><div class="meta"><div class="name">${esc(it.name)}</div><div class="desc">${fmtSize(it.size)} · читать в браузере</div></div></a>`:`<div class="ic">${icon}</div><div class="meta"><div class="name">${esc(it.name)}</div><div class="desc">${fmtSize(it.size)}</div></div><a class="btn" href="${rawUrl(it.path)}" target="_blank" rel="noopener">Скачать</a>`}</div>`;
+      }
+    });
+    grid+='</div>';
+    if(items.length===0)grid='<p class="state">Папка пуста.</p>';
+    c.innerHTML=intro+breadcrumbs(path)+grid;
+    c.querySelectorAll('[data-nav]').forEach(el=>el.onclick=e=>{e.preventDefault();goto(el.dataset.nav);});
+    c.querySelectorAll('[data-view]').forEach(el=>el.onclick=e=>{e.preventDefault();gotoView(el.dataset.view);});
+    c.querySelectorAll('.crumbs a').forEach(el=>el.onclick=e=>{e.preventDefault();goto(el.dataset.p);});
+  }catch(e){
+    c.innerHTML=intro+breadcrumbs(path)+'<p class="state">Ошибка загрузки: '+esc(e.message)+'</p>';
+  }
+}
+
+function renderView(path){
+  const c=document.getElementById('content');
+  const name=path.split('/').pop();
+  const parent=path.split('/').slice(0,-1).join('/');
+  c.innerHTML=`<div class="viewbar"><button class="btn2" id="back-btn">← Назад</button><div class="viewname">📕 ${esc(name)}</div><a class="btn2" href="${rawUrl(path)}" target="_blank" rel="noopener">Открыть в новой вкладке</a></div><iframe class="pdfframe" src="${rawUrl(path)}"></iframe>`;
+  document.getElementById('back-btn').onclick=()=>goto(parent);
+}
+
+function route(){
+  const {mode,path}=parseHash();
+  if(mode==='view')renderView(path);else renderBrowse(path);
+}
+window.addEventListener('hashchange',route);
+route();
+</script>
+</body>
+</html>
