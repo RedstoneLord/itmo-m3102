@@ -41,25 +41,30 @@ ol.queue li a:hover{color:var(--accent);text-decoration:underline;}
 footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 .state{color:var(--muted);font-size:.85rem;margin-top:10px;}
 </style>
+<link rel="stylesheet" href="./deadlines.css">
 </head>
 <body>
 <div class="wrap" id="app">
+  <nav class="topbar" aria-label="Навигация"><a class="brand" href="../">М3102</a><div><a href="../">Главная</a><a href="../#/materials">Материалы</a><a href="../#/schedule">Расписание</a><a class="active" href="./">Дедлайны</a></div><a class="github" href="https://github.com/RedstoneLord/itmo-m3102" target="_blank" rel="noopener">GitHub ↗</a></nav>
   <header>
-    <div>
-      <h1>🗓️ Дедлайны М3102</h1>
-      <p class="sub">Сроки сдачи по предметам и живая очередь на основе GitHub Issues. Впишите имя и встаньте в очередь.</p>
-    </div>
+    <div><h1>Дедлайны<span>.</span></h1><p class="sub">Сроки сдачи и очередь группы М3102. Отмечайте выполненное — прогресс сохранится в этом браузере.</p></div>
     <div class="headctrls">
-      <a class="btn" href="../">← Назад</a>
       <button class="btn" id="refresh">↻ Обновить</button>
-      <a class="linkghost" id="edit-link" href="#" target="_blank">✏️ изменить дедлайны на GitHub</a>
+      <a class="linkghost" id="edit-link" href="#" target="_blank">Изменить сроки на GitHub ↗</a>
     </div>
   </header>
   <div id="content"><p class="state">Загрузка…</p></div>
-  <footer>Очередь = открытые issues с меткой <code>queue-signup</code> · дедлайны редактируются в deadlines.json</footer>
+  <footer>Очередь работает через открытые GitHub Issues с меткой <code>queue-signup</code>.</footer>
 </div>
 <script>
 const OWNER='RedstoneLord', REPO='itmo-m3102', BRANCH='master', LABEL='queue-signup';
+const PLAN_KEY='m3102-study-plan-v1';
+function readDone(){try{return JSON.parse(localStorage.getItem(PLAN_KEY)||'{}').done||{};}catch(e){return {};}}
+function setDone(id,value){
+  let data;
+  try{data=JSON.parse(localStorage.getItem(PLAN_KEY)||'{}');}catch(e){data={};}
+  try{data.done=data.done||{};data.done['deadline:'+id]=value;localStorage.setItem(PLAN_KEY,JSON.stringify(data));}catch(e){/* Частный режим может запретить запись. */}
+}
 document.getElementById('edit-link').href=`https://github.com/${OWNER}/${REPO}/edit/${BRANCH}/Дедлайны/deadlines.json`;
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -103,23 +108,27 @@ function joinUrl(subjectId,name){
   return `https://github.com/${OWNER}/${REPO}/issues/new?labels=${encodeURIComponent(LABEL)}&title=${encodeURIComponent(title)}`;
 }
 
-function render(subjects,queues){
+function render(subjects,queues,queueError){
   const subs=[...subjects].sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
   const c=document.getElementById('content');
   if(subs.length===0){c.innerHTML='<p class="empty">Дедлайнов пока нет — добавьте их в deadlines.json.</p>';return;}
-  let html='<div class="grid">';
+  const done=readDone();
+  const complete=subs.filter(sub=>done['deadline:'+sub.id]).length;
+  let html=`<div class="overview"><div><span class="overview-label">В фокусе</span><strong>${subs.length-complete} <small>из ${subs.length} сроков</small></strong></div><p>Отметки выполнения видны только вам. Очередь общая для группы.</p></div>`;
+  html+='<div class="grid">';
   subs.forEach(sub=>{
     const q=queues[sub.id]||[];
-    html+=`<div class="card"><h3>${esc(sub.name)}</h3>${badge(sub.deadline)}`;
+    html+=`<article class="card${done['deadline:'+sub.id]?' is-done':''}"><div class="card-top"><span class="card-index">${String(subs.indexOf(sub)+1).padStart(2,'0')}</span>${badge(sub.deadline)}</div><h3>${esc(sub.name)}</h3>`;
     html+=`<div class="note">до ${fmtDeadline(sub.deadline)}${sub.note?' · '+esc(sub.note):''}</div>`;
-    html+='<ol class="queue">';
-    if(q.length===0)html+='<li class="empty">очередь пуста</li>';
+    html+=`<div class="queue-head">Очередь <span>${queueError?'недоступна':q.length+' чел.'}</span></div><ol class="queue">`;
+    if(q.length===0)html+=`<li class="empty">${queueError?'Не удалось загрузить очередь GitHub. Попробуйте обновить.':'Очередь пока пуста'}</li>`;
     q.forEach(item=>{html+=`<li><a href="${item.url}" target="_blank" title="Открыть issue на GitHub">${esc(item.name)}</a></li>`;});
     html+='</ol>';
-    html+=`<div class="joinrow"><input type="text" placeholder="Ваше имя" class="join-input" data-sub="${esc(sub.id)}"><button class="btn btn-primary join-btn" data-sub="${esc(sub.id)}">В очередь</button></div></div>`;
+    html+=`<div class="joinrow"><input type="text" placeholder="Ваше имя" aria-label="Имя для очереди ${esc(sub.name)}" class="join-input" data-sub="${esc(sub.id)}"><button class="btn btn-primary join-btn" data-sub="${esc(sub.id)}">В очередь ↗</button></div><label class="done-control"><input type="checkbox" data-done="${esc(sub.id)}" ${done['deadline:'+sub.id]?'checked':''}> Выполнено для меня</label></article>`;
   });
   html+='</div>';
   c.innerHTML=html;
+  c.querySelectorAll('[data-done]').forEach(input=>input.onchange=()=>{setDone(input.dataset.done,input.checked);render(subjects,queues,queueError);});
   document.querySelectorAll('.join-btn').forEach(b=>b.onclick=()=>{
     const id=b.dataset.sub, input=document.querySelector(`.join-input[data-sub="${CSS.escape(id)}"]`), name=(input.value||'').trim();
     if(!name){input.focus();return;}
@@ -132,8 +141,9 @@ let subjectsCache=null;
 async function refresh(){
   try{
     if(!subjectsCache)subjectsCache=await loadDeadlines();
-    const queues=await loadQueues();
-    render(subjectsCache,queues);
+    let queues={},queueError=false;
+    try{queues=await loadQueues();}catch(e){queueError=true;}
+    render(subjectsCache,queues,queueError);
   }catch(e){
     const c=document.getElementById('content');
     if(e.message==='rate_limit'){c.innerHTML='<p class="state">Превышен лимит запросов к GitHub API. Подождите немного и нажмите «Обновить».</p>';}
