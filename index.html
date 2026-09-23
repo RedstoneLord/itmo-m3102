@@ -65,12 +65,55 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 .callout-body{font-size:.93rem;}
 .callout-body>:first-child{margin-top:0;}
 .callout-body>:last-child{margin-bottom:0;}
+
+/* header tabs */
+.tabs{display:flex;gap:2px;flex-wrap:wrap;}
+.tab{padding:7px 12px;border-radius:10px;font-size:.83rem;color:var(--muted);text-decoration:none;cursor:pointer;white-space:nowrap;}
+.tab:hover{color:var(--text);background:var(--border);}
+.tab.active{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card));font-weight:600;}
+
+/* home landing page */
+.home-hero{padding:6px 0 4px;}
+.home-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-primary:hover{background:var(--accent2);border-color:var(--accent2);}
+.home-grid{display:grid;gap:20px;grid-template-columns:1fr;margin-top:24px;align-items:start;}
+@media(min-width:760px){.home-grid{grid-template-columns:1fr 300px;}}
+.home-side{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.side-title{font-size:.95rem;margin:0 0 12px;}
+.recent-item{display:block;padding:10px 0;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);}
+.recent-item:last-child{border-bottom:none;}
+.recent-item:hover .recent-name{color:var(--accent);}
+.recent-name{font-weight:600;font-size:.88rem;word-break:break-word;}
+.recent-meta{color:var(--muted);font-size:.76rem;margin-top:2px;}
+
+/* schedule */
+.sched-bar{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px 0 8px;}
+.week-pills{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.week-pill{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:10px;padding:6px 10px;font-size:.78rem;cursor:pointer;text-align:center;line-height:1.3;}
+.week-pill.today{border-color:var(--accent);}
+.week-pill.sel{background:var(--accent);color:#fff;border-color:var(--accent);}
+.sched-day-info{text-align:center;margin:14px 0 20px;}
+.sched-day-title{font-weight:700;font-size:1.05rem;}
+.sched-day-sub{color:var(--muted);font-size:.85rem;margin-top:2px;}
+.lessons{display:flex;flex-direction:column;gap:10px;max-width:640px;margin:0 auto;}
+.lesson{display:flex;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;}
+.lesson-time{font-weight:700;font-size:.85rem;color:var(--accent);min-width:92px;}
+.lesson-subject{font-weight:600;font-size:.92rem;}
+.lesson-meta{color:var(--muted);font-size:.78rem;margin-top:2px;}
+.lesson-break{opacity:.65;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <span class="brand" id="home-link">🎓 itmo-m3102</span>
+    <nav class="tabs">
+      <a class="tab" id="tab-home">Главная</a>
+      <a class="tab" id="tab-materials">Материалы</a>
+      <a class="tab" id="tab-schedule">Расписание</a>
+      <a class="tab" id="tab-deadlines">Дедлайны</a>
+    </nav>
     <div class="navlinks">
       <a href="https://github.com/RedstoneLord/itmo-m3102" target="_blank" rel="noopener">GitHub ↗</a>
     </div>
@@ -99,10 +142,15 @@ function encodePath(p){return p?p.split('/').map(encodeURIComponent).join('/'):'
 function decodePath(p){return p?p.split('/').map(decodeURIComponent).join('/'):'';}
 function apiUrl(path){const p=encodePath(path);return `https://api.github.com/repos/${OWNER}/${REPO}/contents${p?'/'+p:''}?ref=${BRANCH}`;}
 function rawUrl(path){return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodePath(path)}`;}
-function goto(path){location.hash='#/'+encodePath(path);}
+function goto(path){location.hash=path?'#/'+encodePath(path):'#/materials';}
 function gotoView(path){location.hash='#/view/'+encodePath(path);}
 function gotoNote(path){location.hash='#/note/'+encodePath(path);}
-document.getElementById('home-link').onclick=()=>goto('');
+function gotoHomePage(){if(location.hash===''||location.hash==='#')route();else location.hash='';}
+document.getElementById('home-link').onclick=()=>gotoHomePage();
+document.getElementById('tab-home').onclick=e=>{e.preventDefault();gotoHomePage();};
+document.getElementById('tab-materials').onclick=e=>{e.preventDefault();location.hash='#/materials';};
+document.getElementById('tab-schedule').onclick=e=>{e.preventDefault();location.hash='#/schedule';};
+document.getElementById('tab-deadlines').onclick=e=>{e.preventDefault();location.hash='#/'+encodePath('Дедлайны');};
 
 /* ---------- notes parser (markdown + callouts + code + LaTeX) ---------- */
 const CALLOUT_TYPES={
@@ -205,16 +253,234 @@ function renderNotes(raw) {
   return html;
 }
 
+/* ---------- schedule (odd/even week cycle, М3102) ---------- */
+// 14-day repeating pattern: index 0..6 = odd week (day 1..7), index 7..13 = even week (day 8..14)
+const SCHEDULE=[
+  [],
+  [ // day 2 (Вт)
+    {time:'09:50–11:20',subject:'Дискретная математика',room:'2304',teacher:'Чухарев Константин Игоревич',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'11:30–13:00',subject:'Линейная алгебра',room:'2337',teacher:'Ржонсицкая Юлия Борисовна',location:'Кронверкский пр., д.49, лит.А'}
+  ],
+  [ // day 3 (Ср)
+    {time:'13:30–15:00',subject:'Дискретная математика',room:'2240',teacher:'Кулешова Екатерина Дмитриевна',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'15:30–17:00',subject:'Алгоритмы и структуры данных',room:'2240',teacher:'Кулешова Екатерина Дмитриевна',location:'Кронверкский пр., д.49, лит.А'}
+  ],
+  [ // day 4 (Чт)
+    {time:'09:50–11:20',subject:'Линейная алгебра',room:'2430',teacher:'Бровкина Екатерина Анатольевна',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'11:30–13:00',subject:'Линейная алгебра',room:'2430',teacher:'Бровкина Екатерина Анатольевна',location:'Кронверкский пр., д.49, лит.А'}
+  ],
+  [ // day 5 (Пт)
+    {time:'11:30–13:00',subject:'Инструментальные средства разработки ПО',room:'2238',teacher:'Хегай Максим Вилорьевич',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'13:30–15:00',subject:'Математический анализ',room:'2304',teacher:'Ржонсицкая Юлия Борисовна',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'15:30–17:00',subject:'Инструментальные средства разработки ПО',room:'2342',teacher:'Койнов Руслан Васильевич',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'17:10–18:40',subject:'Математический анализ',room:'2138',teacher:'Бровкина Екатерина Анатольевна',location:'Кронверкский пр., д.49, лит.А'}
+  ],
+  [ // day 6 (Сб)
+    {time:'09:50–11:20',subject:'Основы программирования',room:'1419',teacher:'Хвастунов Александр Павлович',location:'Lemon Classroom (1419), Кронверкский пр., д.49, лит.А'},
+    {time:'11:30–13:00',subject:'Алгоритмы и структуры данных',room:'2342',teacher:'Ткаченко Данил Михайлович',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'13:00–15:30',subject:'Перерыв',break:true},
+    {time:'15:30–17:00',subject:'Основы программирования',room:'2311',teacher:'Влад Сергей Евгеньевич',location:'Кронверкский пр., д.49, лит.А'}
+  ],
+  [], // day 7 (Вс) — нет занятий
+  [],
+  [ // day 9 (Вт)
+    {time:'09:50–11:20',subject:'Дискретная математика',room:'2304',teacher:'Чухарев Константин Игоревич',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'11:30–13:00',subject:'Линейная алгебра',room:'2337',teacher:'Ржонсицкая Юлия Борисовна',location:'Кронверкский пр., д.49, лит.А'}
+  ],
+  [ // day 10 (Ср)
+    {time:'13:30–15:00',subject:'Дискретная математика',room:'2240',teacher:'Кулешова Екатерина Дмитриевна',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'15:30–17:00',subject:'Алгоритмы и структуры данных',room:'2240',teacher:'Кулешова Екатерина Дмитриевна',location:'Кронверкский пр., д.49, лит.А'}
+  ],
+  [ // day 11 (Чт)
+    {time:'09:50–11:20',subject:'Линейная алгебра',room:'2430',teacher:'Бровкина Екатерина Анатольевна',location:'Кронверкский пр., д.49, лит.А'}
+  ],
+  [ // day 12 (Пт)
+    {time:'13:30–15:00',subject:'Математический анализ',room:'2304',teacher:'Ржонсицкая Юлия Борисовна',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'15:30–17:00',subject:'Математический анализ',room:'2304',teacher:'Ржонсицкая Юлия Борисовна',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'17:10–18:40',subject:'Математический анализ',room:'2138',teacher:'Бровкина Екатерина Анатольевна',location:'Кронверкский пр., д.49, лит.А'}
+  ],
+  [ // day 13 (Сб)
+    {time:'09:50–11:20',subject:'Основы программирования',room:'1419',teacher:'Хвастунов Александр Павлович',location:'Lemon Classroom (1419), Кронверкский пр., д.49, лит.А'},
+    {time:'11:30–13:00',subject:'Алгоритмы и структуры данных',room:'2342',teacher:'Ткаченко Данил Михайлович',location:'Кронверкский пр., д.49, лит.А'},
+    {time:'13:00–15:30',subject:'Перерыв',break:true},
+    {time:'15:30–17:00',subject:'Основы программирования',room:'2311',teacher:'Влад Сергей Евгеньевич',location:'Кронверкский пр., д.49, лит.А'}
+  ],
+  [] // day 14 (Вс) — нет занятий
+];
+// Anchor: Monday 21.09.2026 is the Monday of a confirmed "чётная" (even) week.
+const SCHED_ANCHOR_MONDAY=new Date(2026,8,21);
+function mondayOf(date){
+  const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+  const day=d.getDay();
+  d.setDate(d.getDate()+(day===0?-6:1-day));
+  return d;
+}
+function weekParity(date){
+  const mon=mondayOf(date);
+  const weeksDiff=Math.round((mon-SCHED_ANCHOR_MONDAY)/(7*86400000));
+  return (((weeksDiff%2)+2)%2)===0?'even':'odd';
+}
+function isVacation(date){const m=date.getMonth();return m===6||m===7;} // июль, август
+function cycleDayIndex(date){
+  const weekday=date.getDay()===0?7:date.getDay();
+  const dayNum=weekParity(date)==='odd'?weekday:weekday+7;
+  return dayNum-1;
+}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+function pluralPairs(n){
+  const n10=n%10,n100=n%100;
+  if(n10===1&&n100!==11)return'пара';
+  if([2,3,4].includes(n10)&&![12,13,14].includes(n100))return'пары';
+  return'пар';
+}
+function scheduleSummaryToday(){
+  const d=new Date();
+  if(isVacation(d))return'🏖️ Сейчас каникулы';
+  const n=(SCHEDULE[cycleDayIndex(d)]||[]).filter(l=>!l.break).length;
+  const parity=weekParity(d)==='even'?'чётная':'нечётная';
+  return`Расписание на сегодня (${parity} неделя, ${n} ${pluralPairs(n)})`;
+}
+const WEEKDAYS_SHORT=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const WEEKDAYS_FULL=['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+function fmtDateRu(d){return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});}
+let scheduleDate=new Date();
+
+function renderSchedule(){
+  const c=document.getElementById('content');
+  c.innerHTML=scheduleHtml(scheduleDate);
+  bindScheduleEvents();
+}
+function scheduleHtml(date){
+  const vacation=isVacation(date);
+  const weekdayIdx=date.getDay()===0?6:date.getDay()-1;
+  const parity=weekParity(date);
+  const mon=mondayOf(date);
+  let pills='<div class="week-pills">';
+  for(let i=0;i<7;i++){
+    const d=new Date(mon);d.setDate(mon.getDate()+i);
+    const isToday=sameDay(d,new Date()),isSel=sameDay(d,date);
+    pills+=`<button class="week-pill${isSel?' sel':''}${isToday?' today':''}" data-date="${d.toISOString()}">${WEEKDAYS_SHORT[i]}<br>${d.getDate()}</button>`;
+  }
+  pills+='</div>';
+  let body;
+  if(vacation){
+    body='<p class="state" style="padding:30px 0;text-align:center;">🏖️ Каникулы — занятий нет.</p>';
+  }else{
+    const lessons=SCHEDULE[cycleDayIndex(date)];
+    if(!lessons||lessons.length===0){
+      body='<p class="state" style="padding:30px 0;text-align:center;">В этот день занятий нет.</p>';
+    }else{
+      body='<div class="lessons">'+lessons.map(l=>{
+        if(l.break)return`<div class="lesson lesson-break"><div class="lesson-time">${esc(l.time)}</div><div class="lesson-info"><div class="lesson-subject">☕ ${esc(l.subject)}</div></div></div>`;
+        return`<div class="lesson"><div class="lesson-time">${esc(l.time)}</div><div class="lesson-info"><div class="lesson-subject">${esc(l.subject)}</div><div class="lesson-meta">ауд. ${esc(l.room)} · ${esc(l.teacher)}</div><div class="lesson-meta">${esc(l.location)}</div></div></div>`;
+      }).join('')+'</div>';
+    }
+  }
+  return`<div class="intro"><h1>Расписание</h1><p class="sub">М3102 · дни 1–7 нечётной недели, 8–14 чётной. Июль и август — каникулы.</p></div>
+  <div class="sched-bar"><button class="btn2" id="sched-prev-week">← неделя</button>${pills}<button class="btn2" id="sched-next-week">неделя →</button></div>
+  <div class="sched-day-info"><div class="sched-day-title">${WEEKDAYS_FULL[weekdayIdx]}, ${fmtDateRu(date)}</div><div class="sched-day-sub">${vacation?'Каникулы':(parity==='even'?'Чётная неделя':'Нечётная неделя')}</div></div>
+  ${body}
+  <div style="text-align:center;margin-top:18px;"><button class="btn2" id="sched-today">Сегодня</button></div>`;
+}
+function bindScheduleEvents(){
+  document.querySelectorAll('.week-pill').forEach(btn=>btn.onclick=()=>{scheduleDate=new Date(btn.dataset.date);renderSchedule();});
+  const prev=document.getElementById('sched-prev-week');if(prev)prev.onclick=()=>{const d=new Date(scheduleDate);d.setDate(d.getDate()-7);scheduleDate=d;renderSchedule();};
+  const next=document.getElementById('sched-next-week');if(next)next.onclick=()=>{const d=new Date(scheduleDate);d.setDate(d.getDate()+7);scheduleDate=d;renderSchedule();};
+  const today=document.getElementById('sched-today');if(today)today.onclick=()=>{scheduleDate=new Date();renderSchedule();};
+}
+
+/* ---------- home landing page ---------- */
+const HOME_TILES=[
+  {name:'Конспекты',icon:'📝',desc:'Конспекты лекций и практик по предметам'},
+  {name:'Записи лекций',icon:'🎙️',desc:'Аудиозаписи лекций'},
+  {name:'Лабораторные',icon:'🧪',desc:'Лабораторные работы и отчёты по ним'},
+  {name:'Материалы',icon:'📚',desc:'Учебники и вспомогательные материалы'},
+  {name:'Дедлайны',icon:'🗓️',desc:'Сроки сдачи и важные даты'}
+];
+function renderHome(){
+  const c=document.getElementById('content');
+  const tiles=HOME_TILES.map(t=>`<a class="card${t.name==='Дедлайны'?' deadline-card':''}" data-nav="${esc(t.name)}"><div class="ic">${t.icon}</div><div class="meta"><div class="name">${esc(t.name)}</div><div class="desc">${esc(t.desc)}</div></div></a>`).join('');
+  c.innerHTML=`
+  <div class="home-hero">
+    <h1>Материалы группы М3102</h1>
+    <p class="sub">Конспекты, записи лекций, лабораторные и учебники по дисциплинам первого курса ИТМО. Всё загружается прямо из GitHub-репозитория — PDF и .md конспекты открываются в браузере.</p>
+    <div class="home-actions">
+      <a class="btn2 btn-primary" id="enter-btn">Перейти к материалам →</a>
+      <a class="btn2" id="enter-schedule">${scheduleSummaryToday()}</a>
+    </div>
+  </div>
+  <div class="home-grid">
+    <div class="home-main"><div class="grid">${tiles}</div></div>
+    <aside class="home-side">
+      <h2 class="side-title">Недавние конспекты</h2>
+      <div id="recent-notes"><p class="state" style="padding:8px 0;">Загрузка…</p></div>
+    </aside>
+  </div>`;
+  document.getElementById('enter-btn').onclick=e=>{e.preventDefault();location.hash='#/materials';};
+  document.getElementById('enter-schedule').onclick=e=>{e.preventDefault();location.hash='#/schedule';};
+  c.querySelectorAll('[data-nav]').forEach(el=>el.onclick=e=>{e.preventDefault();goto(el.dataset.nav);});
+  fetchRecentNotes();
+}
+const RECENT_NOTES_LIMIT=6;
+async function fetchRecentNotes(){
+  const box=document.getElementById('recent-notes');
+  if(!box)return;
+  try{
+    const res=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits?sha=${BRANCH}&per_page=10`);
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const commits=await res.json();
+    const seen=new Map();
+    for(const cm of commits){
+      if(seen.size>=RECENT_NOTES_LIMIT)break;
+      try{
+        const cr=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${cm.sha}`);
+        if(!cr.ok)continue;
+        const detail=await cr.json();
+        const date=(cm.commit&&cm.commit.author&&cm.commit.author.date)||(detail.commit&&detail.commit.author&&detail.commit.author.date);
+        (detail.files||[]).forEach(f=>{
+          if(ext(f.filename)==='md'&&f.status!=='removed'&&!seen.has(f.filename))seen.set(f.filename,date);
+        });
+      }catch(e){/* пропускаем коммит при ошибке */}
+    }
+    const list=Array.from(seen.entries()).map(([path,date])=>({path,date})).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,RECENT_NOTES_LIMIT);
+    if(list.length===0){box.innerHTML='<p class="state" style="padding:8px 0;">Пока нет добавленных конспектов.</p>';return;}
+    box.innerHTML=list.map(item=>{
+      const parts=item.path.split('/');
+      const name=parts[parts.length-1].replace(/\.md$/i,'');
+      let subject='Прочее';
+      if(parts[0]==='Конспекты'&&parts.length>=2)subject=parts[1];
+      else if(parts.length>=2)subject=parts[parts.length-2];
+      const dateStr=new Date(item.date).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'2-digit'});
+      return`<a class="recent-item" data-note="${esc(item.path)}"><div class="recent-name">${esc(name)}</div><div class="recent-meta">${esc(subject)} · ${dateStr}</div></a>`;
+    }).join('');
+    box.querySelectorAll('[data-note]').forEach(el=>el.onclick=e=>{e.preventDefault();gotoNote(el.dataset.note);});
+  }catch(e){
+    box.innerHTML='<p class="state" style="padding:8px 0;">Не удалось загрузить список (превышен лимит запросов к GitHub API?).</p>';
+  }
+}
+
 /* ---------- routing ---------- */
 function parseHash(){
   let h=location.hash.replace(/^#\/?/,'');
+  if(h==='')return{mode:'home',path:''};
+  if(h==='materials')return{mode:'browse',path:''};
+  if(h==='schedule')return{mode:'schedule',path:''};
   if(h.startsWith('view/'))return{mode:'view',path:decodePath(h.slice(5))};
   if(h.startsWith('note/'))return{mode:'note',path:decodePath(h.slice(5))};
   return{mode:'browse',path:decodePath(h)};
 }
+function updateActiveTab(mode,path){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  let id='tab-materials';
+  if(mode==='home')id='tab-home';
+  else if(mode==='schedule')id='tab-schedule';
+  else if(mode==='browse'&&path&&path.split('/')[0]==='Дедлайны')id='tab-deadlines';
+  const el=document.getElementById(id);
+  if(el)el.classList.add('active');
+}
 function breadcrumbs(path){
   const parts=path?path.split('/'):[];
-  let html='<div class="crumbs"><a data-p="">Главная</a>';
+  let html='<div class="crumbs"><a data-p="">Материалы</a>';
   let acc='';
   parts.forEach(p=>{acc=acc?acc+'/'+p:p;html+=' / <a data-p="'+esc(acc)+'">'+esc(p)+'</a>';});
   return html+'</div>';
@@ -242,7 +508,7 @@ async function renderBrowse(path){
     items.forEach(it=>{
       if(it.type==='dir'){
         if(!path && it.name==='Дедлайны'){
-          grid+=`<a class="card deadline-card" href="/itmo-m3102/Дедлайны/"><div class="ic">🗓️</div><div class="meta"><div class="name">Дедлайны</div><div class="desc">Сроки сдачи и важные даты</div></div></a>`;
+          grid+=`<a class="card deadline-card" data-nav="${esc(it.path)}"><div class="ic">🗓️</div><div class="meta"><div class="name">Дедлайны</div><div class="desc">Сроки сдачи и важные даты</div></div></a>`;
           return;
         }
         const sub=path?'':(SUBTITLES[it.name]||'Папка');
@@ -309,8 +575,11 @@ function renderNoteView(path){
 
 function route(){
   const {mode,path}=parseHash();
+  updateActiveTab(mode,path);
   if(mode==='view')renderPdfView(path);
   else if(mode==='note')renderNoteView(path);
+  else if(mode==='home')renderHome();
+  else if(mode==='schedule')renderSchedule();
   else renderBrowse(path);
 }
 window.addEventListener('hashchange',route);
