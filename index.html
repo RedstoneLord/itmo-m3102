@@ -20,6 +20,8 @@ header{display:flex;justify-content:space-between;align-items:center;gap:10px;fl
 .navlinks{display:flex;gap:14px;}
 .navlinks a{color:var(--muted);font-size:.82rem;text-decoration:none;}
 .navlinks a:hover{color:var(--accent);}
+.deadline-card{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--card));}
+.deadline-card:hover{border-color:var(--accent2);}
 .intro{margin:14px 0 6px;}
 h1{font-size:1.7rem;margin:0 0 6px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
 .sub{color:var(--muted);font-size:.95rem;max-width:600px;margin:0 0 18px;}
@@ -71,7 +73,6 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
     <span class="brand" id="home-link">🎓 itmo-m3102</span>
     <div class="navlinks">
       <a href="https://github.com/RedstoneLord/itmo-m3102" target="_blank" rel="noopener">GitHub ↗</a>
-      <a href="Дедлайны/">🗓️ Дедлайны</a>
     </div>
   </header>
   <div id="content"><p class="state">Загрузка…</p></div>
@@ -146,22 +147,61 @@ marked.use({
   }
 });
 
-function renderNotes(raw){
-  const codeStore=[];
-  let text=raw.replace(/```[\s\S]*?```/g,m=>{codeStore.push(m);return `\uE010${codeStore.length-1}\uE011`;});
-  const mathStore=[];
-  function stash(src,display){mathStore.push({src,display});return `\uE000${mathStore.length-1}\uE001`;}
-  text=text.replace(/\$\$([\s\S]+?)\$\$/g,(m,g)=>stash(g.trim(),true));
-  text=text.replace(/\\\[([\s\S]+?)\\\]/g,(m,g)=>stash(g.trim(),true));
-  text=text.replace(/\\\(([\s\S]+?)\\\)/g,(m,g)=>stash(g.trim(),false));
-  text=text.replace(/\$([^\$\n]+?)\$/g,(m,g)=>stash(g.trim(),false));
-  text=text.replace(/\uE010(\d+)\uE011/g,(m,i)=>codeStore[+i]);
-  let html=marked.parse(text);
-  html=html.replace(/\uE000(\d+)\uE001/g,(m,i)=>{
-    const {src,display}=mathStore[+i];
-    try{return katex.renderToString(src,{throwOnError:false,displayMode:display});}
-    catch(e){return '<span class="katex-err">'+esc(src)+'</span>';}
+function renderNotes(raw) {
+  const codeStore = [];
+
+  // Сначала защищаем fenced code
+  let text = raw.replace(/```[\s\S]*?```/g, m => {
+    codeStore.push(m);
+    return `@@CODE_${codeStore.length - 1}@@`;
   });
+
+  const mathStore = [];
+
+  function stash(src, display) {
+    mathStore.push({ src, display });
+    return `@@MATH_${mathStore.length - 1}@@`;
+  }
+
+  // Защищаем математику от Markdown-парсера
+  text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, g) =>
+    stash(g.trim(), true)
+  );
+
+  text = text.replace(/\\\[([\s\S]+?)\\\]/g, (_, g) =>
+    stash(g.trim(), true)
+  );
+
+  text = text.replace(/\\\(([\s\S]+?)\\\)/g, (_, g) =>
+    stash(g.trim(), false)
+  );
+
+  text = text.replace(/\$([^\$\n]+?)\$/g, (_, g) =>
+    stash(g.trim(), false)
+  );
+
+  // Теперь Markdown
+  let html = marked.parse(text);
+
+  // Возвращаем формулы
+  html = html.replace(/@@MATH_(\d+)@@/g, (_, i) => {
+    const { src, display } = mathStore[Number(i)];
+
+    try {
+      return katex.renderToString(src, {
+        throwOnError: false,
+        displayMode: display
+      });
+    } catch (e) {
+      return `<span class="katex-err">${esc(src)}</span>`;
+    }
+  });
+
+  // Возвращаем code
+  html = html.replace(/@@CODE_(\d+)@@/g, (_, i) =>
+    codeStore[Number(i)]
+  );
+
   return html;
 }
 
@@ -201,6 +241,10 @@ async function renderBrowse(path){
     let grid='<div class="grid">';
     items.forEach(it=>{
       if(it.type==='dir'){
+        if(!path && it.name==='Дедлайны'){
+          grid+=`<a class="card deadline-card" data-nav="${esc(it.path)}"><div class="ic">🗓️</div><div class="meta"><div class="name">Дедлайны</div><div class="desc">Сроки сдачи и важные даты</div></div><div class="btn">Открыть</div></a>`;
+          return;
+        }
         const sub=path?'':(SUBTITLES[it.name]||'Папка');
         grid+=`<a class="card" data-nav="${esc(it.path)}"><div class="ic">📁</div><div class="meta"><div class="name">${esc(it.name)}</div><div class="desc">${esc(sub)}</div></div></a>`;
       }else{
