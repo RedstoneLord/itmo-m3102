@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Дедлайны М3102</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%97%93%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#f4f5fa;--card:#ffffff;--text:#1a1c24;--muted:#6b7280;--border:#e6e7ee;--accent:#5b5fef;--accent2:#7c7ffb;--danger:#e0485c;--warn:#dd9a2b;--ok:#1fa971;--radius:16px;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1016;--card:#1a1c26;--text:#eef0f7;--muted:#9599ab;--border:#2b2e3c;}}
+:root[data-theme="dark"]{--bg:#0f1016;--card:#1a1c26;--text:#eef0f7;--muted:#9599ab;--border:#2b2e3c;}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+.wrap{max-width:920px;margin:0 auto;padding:24px 18px 60px;}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:4px;flex-wrap:wrap;}
+h1{font-size:1.6rem;margin:0 0 4px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.sub{color:var(--muted);font-size:.92rem;margin:0;max-width:540px;}
+.headctrls{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 14px;border-radius:10px;font-size:.85rem;cursor:pointer;text-decoration:none;display:inline-block;}
+.btn:hover{border-color:var(--accent);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent2);}
+.linkghost{color:var(--muted);font-size:.78rem;text-decoration:none;}
+.linkghost:hover{color:var(--accent);}
+.grid{display:grid;gap:16px;grid-template-columns:1fr;margin-top:18px;}
+@media(min-width:640px){.grid{grid-template-columns:1fr 1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:10px;}
+.card h3{margin:0;font-size:1.05rem;}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:600;align-self:flex-start;}
+.badge.ok{background:rgba(31,169,113,.15);color:var(--ok);}
+.badge.warn{background:rgba(221,154,43,.15);color:var(--warn);}
+.badge.danger{background:rgba(224,72,92,.15);color:var(--danger);}
+.note{color:var(--muted);font-size:.85rem;}
+ol.queue{margin:0;padding-left:20px;font-size:.9rem;display:flex;flex-direction:column;gap:4px;}
+ol.queue li a{color:var(--text);text-decoration:none;}
+ol.queue li a:hover{color:var(--accent);text-decoration:underline;}
+.empty{color:var(--muted);font-size:.85rem;font-style:italic;list-style:none;margin-left:-20px;}
+.joinrow{display:flex;gap:8px;margin-top:4px;}
+.joinrow input{flex:1;min-width:0;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.85rem;}
+footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
+.state{color:var(--muted);font-size:.85rem;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header>
+    <div>
+      <h1>🗓️ Дедлайны М3102</h1>
+      <p class="sub">Сроки сдачи по предметам и живая очередь на основе GitHub Issues. Впишите имя и встаньте в очередь.</p>
+    </div>
+    <div class="headctrls">
+      <button class="btn" id="refresh">↻ Обновить</button>
+      <a class="linkghost" id="edit-link" href="#" target="_blank">✏️ изменить дедлайны на GitHub</a>
+    </div>
+  </header>
+  <div id="content"><p class="state">Загрузка…</p></div>
+  <footer>Очередь = открытые issues с меткой <code>queue-signup</code> · дедлайны редактируются в deadlines.json</footer>
+</div>
+<script>
+const OWNER='RedstoneLord', REPO='itmo-m3102', BRANCH='master', LABEL='queue-signup';
+document.getElementById('edit-link').href=`https://github.com/${OWNER}/${REPO}/edit/${BRANCH}/Дедлайны/deadlines.json`;
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function fmtDeadline(iso){return new Date(iso).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function badge(iso){
+  const diff=new Date(iso)-new Date();const h=diff/3600000;let cls,label;
+  if(diff<=0){cls='danger';label='дедлайн прошёл';}
+  else if(h<24){cls='danger';label='меньше суток';}
+  else if(h<72){cls='warn';label='через '+Math.ceil(h/24)+' дн.';}
+  else{cls='ok';label='через '+Math.ceil(h/24)+' дн.';}
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+async function loadDeadlines(){
+  const res=await fetch('./deadlines.json',{cache:'no-store'});
+  if(!res.ok)throw new Error('deadlines.json not found');
+  return res.json();
+}
+
+async function loadQueues(){
+  const url=`https://api.github.com/repos/${OWNER}/${REPO}/issues?labels=${LABEL}&state=open&sort=created&direction=asc&per_page=100`;
+  const res=await fetch(url);
+  if(!res.ok){
+    if(res.status===403)throw new Error('rate_limit');
+    throw new Error('github_api');
+  }
+  const issues=await res.json();
+  const bySubject={};
+  issues.forEach(is=>{
+    if(is.pull_request)return;
+    const m=/^\[([^\]]+)\]\s*(.*)$/.exec(is.title||'');
+    if(!m)return;
+    const id=m[1].trim(), name=m[2].trim()||'(без имени)';
+    (bySubject[id]=bySubject[id]||[]).push({name,url:is.html_url});
+  });
+  return bySubject;
+}
+
+function joinUrl(subjectId,name){
+  const title=`[${subjectId}] ${name}`;
+  return `https://github.com/${OWNER}/${REPO}/issues/new?labels=${encodeURIComponent(LABEL)}&title=${encodeURIComponent(title)}`;
+}
+
+function render(subjects,queues){
+  const subs=[...subjects].sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
+  const c=document.getElementById('content');
+  if(subs.length===0){c.innerHTML='<p class="empty">Дедлайнов пока нет — добавьте их в deadlines.json.</p>';return;}
+  let html='<div class="grid">';
+  subs.forEach(sub=>{
+    const q=queues[sub.id]||[];
+    html+=`<div class="card"><h3>${esc(sub.name)}</h3>${badge(sub.deadline)}`;
+    html+=`<div class="note">до ${fmtDeadline(sub.deadline)}${sub.note?' · '+esc(sub.note):''}</div>`;
+    html+='<ol class="queue">';
+    if(q.length===0)html+='<li class="empty">очередь пуста</li>';
+    q.forEach(item=>{html+=`<li><a href="${item.url}" target="_blank" title="Открыть issue на GitHub">${esc(item.name)}</a></li>`;});
+    html+='</ol>';
+    html+=`<div class="joinrow"><input type="text" placeholder="Ваше имя" class="join-input" data-sub="${esc(sub.id)}"><button class="btn btn-primary join-btn" data-sub="${esc(sub.id)}">В очередь</button></div></div>`;
+  });
+  html+='</div>';
+  c.innerHTML=html;
+  document.querySelectorAll('.join-btn').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.sub, input=document.querySelector(`.join-input[data-sub="${CSS.escape(id)}"]`), name=(input.value||'').trim();
+    if(!name){input.focus();return;}
+    window.open(joinUrl(id,name),'_blank');
+    setTimeout(refresh,8000);
+  });
+}
+
+let subjectsCache=null;
+async function refresh(){
+  try{
+    if(!subjectsCache)subjectsCache=await loadDeadlines();
+    const queues=await loadQueues();
+    render(subjectsCache,queues);
+  }catch(e){
+    const c=document.getElementById('content');
+    if(e.message==='rate_limit'){c.innerHTML='<p class="state">Превышен лимит запросов к GitHub API. Подождите немного и нажмите «Обновить».</p>';}
+    else{c.innerHTML='<p class="state">Не удалось загрузить данные ('+esc(e.message)+').</p>';}
+  }
+}
+document.getElementById('refresh').onclick=refresh;
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
+setInterval(refresh,60000);
+refresh();
+</script>
+</body>
+</html>
