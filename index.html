@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>itmo-m3102</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%93%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <style>
 :root{--bg:#f4f5fa;--card:#ffffff;--text:#1a1c24;--muted:#6b7280;--border:#e6e7ee;--accent:#5b5fef;--accent2:#7c7ffb;--radius:16px;}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1016;--card:#1a1c26;--text:#eef0f7;--muted:#9599ab;--border:#2b2e3c;}}
@@ -35,12 +37,32 @@ h1{font-size:1.7rem;margin:0 0 6px;background:linear-gradient(135deg,var(--accen
 .card .btn{border:1px solid var(--border);background:var(--bg);padding:6px 12px;border-radius:8px;font-size:.78rem;white-space:nowrap;text-decoration:none;color:var(--text);}
 .card .btn:hover{border-color:var(--accent);}
 .state{color:var(--muted);font-size:.9rem;padding:20px 0;}
-.viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .btn2{border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 14px;border-radius:10px;font-size:.85rem;cursor:pointer;text-decoration:none;}
 .btn2:hover{border-color:var(--accent);}
 .viewname{font-weight:600;flex:1;min-width:0;word-break:break-word;}
-.pdfframe{width:100%;height:82vh;border:1px solid var(--border);border-radius:12px;}
+.pdf-page{display:block;margin:0 auto 14px;max-width:100%;height:auto;box-shadow:0 2px 14px rgba(0,0,0,.18);border-radius:4px;}
 footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
+.prose{max-width:760px;margin:0 auto;line-height:1.7;font-size:.98rem;}
+.prose h1,.prose h2,.prose h3{line-height:1.3;margin:1.3em 0 .5em;}
+.prose h1{font-size:1.5rem;}.prose h2{font-size:1.25rem;}.prose h3{font-size:1.08rem;}
+.prose p{margin:.7em 0;}
+.prose ul,.prose ol{padding-left:1.4em;margin:.6em 0;}
+.prose blockquote{border-left:3px solid var(--border);margin:.8em 0;padding:.2em 1em;color:var(--muted);}
+.prose table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.9rem;display:block;overflow-x:auto;}
+.prose th,.prose td{border:1px solid var(--border);padding:6px 10px;text-align:left;}
+.prose img{max-width:100%;border-radius:8px;}
+.prose pre{background:#1e1f29;border-radius:10px;padding:14px;overflow-x:auto;margin:1em 0;}
+.prose code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.85em;}
+.prose :not(pre)>code{background:var(--border);padding:1px 5px;border-radius:5px;}
+.prose .katex-display{overflow-x:auto;overflow-y:hidden;padding:.3em 0;}
+.prose .katex-err{color:#e0485c;font-family:monospace;}
+.prose hr{border:none;border-top:1px solid var(--border);margin:1.5em 0;}
+.callout{border-left:4px solid var(--c-color);background:var(--c-bg);border-radius:10px;padding:12px 16px;margin:14px 0;}
+.callout-title{font-weight:700;font-size:.76rem;margin-bottom:6px;color:var(--c-color);text-transform:uppercase;letter-spacing:.03em;}
+.callout-body{font-size:.93rem;}
+.callout-body>:first-child{margin-top:0;}
+.callout-body>:last-child{margin-bottom:0;}
 </style>
 </head>
 <body>
@@ -55,6 +77,10 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
   <div id="content"><p class="state">Загрузка…</p></div>
   <footer>Файлы загружаются напрямую из GitHub-репозитория RedstoneLord/itmo-m3102</footer>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script>
 const OWNER='RedstoneLord', REPO='itmo-m3102', BRANCH='master';
 const SUBTITLES={
@@ -63,7 +89,7 @@ const SUBTITLES={
   'Лабораторные':'Лабораторные работы и отчёты по ним',
   'Материалы':'Учебники и вспомогательные материалы'
 };
-const EXT_ICON={pdf:'📕',docx:'📝',doc:'📝',md:'📄',html:'🌐',htm:'🌐',mp3:'🎵',wav:'🎵',djvu:'📚',txt:'📄'};
+const EXT_ICON={pdf:'📕',docx:'📝',doc:'📝',md:'📝',html:'🌐',htm:'🌐',mp3:'🎵',wav:'🎵',djvu:'📚',txt:'📄'};
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function ext(name){const i=name.lastIndexOf('.');return i<0?'':name.slice(i+1).toLowerCase();}
@@ -72,32 +98,96 @@ function encodePath(p){return p?p.split('/').map(encodeURIComponent).join('/'):'
 function decodePath(p){return p?p.split('/').map(decodeURIComponent).join('/'):'';}
 function apiUrl(path){const p=encodePath(path);return `https://api.github.com/repos/${OWNER}/${REPO}/contents${p?'/'+p:''}?ref=${BRANCH}`;}
 function rawUrl(path){return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodePath(path)}`;}
-
 function goto(path){location.hash='#/'+encodePath(path);}
 function gotoView(path){location.hash='#/view/'+encodePath(path);}
+function gotoNote(path){location.hash='#/note/'+encodePath(path);}
 document.getElementById('home-link').onclick=()=>goto('');
 
+/* ---------- notes parser (markdown + callouts + code + LaTeX) ---------- */
+const CALLOUT_TYPES={
+  remember:{color:'#e0485c',bg:'rgba(224,72,92,.08)',icon:'🔴',label:'Запомнить'},
+  note:{color:'#dd9a2b',bg:'rgba(221,154,43,.08)',icon:'🟡',label:'Заметка'},
+  meaning:{color:'#3b82f6',bg:'rgba(59,130,246,.08)',icon:'🔵',label:'Определение'},
+  warning:{color:'#f97316',bg:'rgba(249,115,22,.08)',icon:'🟠',label:'Важно'},
+  example:{color:'#22c55e',bg:'rgba(34,197,94,.08)',icon:'🟢',label:'Пример'},
+  formula:{color:'#a855f7',bg:'rgba(168,85,247,.08)',icon:'🟣',label:'Формула'}
+};
+const CALLOUT_ALIASES={remember:'remember',запомнить:'remember',note:'note',заметка:'note',meaning:'meaning',определение:'meaning',warning:'warning',важно:'warning',внимание:'warning',example:'example',пример:'example',formula:'formula',формула:'formula'};
+function resolveCalloutType(raw){return CALLOUT_ALIASES[String(raw).toLowerCase()]||'note';}
+
+const calloutExtension={
+  name:'callout', level:'block',
+  start(src){const m=/(^|\n):::\S+/.exec(src);return m?m.index+(m[1]?1:0):undefined;},
+  tokenizer(src){
+    const rule=/^:::(\S+)[ \t]*\n([\s\S]*?)\n:::[ \t]*(?:\n|$)/;
+    const m=rule.exec(src);
+    if(m){
+      const token={type:'callout',raw:m[0],calloutType:m[1],text:m[2],tokens:[]};
+      this.lexer.blockTokens(token.text,token.tokens);
+      return token;
+    }
+  },
+  renderer(token){
+    const type=resolveCalloutType(token.calloutType), cfg=CALLOUT_TYPES[type];
+    return `<div class="callout" style="--c-color:${cfg.color};--c-bg:${cfg.bg};"><div class="callout-title">${cfg.icon} ${cfg.label}</div><div class="callout-body">${this.parser.parse(token.tokens)}</div></div>\n`;
+  }
+};
+marked.use({
+  gfm:true, breaks:false,
+  extensions:[calloutExtension],
+  renderer:{
+    code(code,infostring){
+      const lang=(infostring||'').trim().split(/\s+/)[0];
+      let out;
+      try{out=(lang&&hljs.getLanguage(lang))?hljs.highlight(code,{language:lang}).value:hljs.highlightAuto(code).value;}
+      catch(e){out=esc(code);}
+      return `<pre><code class="hljs">${out}</code></pre>`;
+    }
+  }
+});
+
+function renderNotes(raw){
+  const codeStore=[];
+  let text=raw.replace(/```[\s\S]*?```/g,m=>{codeStore.push(m);return `\uE010${codeStore.length-1}\uE011`;});
+  const mathStore=[];
+  function stash(src,display){mathStore.push({src,display});return `\uE000${mathStore.length-1}\uE001`;}
+  text=text.replace(/\$\$([\s\S]+?)\$\$/g,(m,g)=>stash(g.trim(),true));
+  text=text.replace(/\\\[([\s\S]+?)\\\]/g,(m,g)=>stash(g.trim(),true));
+  text=text.replace(/\\\(([\s\S]+?)\\\)/g,(m,g)=>stash(g.trim(),false));
+  text=text.replace(/\$([^\$\n]+?)\$/g,(m,g)=>stash(g.trim(),false));
+  text=text.replace(/\uE010(\d+)\uE011/g,(m,i)=>codeStore[+i]);
+  let html=marked.parse(text);
+  html=html.replace(/\uE000(\d+)\uE001/g,(m,i)=>{
+    const {src,display}=mathStore[+i];
+    try{return katex.renderToString(src,{throwOnError:false,displayMode:display});}
+    catch(e){return '<span class="katex-err">'+esc(src)+'</span>';}
+  });
+  return html;
+}
+
+/* ---------- routing ---------- */
 function parseHash(){
   let h=location.hash.replace(/^#\/?/,'');
   if(h.startsWith('view/'))return{mode:'view',path:decodePath(h.slice(5))};
+  if(h.startsWith('note/'))return{mode:'note',path:decodePath(h.slice(5))};
   return{mode:'browse',path:decodePath(h)};
 }
-
 function breadcrumbs(path){
   const parts=path?path.split('/'):[];
   let html='<div class="crumbs"><a data-p="">Главная</a>';
   let acc='';
   parts.forEach(p=>{acc=acc?acc+'/'+p:p;html+=' / <a data-p="'+esc(acc)+'">'+esc(p)+'</a>';});
-  html+='</div>';
-  return html;
+  return html+'</div>';
 }
+function viewBar(icon,name,path){
+  return `<div class="viewbar"><button class="btn2" id="back-btn">← Назад</button><div class="viewname">${icon} ${esc(name)}</div><a class="btn2" href="${rawUrl(path)}" target="_blank" rel="noopener" download>Скачать</a></div>`;
+}
+function bindBack(path){document.getElementById('back-btn').onclick=()=>goto(path.split('/').slice(0,-1).join('/'));}
 
 async function renderBrowse(path){
   const c=document.getElementById('content');
   let intro='';
-  if(!path){
-    intro='<div class="intro"><h1>Материалы группы М3102</h1><p class="sub">Конспекты, записи лекций, лабораторные и учебники по дисциплинам первого курса ИТМО. Выберите раздел, затем — предмет и нужный файл. PDF открываются прямо в браузере.</p></div>';
-  }
+  if(!path)intro='<div class="intro"><h1>Материалы группы М3102</h1><p class="sub">Конспекты, записи лекций, лабораторные и учебники по дисциплинам первого курса ИТМО. Выберите раздел, затем — предмет и нужный файл. PDF и конспекты .md открываются прямо в браузере.</p></div>';
   c.innerHTML=intro+breadcrumbs(path)+'<p class="state">Загрузка…</p>';
   try{
     const res=await fetch(apiUrl(path));
@@ -114,8 +204,14 @@ async function renderBrowse(path){
         const sub=path?'':(SUBTITLES[it.name]||'Папка');
         grid+=`<a class="card" data-nav="${esc(it.path)}"><div class="ic">📁</div><div class="meta"><div class="name">${esc(it.name)}</div><div class="desc">${esc(sub)}</div></div></a>`;
       }else{
-        const e=ext(it.name),icon=EXT_ICON[e]||'📄',isPdf=e==='pdf';
-        grid+=`<div class="card" style="cursor:default;">${isPdf?`<a class="card" style="padding:0;border:none;flex:1;" data-view="${esc(it.path)}"><div class="ic">${icon}</div><div class="meta"><div class="name">${esc(it.name)}</div><div class="desc">${fmtSize(it.size)} · читать в браузере</div></div></a>`:`<div class="ic">${icon}</div><div class="meta"><div class="name">${esc(it.name)}</div><div class="desc">${fmtSize(it.size)}</div></div><a class="btn" href="${rawUrl(it.path)}" target="_blank" rel="noopener">Скачать</a>`}</div>`;
+        const e=ext(it.name), icon=EXT_ICON[e]||'📄';
+        if(e==='pdf'){
+          grid+=`<a class="card" data-view="${esc(it.path)}"><div class="ic">${icon}</div><div class="meta"><div class="name">${esc(it.name)}</div><div class="desc">${fmtSize(it.size)} · читать в браузере</div></div></a>`;
+        }else if(e==='md'){
+          grid+=`<a class="card" data-note="${esc(it.path)}"><div class="ic">${icon}</div><div class="meta"><div class="name">${esc(it.name)}</div><div class="desc">${fmtSize(it.size)} · читать конспект</div></div></a>`;
+        }else if(it.name!="index.html"){
+          grid+=`<div class="card" style="cursor:default;"><div class="ic">${icon}</div><div class="meta"><div class="name">${esc(it.name)}</div><div class="desc">${fmtSize(it.size)}</div></div><a class="btn" href="${rawUrl(it.path)}" target="_blank" rel="noopener">Скачать</a></div>`;
+        }
       }
     });
     grid+='</div>';
@@ -123,23 +219,55 @@ async function renderBrowse(path){
     c.innerHTML=intro+breadcrumbs(path)+grid;
     c.querySelectorAll('[data-nav]').forEach(el=>el.onclick=e=>{e.preventDefault();goto(el.dataset.nav);});
     c.querySelectorAll('[data-view]').forEach(el=>el.onclick=e=>{e.preventDefault();gotoView(el.dataset.view);});
+    c.querySelectorAll('[data-note]').forEach(el=>el.onclick=e=>{e.preventDefault();gotoNote(el.dataset.note);});
     c.querySelectorAll('.crumbs a').forEach(el=>el.onclick=e=>{e.preventDefault();goto(el.dataset.p);});
   }catch(e){
     c.innerHTML=intro+breadcrumbs(path)+'<p class="state">Ошибка загрузки: '+esc(e.message)+'</p>';
   }
 }
 
-function renderView(path){
-  const c=document.getElementById('content');
+function renderPdfView(path){
   const name=path.split('/').pop();
-  const parent=path.split('/').slice(0,-1).join('/');
-  c.innerHTML=`<div class="viewbar"><button class="btn2" id="back-btn">← Назад</button><div class="viewname">📕 ${esc(name)}</div><a class="btn2" href="${rawUrl(path)}" target="_blank" rel="noopener">Открыть в новой вкладке</a></div><iframe class="pdfframe" src="${rawUrl(path)}"></iframe>`;
-  document.getElementById('back-btn').onclick=()=>goto(parent);
+  const c=document.getElementById('content');
+  c.innerHTML=viewBar('📕',name,path)+'<p class="state" id="pdf-status">Загрузка PDF…</p><div id="pdf-pages" style="max-width:900px;margin:0 auto;"></div>';
+  bindBack(path);
+  if(!window.__pdfWorkerSet){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';window.__pdfWorkerSet=true;}
+  pdfjsLib.getDocument(rawUrl(path)).promise.then(pdf=>{
+    const status=document.getElementById('pdf-status');if(status)status.remove();
+    const container=document.getElementById('pdf-pages');
+    for(let n=1;n<=pdf.numPages;n++){
+      const canvas=document.createElement('canvas');
+      canvas.className='pdf-page';
+      container.appendChild(canvas);
+      pdf.getPage(n).then(page=>{
+        const cw=Math.min(container.clientWidth||860,900);
+        const vp0=page.getViewport({scale:1});
+        const viewport=page.getViewport({scale:cw/vp0.width});
+        canvas.width=viewport.width;canvas.height=viewport.height;
+        page.render({canvasContext:canvas.getContext('2d'),viewport});
+      });
+    }
+  }).catch(err=>{
+    const status=document.getElementById('pdf-status');
+    if(status)status.textContent='Не удалось загрузить PDF ('+err.message+'). Попробуйте скачать файл напрямую.';
+  });
+}
+
+function renderNoteView(path){
+  const name=path.split('/').pop();
+  const c=document.getElementById('content');
+  c.innerHTML=viewBar('📝',name,path)+'<p class="state" id="note-status">Загрузка…</p><div class="prose" id="note-body"></div>';
+  bindBack(path);
+  fetch(rawUrl(path)).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
+    .then(text=>{const s=document.getElementById('note-status');if(s)s.remove();document.getElementById('note-body').innerHTML=renderNotes(text);})
+    .catch(err=>{const s=document.getElementById('note-status');if(s)s.textContent='Не удалось загрузить файл ('+err.message+').';});
 }
 
 function route(){
   const {mode,path}=parseHash();
-  if(mode==='view')renderView(path);else renderBrowse(path);
+  if(mode==='view')renderPdfView(path);
+  else if(mode==='note')renderNoteView(path);
+  else renderBrowse(path);
 }
 window.addEventListener('hashchange',route);
 route();
