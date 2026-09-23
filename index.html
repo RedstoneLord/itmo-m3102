@@ -54,9 +54,22 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 .prose table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.9rem;display:block;overflow-x:auto;}
 .prose th,.prose td{border:1px solid var(--border);padding:6px 10px;text-align:left;}
 .prose img{max-width:100%;border-radius:8px;}
-.prose pre{background:#1e1f29;border-radius:10px;padding:14px;overflow-x:auto;margin:1em 0;}
+.prose pre{position:relative;background:#1e1f29;border-radius:10px;padding:14px;overflow-x:auto;margin:1em 0;}
 .prose code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.85em;}
 .prose :not(pre)>code{background:var(--border);padding:1px 5px;border-radius:5px;}
+.prose .code-copy{position:absolute;top:8px;right:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#d7d9e2;font-size:.72rem;padding:4px 9px;border-radius:6px;cursor:pointer;opacity:0;transition:opacity .15s;}
+.prose pre:hover .code-copy{opacity:1;}
+.prose .code-copy.copied{opacity:1;border-color:#22c55e;color:#22c55e;}
+.prose .mermaid{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin:1em 0;overflow-x:auto;text-align:center;}
+.prose .mermaid-err{color:#e0485c;font-family:monospace;font-size:.85em;white-space:pre-wrap;background:rgba(224,72,92,.08);border-radius:8px;padding:10px 12px;}
+.prose h1[id],.prose h2[id],.prose h3[id]{scroll-margin-top:14px;}
+.prose .heading-anchor{opacity:0;margin-left:.35em;color:var(--muted);text-decoration:none;font-size:.85em;}
+.prose h1:hover .heading-anchor,.prose h2:hover .heading-anchor,.prose h3:hover .heading-anchor{opacity:1;}
+.prose .img-figure{margin:1em 0;text-align:center;}
+.prose .img-figure img{cursor:zoom-in;}
+.prose .img-figure figcaption{color:var(--muted);font-size:.82rem;margin-top:6px;}
+.img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:24px;z-index:1000;cursor:zoom-out;}
+.img-lightbox img{max-width:100%;max-height:100%;border-radius:6px;}
 .prose .katex-display{overflow-x:auto;overflow-y:hidden;padding:.3em 0;}
 .prose .katex-err{color:#e0485c;font-family:monospace;}
 .prose hr{border:none;border-top:1px solid var(--border);margin:1.5em 0;}
@@ -127,6 +140,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
 <script>
 const OWNER='RedstoneLord', REPO='itmo-m3102', BRANCH='master';
 const SUBTITLES={
@@ -138,6 +152,16 @@ const SUBTITLES={
 const EXT_ICON={pdf:'PDF',docx:'DOC',doc:'DOC',md:'MD',html:'WEB',htm:'WEB',mp3:'MP3',wav:'WAV',djvu:'DJVU',txt:'TXT'};
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+// Файлы и папки, которые не должны отображаться при просмотре материалов
+const HIDDEN_FILE_NAMES=['site.css'];
+const HIDDEN_FOLDER_NAMES=['tests','inner'];
+function isHiddenPath(path){
+  if(!path)return false;
+  const parts=path.split('/');
+  const base=parts[parts.length-1];
+  if(HIDDEN_FILE_NAMES.includes(base.toLowerCase()))return true;
+  return parts.some(p=>HIDDEN_FOLDER_NAMES.includes(p.toLowerCase()));
+}
 function ext(name){const i=name.lastIndexOf('.');return i<0?'':name.slice(i+1).toLowerCase();}
 function fmtSize(b){if(b<1024)return b+' Б';if(b<1048576)return (b/1024).toFixed(0)+' КБ';return (b/1048576).toFixed(1)+' МБ';}
 function encodePath(p){return p?p.split('/').map(encodeURIComponent).join('/'):'';}
@@ -182,26 +206,77 @@ const calloutExtension={
     return `<div class="callout" style="--c-color:${cfg.color};--c-bg:${cfg.bg};"><div class="callout-title">${cfg.icon} ${cfg.label}</div><div class="callout-body">${this.parser.parse(token.tokens)}</div></div>\n`;
   }
 };
+// ---- вспомогательные функции: подсветка кода, диаграммы, изображения ----
+let mermaidSeq=0;
+function renderMermaidBlock(code){
+  const id='mermaid-'+(++mermaidSeq);
+  // сам рендеринг SVG выполняется асинхронно после вставки в DOM (см. runMermaid)
+  return `<div class="mermaid" data-mermaid-id="${id}">${esc(code)}</div>`;
+}
+function highlightCode(code,lang){
+  let out;
+  try{out=(lang&&hljs.getLanguage(lang))?hljs.highlight(code,{language:lang}).value:hljs.highlightAuto(code).value;}
+  catch(e){out=esc(code);}
+  const langAttr=lang?` data-lang="${esc(lang)}"`:'';
+  return `<pre><button class="code-copy" type="button" data-copy>Копировать</button><code class="hljs"${langAttr}>${out}</code></pre>`;
+}
+function renderCodeBlock(code,infostring){
+  const lang=(infostring||'').trim().split(/\s+/)[0].toLowerCase();
+  if(lang==='mermaid')return renderMermaidBlock(code);
+  return highlightCode(code,lang);
+}
+
+// Разрешаем относительные пути картинок/ссылок внутри конспекта относительно его расположения в репозитории
+let notesBasePath='';
+function resolveNotePath(url,basePath){
+  if(!url)return url;
+  if(/^([a-z][a-z0-9+.-]*:)?\/\//i.test(url)||url.startsWith('data:')||url.startsWith('#')||url.startsWith('mailto:'))return null;
+  const dir=basePath.includes('/')?basePath.slice(0,basePath.lastIndexOf('/')):'';
+  const combined=(dir?dir+'/':'')+url;
+  const parts=[];
+  combined.split('/').forEach(seg=>{
+    if(seg==='..')parts.pop();
+    else if(seg!=='.'&&seg!=='')parts.push(seg);
+  });
+  return decodeURIComponent(parts.join('/'));
+}
+
 marked.use({
   gfm:true, breaks:false,
   extensions:[calloutExtension],
   renderer:{
     code(code,infostring){
-      const lang=(infostring||'').trim().split(/\s+/)[0];
-      let out;
-      try{out=(lang&&hljs.getLanguage(lang))?hljs.highlight(code,{language:lang}).value:hljs.highlightAuto(code).value;}
-      catch(e){out=esc(code);}
-      return `<pre><code class="hljs">${out}</code></pre>`;
+      return renderCodeBlock(code,infostring);
+    },
+    heading(text,level,raw){
+      const slug=String(raw||text).toLowerCase().trim()
+        .replace(/[^\p{L}\p{N}\s-]/gu,'').replace(/\s+/g,'-');
+      return `<h${level} id="${esc(slug)}">${text}<a class="heading-anchor" href="#${esc(slug)}" aria-hidden="true">#</a></h${level}>\n`;
+    },
+    image(href,title,text){
+      const resolved=resolveNotePath(href,notesBasePath);
+      const src=resolved?rawUrl(resolved):href;
+      const cap=title||text;
+      return `<figure class="img-figure"><img src="${esc(src)}" alt="${esc(text||'')}" loading="lazy" data-lightbox="${esc(src)}">${cap?`<figcaption>${esc(cap)}</figcaption>`:''}</figure>`;
+    },
+    link(href,title,text){
+      const resolved=resolveNotePath(href,notesBasePath);
+      if(resolved){
+        if(/\.md$/i.test(resolved))return `<a href="#/note/${encodePath(resolved)}" title="${esc(title||'')}">${text}</a>`;
+        return `<a href="${esc(rawUrl(resolved))}" target="_blank" rel="noopener" title="${esc(title||'')}">${text}</a>`;
+      }
+      return `<a href="${esc(href)}" target="_blank" rel="noopener" title="${esc(title||'')}">${text}</a>`;
     }
   }
 });
 
-function renderNotes(raw) {
+function renderNotes(raw, basePath) {
+  notesBasePath = basePath || '';
   const codeStore = [];
 
-  // Сначала защищаем fenced code
-  let text = raw.replace(/```[\s\S]*?```/g, m => {
-    codeStore.push(m);
+  // Сначала защищаем fenced code (поддержаны ``` и ~~~, с указанием языка)
+  let text = raw.replace(/^([ \t]*)(`{3,}|~{3,})([^\n`~]*)\n([\s\S]*?)\n\1\2[ \t]*$/gm, (m, indent, fence, info, code) => {
+    codeStore.push(renderCodeBlock(code, info));
     return `@@CODE_${codeStore.length - 1}@@`;
   });
 
@@ -246,12 +321,59 @@ function renderNotes(raw) {
     }
   });
 
-  // Возвращаем code
-  html = html.replace(/@@CODE_(\d+)@@/g, (_, i) =>
-    codeStore[Number(i)]
-  );
+  // Возвращаем code/диаграммы (снимаем обёртку <p>, которую мог добавить marked)
+  html = html.replace(/<p>@@CODE_(\d+)@@<\/p>/g, (_, i) => codeStore[Number(i)]);
+  html = html.replace(/@@CODE_(\d+)@@/g, (_, i) => codeStore[Number(i)]);
 
   return html;
+}
+
+// Запускает отрисовку Mermaid-диаграмм и навешивает обработчики (копирование кода, лайтбокс картинок)
+let mermaidReady=false;
+function initMermaidOnce(){
+  if(mermaidReady||typeof mermaid==='undefined')return;
+  const dark=document.documentElement.getAttribute('data-theme')==='dark'||
+    (document.documentElement.getAttribute('data-theme')!=='light'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+  mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:dark?'dark':'default'});
+  mermaidReady=true;
+}
+async function runNoteExtras(container){
+  if(!container)return;
+  // диаграммы
+  const nodes=container.querySelectorAll('.mermaid[data-mermaid-id]');
+  if(nodes.length){
+    initMermaidOnce();
+    for(const node of nodes){
+      const src=node.textContent;
+      try{
+        const {svg}=await mermaid.render(node.dataset.mermaidId+'-svg',src);
+        node.innerHTML=svg;
+      }catch(e){
+        node.outerHTML=`<div class="mermaid-err">Не удалось построить диаграмму: ${esc(e.message||String(e))}</div>`;
+      }
+    }
+  }
+  // копирование кода
+  container.querySelectorAll('[data-copy]').forEach(btn=>{
+    btn.onclick=()=>{
+      const code=btn.parentElement.querySelector('code');
+      if(!code)return;
+      navigator.clipboard.writeText(code.textContent).then(()=>{
+        btn.textContent='Скопировано';btn.classList.add('copied');
+        setTimeout(()=>{btn.textContent='Копировать';btn.classList.remove('copied');},1500);
+      }).catch(()=>{});
+    };
+  });
+  // лайтбокс для картинок конспекта
+  container.querySelectorAll('img[data-lightbox]').forEach(img=>{
+    img.onclick=()=>{
+      const box=document.createElement('div');
+      box.className='img-lightbox';
+      box.innerHTML=`<img src="${esc(img.dataset.lightbox)}" alt="">`;
+      box.onclick=()=>box.remove();
+      document.body.appendChild(box);
+    };
+  });
 }
 
 /* ---------- schedule (odd/even week cycle, М3102) ---------- */
@@ -494,7 +616,7 @@ async function fetchRecentNotes(){
         const detail=await cr.json();
         const date=(cm.commit&&cm.commit.author&&cm.commit.author.date)||(detail.commit&&detail.commit.author&&detail.commit.author.date);
         (detail.files||[]).forEach(f=>{
-          if(ext(f.filename)==='md'&&f.status!=='removed'&&!seen.has(f.filename))seen.set(f.filename,date);
+          if(ext(f.filename)==='md'&&f.status!=='removed'&&!seen.has(f.filename)&&!isHiddenPath(f.filename))seen.set(f.filename,date);
         });
       }catch(e){/* пропускаем коммит при ошибке */}
     }
@@ -559,6 +681,7 @@ async function renderBrowse(path){
     }
     let items=await res.json();
     if(!Array.isArray(items))items=[items];
+    items=items.filter(it=>!isHiddenPath(it.path));
     items.sort((a,b)=>a.type!==b.type?(a.type==='dir'?-1:1):a.name.localeCompare(b.name,'ru'));
     let grid='<div class="grid">';
     items.forEach(it=>{
@@ -625,7 +748,12 @@ function renderNoteView(path){
   c.innerHTML=viewBar('MD',name,path)+'<p class="state" id="note-status">Загрузка…</p><div class="prose" id="note-body"></div>';
   bindBack(path);
   fetch(rawUrl(path)).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
-    .then(text=>{const s=document.getElementById('note-status');if(s)s.remove();document.getElementById('note-body').innerHTML=renderNotes(text);})
+    .then(text=>{
+      const s=document.getElementById('note-status');if(s)s.remove();
+      const body=document.getElementById('note-body');
+      body.innerHTML=renderNotes(text,path);
+      runNoteExtras(body);
+    })
     .catch(err=>{const s=document.getElementById('note-status');if(s)s.textContent='Не удалось загрузить файл ('+err.message+').';});
 }
 
