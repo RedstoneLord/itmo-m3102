@@ -242,7 +242,7 @@ async function renderBrowse(path){
     items.forEach(it=>{
       if(it.type==='dir'){
         if(!path && it.name==='Дедлайны'){
-          grid+=`<a class="card deadline-card" href="/Дедлайны/"><div class="ic">🗓️</div><div class="meta"><div class="name">Дедлайны</div><div class="desc">Сроки сдачи и важные даты</div></div></a>`;
+          grid+=`<a class="card deadline-card" href="/itmo-m3102/Дедлайны/"><div class="ic">🗓️</div><div class="meta"><div class="name">Дедлайны</div><div class="desc">Сроки сдачи и важные даты</div></div></a>`;
           return;
         }
         const sub=path?'':(SUBTITLES[it.name]||'Папка');
