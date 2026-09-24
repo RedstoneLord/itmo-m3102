@@ -119,6 +119,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 </style>
 <link rel="stylesheet" href="./site.css">
 <link rel="stylesheet" href="./css/schedule.css">
+<link rel="stylesheet" href="./css/homework.css">
 </head>
 <body>
 <div class="wrap">
@@ -128,6 +129,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
       <a class="tab" id="tab-home" href="./">Главная</a>
       <a class="tab" id="tab-materials" href="#/materials">Материалы</a>
       <a class="tab" id="tab-schedule" href="#/schedule">Расписание</a>
+      <a class="tab" id="tab-homework" href="#/homework">Домашнее задание</a>
       <a class="tab" id="tab-deadlines" href="./Дедлайны/">Дедлайны</a>
     </nav>
     <div class="navlinks">
@@ -147,6 +149,7 @@ import { dateKey, parseDate, isVacation, lessonsOn, weekParity } from './js/sche
 import { mountSchedule, ensureSchedule, getSchedule } from './js/schedule-ui.js';
 import { installScheduleEditor } from './js/schedule-editor.js';
 import { githubFetch } from './js/github.js';
+import { installHomework, renderHomeHomework, renderHomeworkPage } from './js/homework.js';
 const OWNER='RedstoneLord', REPO='itmo-m3102', BRANCH='master';
 const SUBTITLES={
   'Записи лекций':'Аудиозаписи лекций',
@@ -444,6 +447,7 @@ function renderHome(){
   <div class="dashboard-grid">
     <section class="dash-panel schedule-panel"><div class="panel-head"><h2>Сегодня в расписании</h2><a href="#/schedule">Все занятия <span aria-hidden="true">↗</span></a></div>${homeSchedule()}</section>
     <section class="dash-panel deadline-panel"><div class="panel-head"><h2>Ближайшие дедлайны</h2><a href="./Дедлайны/">Все дедлайны <span aria-hidden="true">↗</span></a></div><div id="home-deadlines"><p class="empty-line">Загрузка сроков…</p></div><div id="completed-deadlines"></div></section>
+    <section class="dash-panel homework-panel"><div class="panel-head"><h2>Домашнее задание</h2><a href="#/homework">Все задания <span aria-hidden="true">↗</span></a></div><div id="home-homework"><p class="empty-line">Загрузка заданий…</p></div></section>
     <section class="dash-panel materials-panel"><div class="panel-head"><h2>Материалы</h2><a href="#/materials">Все материалы <span aria-hidden="true">↗</span></a></div><div class="material-links">${tiles}</div></section>
     <section class="dash-panel plan-panel"><div class="panel-head"><h2>Мой учебный план</h2><label class="toggle-label"><input id="hide-completed" type="checkbox" ${hideCompleted?'checked':''}> Скрыть выполненные</label></div><form id="plan-form" class="plan-form"><input id="task-name" name="name" type="text" maxlength="120" placeholder="Добавить свою задачу…" aria-label="Новая задача" required><input id="task-date" name="date" type="date" aria-label="Срок задачи"><button type="submit">Добавить</button></form><div id="plan-list"></div><p class="plan-hint">Личные задачи и отметки хранятся в этом браузере.</p></section>
     <section class="dash-panel notes-panel"><div class="panel-head"><h2>Недавние конспекты</h2><a href="#/${encodePath('Конспекты')}">Все конспекты <span aria-hidden="true">↗</span></a></div><div id="recent-notes"><p class="empty-line">Загрузка конспектов…</p></div></section>
@@ -468,6 +472,7 @@ function renderHome(){
   };
   renderPlan();
   loadHomeDeadlines();
+  renderHomeHomework();
   fetchRecentNotes();
   ensureSchedule().then(()=>{const box=c.querySelector('.schedule-panel');if(box){const old=box.querySelector('.today-list,.empty-line');if(old)old.outerHTML=homeSchedule();}}).catch(()=>{});
 }
@@ -515,6 +520,7 @@ function parseHash(){
   if(h==='')return{mode:'home',path:''};
   if(h==='materials')return{mode:'browse',path:''};
   if(h==='schedule')return{mode:'schedule',path:''};
+  if(h==='homework')return{mode:'homework',path:''};
   if(/^schedule\/\d{4}-\d{2}-\d{2}$/.test(h))return{mode:'schedule',path:h.slice(9)};
   if(h.startsWith('view/'))return{mode:'view',path:decodePath(h.slice(5))};
   if(h.startsWith('note/'))return{mode:'note',path:decodePath(h.slice(5))};
@@ -525,6 +531,7 @@ function updateActiveTab(mode,path){
   let id='tab-materials';
   if(mode==='home')id='tab-home';
   else if(mode==='schedule')id='tab-schedule';
+  else if(mode==='homework')id='tab-homework';
   else if(mode==='browse'&&path&&path.split('/')[0]==='Дедлайны')id='tab-deadlines';
   const el=document.getElementById(id);
   if(el)el.classList.add('active');
@@ -637,10 +644,12 @@ function route(){
   else if(mode==='note')renderNoteView(path);
   else if(mode==='home')renderHome();
   else if(mode==='schedule')mountSchedule(parseDate(path)||new Date());
+  else if(mode==='homework')renderHomeworkPage();
   else renderBrowse(path);
 }
 window.addEventListener('hashchange',route);
 installScheduleEditor();
+installHomework();
 route();
 </script>
 </body>
