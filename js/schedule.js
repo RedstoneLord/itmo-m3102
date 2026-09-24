@@ -90,6 +90,7 @@ export async function loadSchedule() {
     const cached = readStored(SCHEDULE_CACHE_KEY);
     if (!cached) throw error;
     const base = normalizeSchedule(cached);
-    return { base, data: readStored(SCHEDULE_DRAFT_KEY) ? normalizeSchedule(readStored(SCHEDULE_DRAFT_KEY)) : clone(base), stale: true };
+    const overlay = readStored(SCHEDULE_DRAFT_KEY) || readStored(SCHEDULE_PENDING_KEY);
+    return { base, data: overlay ? normalizeSchedule(overlay) : clone(base), stale: true };
   }
 }
