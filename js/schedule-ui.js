@@ -11,6 +11,7 @@ let base = null, data = null, loading = null, selected = new Date(), animations 
 
 export const getSchedule = () => data;
 export const getBaseSchedule = () => base;
+export const setBaseSchedule = next => { base = next; };
 export function setSchedule(next) { data = next; document.dispatchEvent(new CustomEvent('schedule:change')); refreshSchedule(); }
 export async function ensureSchedule() {
   if (data) return data;
@@ -134,6 +135,7 @@ export function refreshSchedule() {
   stopAnimations();
   const stage = document.querySelector('#sched-stage');
   stage.innerHTML = `<div class="sched-layer">${dayMarkup(selected)}</div>`;
+  document.querySelector('.week-pills').innerHTML = '';
   updateHeader(); fillWeek(); updateLive();
   document.dispatchEvent(new CustomEvent('schedule:day', { detail: { date: selected, layer: stage.firstElementChild } }));
 }

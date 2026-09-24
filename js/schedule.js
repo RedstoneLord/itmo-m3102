@@ -1,5 +1,6 @@
 export const SCHEDULE_DRAFT_KEY = 'm3102-draft-schedule-v1';
 export const SCHEDULE_CACHE_KEY = 'm3102-cache-schedule-v1';
+export const SCHEDULE_PENDING_KEY = 'm3102-pending-schedule-v1';
 
 export const clone = value => structuredClone(value);
 export const dateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -64,13 +65,27 @@ export function readStored(key) {
 export function writeStored(key, data) {
   try { localStorage.setItem(key, JSON.stringify(data)); return true; } catch { return false; }
 }
+export function applyScheduleChanges(before, remote, local) {
+  const merged = clone(remote);
+  for (let i = 0; i < 14; i++) if (JSON.stringify(before.cycle[i]) !== JSON.stringify(local.cycle[i])) merged.cycle[i] = clone(local.cycle[i]);
+  for (const key of new Set([...Object.keys(before.overrides), ...Object.keys(local.overrides)])) {
+    if (JSON.stringify(before.overrides[key]) === JSON.stringify(local.overrides[key])) continue;
+    if (local.overrides[key]) merged.overrides[key] = clone(local.overrides[key]);
+    else delete merged.overrides[key];
+  }
+  for (const key of ['anchorMonday', 'anchorParity', 'defaultLocation', 'vacations']) if (JSON.stringify(before[key]) !== JSON.stringify(local[key])) merged[key] = clone(local[key]);
+  return merged;
+}
 export async function loadSchedule() {
   try {
     const response = await fetch('./data/schedule.json', { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const base = normalizeSchedule(await response.json());
     writeStored(SCHEDULE_CACHE_KEY, base);
-    return { base, data: readStored(SCHEDULE_DRAFT_KEY) ? normalizeSchedule(readStored(SCHEDULE_DRAFT_KEY)) : clone(base), stale: false };
+    const pending = readStored(SCHEDULE_PENDING_KEY);
+    if (pending && JSON.stringify(base) === JSON.stringify(pending)) { try { localStorage.removeItem(SCHEDULE_PENDING_KEY); } catch { /* Приватный режим. */ } }
+    const overlay = readStored(SCHEDULE_DRAFT_KEY) || (pending && JSON.stringify(base) !== JSON.stringify(pending) ? pending : null);
+    return { base, data: overlay ? normalizeSchedule(overlay) : clone(base), stale: false };
   } catch (error) {
     const cached = readStored(SCHEDULE_CACHE_KEY);
     if (!cached) throw error;

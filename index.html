@@ -145,6 +145,8 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 <script type="module">
 import { dateKey, parseDate, isVacation, lessonsOn, weekParity } from './js/schedule.js';
 import { mountSchedule, ensureSchedule, getSchedule } from './js/schedule-ui.js';
+import { installScheduleEditor } from './js/schedule-editor.js';
+import { githubFetch } from './js/github.js';
 const OWNER='RedstoneLord', REPO='itmo-m3102', BRANCH='master';
 const SUBTITLES={
   'Записи лекций':'Аудиозаписи лекций',
@@ -474,14 +476,14 @@ async function fetchRecentNotes(){
   const box=document.getElementById('recent-notes');
   if(!box)return;
   try{
-    const res=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits?sha=${BRANCH}&path=${encodeURIComponent('Конспекты')}&per_page=10`);
+    const res=await githubFetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits?sha=${BRANCH}&path=${encodeURIComponent('Конспекты')}&per_page=10`);
     if(!res.ok)throw new Error('HTTP '+res.status);
     const commits=await res.json();
     const seen=new Map();
     for(const cm of commits){
       if(seen.size>=RECENT_NOTES_LIMIT)break;
       try{
-        const cr=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${cm.sha}`);
+        const cr=await githubFetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${cm.sha}`);
         if(!cr.ok)continue;
         const detail=await cr.json();
         const date=(cm.commit&&cm.commit.author&&cm.commit.author.date)||(detail.commit&&detail.commit.author&&detail.commit.author.date);
@@ -545,7 +547,7 @@ async function renderBrowse(path){
   if(!path)intro='<div class="intro"><h1>Материалы группы М3102</h1><p class="sub">Конспекты, записи лекций, лабораторные и учебники по дисциплинам первого курса ИТМО. Выберите раздел, затем — предмет и нужный файл. PDF и конспекты .md открываются прямо в браузере.</p></div>';
   c.innerHTML=intro+breadcrumbs(path)+'<p class="state">Загрузка…</p>';
   try{
-    const res=await fetch(apiUrl(path));
+    const res=await githubFetch(apiUrl(path));
     if(!res.ok){
       const msg=res.status===403?'Превышен лимит запросов к GitHub API. Подождите немного и обновите страницу.':'Не удалось загрузить содержимое папки.';
       c.innerHTML=intro+breadcrumbs(path)+'<p class="state">'+msg+'</p>';return;
@@ -638,6 +640,7 @@ function route(){
   else renderBrowse(path);
 }
 window.addEventListener('hashchange',route);
+installScheduleEditor();
 route();
 </script>
 </body>
