@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { codeFigure, diagramLanguages, parseDiagram, renderDiagram, serializeDiagram } from '../js/diagrams/index.js';
 import { parseExpression } from '../js/diagrams/expression.js';
+import { importGraphText } from '../js/diagrams/editor.js';
 
 test('выражения соблюдают приоритет и не исполняют JavaScript', () => {
   assert.equal(parseExpression('2+3*4')({}), 14);
@@ -47,4 +48,16 @@ test('параметрический график, касательная и н�
   assert.match(plot, /clipPath/);
   const chart = renderDiagram('chart', 'chart bar\nseries: Тест | Экзамен\nДМ | 70 | 85\nАлгебра | 66 | 90').svg;
   assert.match(chart, /Экзамен/);
+});
+
+test('группа холста и ошибка незакрытой группы', () => {
+  const image = renderDiagram('canvas', 'canvas 400x200\ngroup 20 30\nrect 10 10 100 40 "A"\nendgroup').svg;
+  assert.match(image, /x="30" y="40"/);
+  assert.throws(() => parseDiagram('canvas', 'canvas 400x200\ngroup 20 30'), /Не закрыта группа/);
+});
+
+test('импорт графа из рёбер и матрицы', () => {
+  assert.equal(importGraphText('A B 5\nB C 2'), 'A -> B : 5\nB -> C : 2');
+  assert.equal(importGraphText('A B\n0 3\n0 0', 'matrix'), 'A -> B : 3');
+  assert.throws(() => importGraphText('A B\n0 1', 'matrix'), /квадратная/);
 });

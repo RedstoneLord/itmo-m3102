@@ -75,6 +75,15 @@ function graphPositions(model, width, height) {
     else { const angle = (i / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2; x = width / 2 + Math.min(width, height) * .34 * Math.cos(angle); y = height / 2 + Math.min(width, height) * .34 * Math.sin(angle); }
     points.set(node.id, { x: node.x ?? x, y: node.y ?? y });
   });
+  if (model.layout === 'layered') {
+    const levels = new Map(nodes.map(node => [node.id, 0])), incoming = new Map(nodes.map(node => [node.id, 0]));
+    model.edges.forEach(edge => incoming.set(edge.to, incoming.get(edge.to) + 1));
+    const queue = nodes.filter(node => !incoming.get(node.id)).map(node => node.id);
+    while (queue.length) { const id = queue.shift(); for (const edge of model.edges.filter(item => item.from === id)) { levels.set(edge.to, Math.max(levels.get(edge.to), levels.get(id) + 1)); incoming.set(edge.to, incoming.get(edge.to) - 1); if (!incoming.get(edge.to)) queue.push(edge.to); } }
+    const maxLevel = Math.max(0, ...levels.values()), groups = new Map();
+    nodes.forEach(node => { const level = levels.get(node.id), group = groups.get(level) || []; group.push(node); groups.set(level, group); });
+    nodes.forEach(node => { const group = groups.get(levels.get(node.id)), slot = group.indexOf(node); points.set(node.id, { x: node.x ?? width * (slot + 1) / (group.length + 1), y: node.y ?? height * (levels.get(node.id) + 1) / (maxLevel + 2) }); });
+  }
   if (model.layout === 'force' && n > 1) for (let iter = 0; iter < 70; iter++) {
     for (let i = 0; i < n; i++) {
       const point = points.get(nodes[i].id); if (nodes[i].x != null) continue;
@@ -91,10 +100,11 @@ function drawGraph(model) {
   const defs = `<marker id="${id}" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="var(--muted)"/></marker>`;
   const edges = model.edges.map((edge, index) => {
     const a = points.get(edge.from), b = points.get(edge.to), color = edge.color || 'var(--muted)', dash = edge.dashed ? 'stroke-dasharray="5 5"' : '';
-    if (edge.from === edge.to) return `<g data-dgm-edge="${index}"><path d="M ${format(a.x + 15)} ${format(a.y - 14)} C ${format(a.x + 70)} ${format(a.y - 75)}, ${format(a.x - 70)} ${format(a.y - 75)}, ${format(a.x - 15)} ${format(a.y - 14)}" fill="none" stroke="${color}" stroke-width="2" ${dash} ${edge.directed ? `marker-end="url(#${id})"` : ''}/></g>`;
+    if (edge.from === edge.to) { const d = `M ${format(a.x + 15)} ${format(a.y - 14)} C ${format(a.x + 70)} ${format(a.y - 75)}, ${format(a.x - 70)} ${format(a.y - 75)}, ${format(a.x - 15)} ${format(a.y - 14)}`; return `<g data-dgm-edge="${index}"><path d="${d}" fill="none" stroke="transparent" stroke-width="18" pointer-events="stroke"/><path d="${d}" fill="none" stroke="${color}" stroke-width="2" ${dash} ${edge.directed ? `marker-end="url(#${id})"` : ''}/></g>`; }
     const angle = Math.atan2(b.y - a.y, b.x - a.x), offset = model.edges.slice(0, index).filter(other => other.from === edge.from && other.to === edge.to).length * 12;
     const x1 = a.x + Math.cos(angle) * 23, y1 = a.y + Math.sin(angle) * 23 + offset, x2 = b.x - Math.cos(angle) * 25, y2 = b.y - Math.sin(angle) * 25 + offset;
-    return `<g data-dgm-edge="${index}"><path d="M ${format(x1)} ${format(y1)} L ${format(x2)} ${format(y2)}" fill="none" stroke="${color}" stroke-width="2" ${dash} ${edge.directed ? `marker-end="url(#${id})"` : ''}/>${edge.weight ? textSvg((x1 + x2) / 2, (y1 + y2) / 2 - 7, edge.weight, 'text-anchor="middle" fill="var(--muted)" font-size="12"') : ''}</g>`;
+    const d = `M ${format(x1)} ${format(y1)} L ${format(x2)} ${format(y2)}`;
+    return `<g data-dgm-edge="${index}"><path d="${d}" fill="none" stroke="transparent" stroke-width="18" pointer-events="stroke"/><path d="${d}" fill="none" stroke="${color}" stroke-width="2" ${dash} ${edge.directed ? `marker-end="url(#${id})"` : ''}/>${edge.weight ? textSvg((x1 + x2) / 2, (y1 + y2) / 2 - 7, edge.weight, 'text-anchor="middle" fill="var(--muted)" font-size="12"') : ''}</g>`;
   }).join('');
   const nodes = [...model.nodes.values()].map(node => { const p = points.get(node.id); return `<g data-dgm-node="${escape(node.id)}"><circle cx="${format(p.x)}" cy="${format(p.y)}" r="23" fill="var(--card)" stroke="${node.color || 'var(--accent)'}" stroke-width="2.5"/>${textSvg(p.x, p.y + 5, node.label || node.id, 'text-anchor="middle" fill="var(--text)" font-size="13" font-weight="650"')}</g>`; }).join('');
   return svg(model, edges + nodes, width, height, defs);
@@ -113,6 +123,8 @@ function parsePlot(text) {
     if (point) { m.points.push({ x: number(point[1]), y: number(point[2]), label: point[3] || '' }); return; }
     const vertical = /^x\s*=\s*(.+)$/.exec(styled.line);
     if (vertical) { m.verticals.push({ x: number(vertical[1]), color: styled.color, dashed: styled.dashed }); return; }
+    const between = /^area\s+between\s+y\s*=\s*(.+?)\s+and\s+y\s*=\s*(.+?)\s+from\s+(-?[\d.]+)\s+to\s+(-?[\d.]+)$/i.exec(styled.line);
+    if (between) { try { m.areas.push({ expr: between[1], otherExpr: between[2], fn: parseExpression(between[1]), otherFn: parseExpression(between[2]), from: number(between[3]), to: number(between[4]) }); } catch (error) { lineError(at, error.message); } return; }
     const area = /^area\s+y\s*=\s*(.+)\s+from\s+(-?[\d.]+)\s+to\s+(-?[\d.]+)$/i.exec(styled.line);
     if (area) { try { m.areas.push({ expr: area[1], fn: parseExpression(area[1]), from: number(area[2]), to: number(area[3]) }); } catch (error) { lineError(at, error.message); } return; }
     const tangent = /^tangent\s+y\s*=\s*(.+)\s+at\s+(-?[\d.]+)$/i.exec(styled.line);
@@ -158,9 +170,11 @@ function drawPlot(model) {
     if (Number.isFinite(y) && Number.isFinite(slope)) body += `<path d="M${format(X(model.x[0]))} ${format(Y(y + slope * (model.x[0] - x)))} L${format(X(model.x[1]))} ${format(Y(y + slope * (model.x[1] - x)))}" fill="none" stroke="${tangent.color || 'var(--accent)'}" stroke-dasharray="6 5" stroke-width="1.5" clip-path="url(#${id})"/>`;
   }
   for (const area of model.areas) {
-    let path = `M${format(X(area.from))} ${format(Y(0))} `;
+    let path = area.otherFn ? '' : `M${format(X(area.from))} ${format(Y(0))} `;
     for (let j = 0; j <= 100; j++) { const x = area.from + (area.to - area.from) * j / 100, y = area.fn({ x }); if (Number.isFinite(y)) path += `L${format(X(x))} ${format(Y(y))} `; }
-    path += `L${format(X(area.to))} ${format(Y(0))} Z`;
+    if (area.otherFn) for (let j = 100; j >= 0; j--) { const x = area.from + (area.to - area.from) * j / 100, y = area.otherFn({ x }); if (Number.isFinite(y)) path += `L${format(X(x))} ${format(Y(y))} `; }
+    else path += `L${format(X(area.to))} ${format(Y(0))} `;
+    path += 'Z'; path = path.replace(/^L/, 'M');
     body += `<path d="${path}" fill="var(--accent)" opacity=".16" clip-path="url(#${id})"/>`;
   }
   model.verticals.forEach(line => { body += `<path d="M${format(X(line.x))} ${p}V${height - p}" stroke="${line.color || 'var(--accent)'}" ${line.dashed ? 'stroke-dasharray="5 5"' : ''} stroke-width="2"/>`; });
@@ -190,7 +204,7 @@ function drawChart(model) {
   let body = '';
   if (model.type === 'pie') {
     const total = rows.reduce((sum, row) => sum + Math.max(0, row.values[0]), 0) || 1; let angle = -Math.PI / 2;
-    rows.forEach((row, i) => { const next = angle + Math.max(0, row.values[0]) / total * 2 * Math.PI, r = Math.min(width, height) * .32, cx = width * .34, cy = height / 2; if (next > angle) body += `<path d="M${format(cx)} ${format(cy)} L${format(cx + r * Math.cos(angle))} ${format(cy + r * Math.sin(angle))} A${format(r)} ${format(r)} 0 ${next - angle > Math.PI ? 1 : 0} 1 ${format(cx + r * Math.cos(next))} ${format(cy + r * Math.sin(next))} Z" fill="${palette[i % palette.length]}"/>`; angle = next; body += `<rect x="${format(width * .68)}" y="${35 + i * 22}" width="10" height="10" fill="${palette[i % palette.length]}"/>${textSvg(width * .68 + 17, 44 + i * 22, `${row.label}: ${row.values[0]}`, 'fill="var(--text)" font-size="12"')}`; });
+    rows.forEach((row, i) => { const next = angle + Math.max(0, row.values[0]) / total * 2 * Math.PI, r = Math.min(width, height) * .32, cx = width * .34, cy = height / 2; if (next - angle > 6.28) body += `<circle cx="${format(cx)}" cy="${format(cy)}" r="${format(r)}" fill="${palette[i % palette.length]}"/>`; else if (next > angle) body += `<path d="M${format(cx)} ${format(cy)} L${format(cx + r * Math.cos(angle))} ${format(cy + r * Math.sin(angle))} A${format(r)} ${format(r)} 0 ${next - angle > Math.PI ? 1 : 0} 1 ${format(cx + r * Math.cos(next))} ${format(cy + r * Math.sin(next))} Z" fill="${palette[i % palette.length]}"/>`; angle = next; body += `<rect x="${format(width * .68)}" y="${35 + i * 22}" width="10" height="10" fill="${palette[i % palette.length]}"/>${textSvg(width * .68 + 17, 44 + i * 22, `${row.label}: ${row.values[0]}`, 'fill="var(--text)" font-size="12"')}`; });
   } else {
     body += `<path d="M42 26V${bottom}H${width - 18}" fill="none" stroke="var(--muted)"/>`;
     const seriesCount = Math.max(1, ...rows.map(row => row.values.length)), step = (width - 75) / rows.length;
@@ -204,7 +218,7 @@ function drawChart(model) {
       });
       body += textSvg(x + step / 2, bottom + 19, row.label, 'text-anchor="middle" fill="var(--muted)" font-size="11"');
     });
-    if (model.type === 'line') for (let j = 0; j < seriesCount; j++) body += `<path d="${rows.map((row, i) => { const value = row.values[j]; if (!Number.isFinite(value)) return ''; return `${i ? 'L' : 'M'}${format(46 + i * step + step / 2)} ${format(bottom - value / max * (height - 100))}`; }).join(' ')}" fill="none" stroke="${palette[j % palette.length]}" stroke-width="2"/>`;
+    if (model.type === 'line') for (let j = 0; j < seriesCount; j++) { let path = '', connected = false; rows.forEach((row, i) => { const value = row.values[j]; if (!Number.isFinite(value)) { connected = false; return; } path += `${connected ? 'L' : 'M'}${format(46 + i * step + step / 2)} ${format(bottom - value / max * (height - 100))} `; connected = true; }); body += `<path d="${path}" fill="none" stroke="${palette[j % palette.length]}" stroke-width="2"/>`; }
     if (model.type === 'scatter') rows.forEach((row, i) => { const x = row.values.length > 1 ? row.values[0] : i, y = row.values.length > 1 ? row.values[1] : row.values[0]; body += `<circle cx="${format(46 + x / max * (width - 95))}" cy="${format(bottom - y / max * (height - 100))}" r="5" fill="${palette[i % palette.length]}"/>`; });
     if (seriesCount > 1 && model.type !== 'scatter') for (let j = 0; j < seriesCount; j++) body += `<rect x="${width - 105}" y="${25 + j * 18}" width="9" height="9" fill="${palette[j % palette.length]}"/>${textSvg(width - 92, 34 + j * 18, model.series?.[j] || `Серия ${j + 1}`, 'fill="var(--muted)" font-size="11"')}`;
   }
@@ -276,13 +290,21 @@ function parseFlow(text) {
   return model;
 }
 function drawFlow(model) {
-  const width = size(model.width, 640), height = size(model.height, 360), nodes = [...model.nodes.values()], positions = new Map(), marker = `dgm-flow-arrow-${hash(model.source)}`;
-  nodes.forEach((node, i) => positions.set(node.id, { x: node.x ?? width * ((i % 3) + 1) / (Math.min(3, nodes.length) + 1), y: node.y ?? height * (Math.floor(i / 3) + 1) / (Math.ceil(nodes.length / 3) + 1) }));
+  const width = size(model.width, 640), nodes = [...model.nodes.values()], positions = new Map(), marker = `dgm-flow-arrow-${hash(model.source)}`;
+  const levels = new Map(nodes.map(node => [node.id, 0])), incoming = new Map(nodes.map(node => [node.id, 0]));
+  model.edges.forEach(edge => incoming.set(edge.to, incoming.get(edge.to) + 1));
+  const queue = nodes.filter(node => !incoming.get(node.id)).map(node => node.id);
+  while (queue.length) { const id = queue.shift(); for (const edge of model.edges.filter(item => item.from === id)) { levels.set(edge.to, Math.max(levels.get(edge.to), levels.get(id) + 1)); incoming.set(edge.to, incoming.get(edge.to) - 1); if (!incoming.get(edge.to)) queue.push(edge.to); } }
+  const maxLevel = Math.max(0, ...levels.values()), height = size(model.height, Math.max(360, (maxLevel + 1) * 100 + 60)), groups = new Map();
+  nodes.forEach(node => { const level = levels.get(node.id), group = groups.get(level) || []; group.push(node); groups.set(level, group); });
+  nodes.forEach(node => { const group = groups.get(levels.get(node.id)), slot = group.indexOf(node); positions.set(node.id, { x: node.x ?? width * (slot + 1) / (group.length + 1), y: node.y ?? height * (levels.get(node.id) + 1) / (maxLevel + 2) }); });
   const defs = `<marker id="${marker}" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="var(--accent)"/></marker>`;
   const arrows = model.edges.map(edge => { const a = positions.get(edge.from), b = positions.get(edge.to); return `<line x1="${format(a.x)}" y1="${format(a.y + 28)}" x2="${format(b.x)}" y2="${format(b.y - 34)}" stroke="var(--accent)" stroke-width="2" marker-end="url(#${marker})"/>${edge.label ? textSvg((a.x + b.x) / 2, (a.y + b.y) / 2 - 8, edge.label, 'text-anchor="middle" fill="var(--muted)" font-size="11"') : ''}`; }).join('');
   const shapes = nodes.map(node => { const p = positions.get(node.id), x = format(p.x), y = format(p.y); let shape;
     if (node.shape === 'diamond') shape = `<path d="M${x} ${y - 33} L${p.x + 66} ${y} L${x} ${p.y + 33} L${p.x - 66} ${y} Z"/>`;
     else if (node.shape === 'circle') shape = `<circle cx="${x}" cy="${y}" r="33"/>`;
+    else if (node.shape === 'db') shape = `<path d="M${format(p.x - 65)} ${format(p.y - 21)} A65 12 0 0 1 ${format(p.x + 65)} ${format(p.y - 21)} V${format(p.y + 21)} A65 12 0 0 1 ${format(p.x - 65)} ${format(p.y + 21)} Z"/><ellipse cx="${x}" cy="${format(p.y - 21)}" rx="65" ry="12"/>`;
+    else if (node.shape === 'note') shape = `<path d="M${format(p.x - 65)} ${format(p.y - 28)} H${format(p.x + 43)} L${format(p.x + 65)} ${format(p.y - 6)} V${format(p.y + 28)} H${format(p.x - 65)} Z M${format(p.x + 43)} ${format(p.y - 28)} V${format(p.y - 6)} H${format(p.x + 65)}"/>`;
     else shape = `<rect x="${format(p.x - 65)}" y="${format(p.y - 28)}" width="130" height="56" rx="${node.shape === 'round' ? 25 : 9}"/>`;
     return `<g data-dgm-node="${escape(node.id)}"><g fill="var(--card)" stroke="var(--accent)" stroke-width="2">${shape}</g>${textSvg(p.x, p.y + 5, node.label, 'text-anchor="middle" fill="var(--text)" font-size="12"')}</g>`;
   }).join('');
@@ -292,30 +314,33 @@ registerDiagram('diagram', { parse: parseFlow, render: drawFlow, serialize: mode
 
 function parseCanvas(text) {
   const model = markup(text, (m, line, at) => {
-    m.shapes ||= [];
+    m.shapes ||= []; m.groups ||= [];
     const header = /^canvas(?:\s+(\d+)x(\d+))?$/.exec(line);
     if (header) { if (header[1]) { m.width = size(header[1], 400); m.height = size(header[2], 200); } return; }
+    const group = /^group\s+(-?[\d.]+)\s+(-?[\d.]+)$/.exec(line);
+    if (group) { const parent = m.groups.at(-1) || { x: 0, y: 0 }; m.groups.push({ x: parent.x + number(group[1]), y: parent.y + number(group[2]) }); return; }
+    if (line === 'endgroup') { if (!m.groups.length) lineError(at, 'нет открытой группы'); m.groups.pop(); return; }
     const quoted = /"([^"]*)"/.exec(line), label = quoted?.[1] || '', clean = line.replace(/"[^"]*"/, '').trim(), parts = clean.split(/\s+/), type = parts.shift();
     if (!['rect', 'circle', 'ellipse', 'line', 'arrow', 'path', 'text'].includes(type)) lineError(at, 'неизвестная фигура');
     const color = /(?:fill|color)=(#[0-9a-fA-F]{3,6}|[a-z]+)/.exec(clean)?.[1];
-    m.shapes.push({ type, parts, label, color: color ? safeColor(color) : '' });
+    m.shapes.push({ type, parts, label, color: color ? safeColor(color) : '', dx: m.groups.at(-1)?.x || 0, dy: m.groups.at(-1)?.y || 0 });
     if (m.shapes.length > 500) lineError(at, 'слишком много фигур');
   });
-  model.shapes ||= []; return model;
+  model.shapes ||= []; if (model.groups?.length) throw new Error('Не закрыта группа'); delete model.groups; return model;
 }
 function drawCanvas(model) {
   const width = size(model.width, 400), height = size(model.height, 200), marker = `dgm-canvas-arrow-${hash(model.source)}`;
   const defs = `<marker id="${marker}" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="var(--accent)"/></marker>`;
   const body = model.shapes.map(shape => {
-    const p = shape.parts, x = number(p[0]), y = number(p[1]), fill = shape.color || 'var(--accent)', label = shape.label;
+    const p = shape.parts, x = number(p[0]) + shape.dx, y = number(p[1]) + shape.dy, fill = shape.color || 'var(--accent)', label = shape.label;
     if (shape.type === 'rect') return `<rect x="${x}" y="${y}" width="${number(p[2])}" height="${number(p[3])}" rx="8" fill="${fill}" opacity=".18" stroke="${fill}" stroke-width="2"/>${label ? textSvg(x + number(p[2]) / 2, y + number(p[3]) / 2 + 4, label, 'text-anchor="middle" fill="var(--text)" font-size="13"') : ''}`;
     if (shape.type === 'circle') { const radius = number((/r=([\d.]+)/.exec(p.join(' ')) || [])[1], 25); return `<circle cx="${x}" cy="${y}" r="${radius}" fill="var(--card)" stroke="${fill}" stroke-width="2"/>${label ? textSvg(x, y + 5, label, 'text-anchor="middle" fill="var(--text)" font-size="13"') : ''}`; }
     if (shape.type === 'ellipse') return `<ellipse cx="${x}" cy="${y}" rx="${number(p[2])}" ry="${number(p[3])}" fill="var(--card)" stroke="${fill}" stroke-width="2"/>${label ? textSvg(x, y + 5, label, 'text-anchor="middle" fill="var(--text)" font-size="13"') : ''}`;
-    if (shape.type === 'line' || shape.type === 'arrow') { const tx = number(p[p[2] === '->' ? 3 : 2]), ty = number(p[p[2] === '->' ? 4 : 3]); return `<line x1="${x}" y1="${y}" x2="${tx}" y2="${ty}" stroke="${fill}" stroke-width="2" ${shape.type === 'arrow' ? `marker-end="url(#${marker})"` : ''}/>`; }
+    if (shape.type === 'line' || shape.type === 'arrow') { const tx = number(p[p[2] === '->' ? 3 : 2]) + shape.dx, ty = number(p[p[2] === '->' ? 4 : 3]) + shape.dy; return `<line x1="${x}" y1="${y}" x2="${tx}" y2="${ty}" stroke="${fill}" stroke-width="2" ${shape.type === 'arrow' ? `marker-end="url(#${marker})"` : ''}/>`; }
     if (shape.type === 'text') return textSvg(x, y, label || p.slice(2).join(' '), `fill="${fill}" font-size="14"`);
     const path = p.join(' ').replace(/(?:fill|color)=\S+/g, '').trim();
     if (!/^[MmLlHhVvCcQqZz0-9.,\s-]+$/.test(path)) throw new Error('Путь содержит недопустимую команду');
-    return `<path d="${escape(path)}" fill="none" stroke="${fill}" stroke-width="2"/>`;
+    return `<path d="${escape(path)}" transform="translate(${shape.dx} ${shape.dy})" fill="none" stroke="${fill}" stroke-width="2"/>`;
   }).map((item, index) => `<g data-dgm-shape="${index}">${item}</g>`).join('');
   return svg(model, body, width, height, defs);
 }

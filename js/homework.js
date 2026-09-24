@@ -1,10 +1,10 @@
 import { addDays, dateKey, lessonsOn, nextLessonDate, parseDate, readStored, writeStored } from './schedule.js';
-import { getSchedule, selectedDate } from './schedule-ui.js';
+import { ensureSchedule, getSchedule, selectedDate } from './schedule-ui.js';
 import { getToken, mergeHomework, readRepoFile, repoEditUrl, saveToken, writeRepoFile } from './github.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const cacheKey = 'm3102-cache-homework-v1', draftKey = 'm3102-draft-homework-v1', pendingKey = 'm3102-pending-homework-v1', doneKey = 'm3102-hw-done-v1';
-let base = null, homework = null, loading = null, filter = 'active', showEmpty = false, editingId = '';
+let base = null, homework = null, loading = null, filter = 'active', showEmpty = false, editingId = '', listAnimation = null;
 let done = readStored(doneKey) || {};
 const validUrl = raw => { try { const url = new URL(raw); return /^https?:$/.test(url.protocol) ? url.href : ''; } catch { return ''; } };
 const dateLabel = key => parseDate(key)?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) || '';
@@ -44,7 +44,7 @@ function renderText(text) {
   const parts = String(text).split(/(\$[^$\n]+\$)/g);
   return parts.map((part, i) => {
     if (i % 2 && typeof katex !== 'undefined') { try { return katex.renderToString(part.slice(1, -1), { throwOnError: false, trust: false }); } catch { return esc(part); } }
-    return esc(part).replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => `<a href="${esc(validUrl(url))}" target="_blank" rel="noopener noreferrer">${label}</a>`).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\n/g, '<br>');
+    return esc(part).replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => `<a href="${esc(validUrl(url.replace(/&amp;/g, '&')))}" target="_blank" rel="noopener noreferrer">${label}</a>`).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\n/g, '<br>');
   }).join('');
 }
 function itemMarkup(item, compact = false) {
@@ -62,11 +62,15 @@ function renderList() {
   const subjects = showEmpty && getSchedule() ? [...new Set(getSchedule().cycle.flat().filter(item => !item.break).map(item => item.subject))] : [];
   for (const subject of subjects) if (!grouped.has(subject)) grouped.set(subject, []);
   const ordered = [...grouped].sort((a, b) => (a[1][0] ? dueOrder(a[1][0]) : '9999').localeCompare(b[1][0] ? dueOrder(b[1][0]) : '9999') || a[0].localeCompare(b[0], 'ru'));
-  const html = ordered.map(([subject, entries]) => `<section class="hw-group"><div class="hw-group-head"><h2>${esc(subject)}</h2><span>${entries.length ? `${entries.length} заданий` : 'нет заданий'}</span></div>${entries.map(item => itemMarkup(item)).join('')}</section>`).join('');
+  const html = ordered.map(([subject, entries]) => `<section class="hw-group"><div class="hw-group-head"><h2>${esc(subject)}</h2><span>${entries.length ? `${entries.length} ${entries.length === 1 ? 'задание' : [2, 3, 4].includes(entries.length % 10) && ![12, 13, 14].includes(entries.length % 100) ? 'задания' : 'заданий'}` : 'нет заданий'}</span></div>${entries.map(item => itemMarkup(item)).join('')}</section>`).join('');
   const layer = document.createElement('div'); layer.className = 'hw-list-layer'; layer.innerHTML = html || '<div class="hw-empty"><span>✓</span><h2>Всё под контролем</h2><p>Заданий в этом списке пока нет.</p></div>';
-  const old = container.firstElementChild; container.append(layer);
+  listAnimation?.cancel(); container.style.height = ''; container.style.overflow = ''; container.querySelectorAll('.hw-list-layer:not(:last-child)').forEach(node => node.remove());
+  const old = container.firstElementChild, oldHeight = old?.offsetHeight || 0; container.append(layer);
   if (old && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    layer.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' }).finished.catch(() => {}).then(() => old.remove());
+    const height = layer.offsetHeight; container.style.height = `${oldHeight}px`; container.style.overflow = 'hidden';
+    const incoming = layer.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' });
+    listAnimation = container.animate([{ height: `${oldHeight}px` }, { height: `${height}px` }], { duration: 220, easing: 'ease-out' });
+    Promise.all([incoming.finished, listAnimation.finished]).then(() => { old.remove(); container.style.height = ''; container.style.overflow = ''; listAnimation = null; }).catch(() => {});
   } else old?.remove();
   container.querySelectorAll('[data-filter]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.filter === filter)));
 }
@@ -88,6 +92,7 @@ export function renderHomeworkPage() {
   const content = document.querySelector('#content');
   content.innerHTML = `<section class="homework-page"><div class="intro hw-intro"><span class="sched-eyebrow">ВАШ ПРОГРЕСС · М3102</span><h1>Домашнее задание</h1><p class="sub">Задания по всем предметам. Выполнение видно только вам.</p></div><div class="hw-toolbar"><div class="hw-filters" role="group" aria-label="Фильтр заданий"><button data-filter="active" aria-pressed="true">Актуальные</button><button data-filter="done" aria-pressed="false">Выполненные</button><button data-filter="all" aria-pressed="false">Все</button></div><button class="btn2 btn-primary" data-hw-add>＋ Добавить</button></div><label class="hw-show-empty"><input type="checkbox" id="hw-empty-toggle" ${showEmpty ? 'checked' : ''}> Показать предметы без заданий</label><div id="homework-alert" class="sched-alert" hidden></div><div id="homework-list"><p class="state">Загрузка заданий…</p></div><div class="hw-publish"><button class="btn2 btn-primary" data-hw-publish>Сохранить в GitHub</button><button class="btn2" data-hw-download>Скачать JSON</button><button class="btn2" data-hw-copy>Копировать JSON</button><a class="btn2" href="${repoEditUrl('data/homework.json')}" target="_blank" rel="noopener">Открыть на GitHub ↗</a></div><p class="plan-hint">Добавленные задания видны вам сразу. Чтобы их увидела вся группа, сохраните изменения в GitHub.</p></section>`;
   ensureHomework().catch(() => {}); renderList();
+  ensureSchedule().then(() => { if (showEmpty) renderList(); }).catch(() => {});
 }
 function openForm(item = null, lesson = null) {
   editingId = item?.id || '';
@@ -95,15 +100,16 @@ function openForm(item = null, lesson = null) {
   const subjects = schedule ? [...new Set(schedule.cycle.flat().filter(row => !row.break).map(row => row.subject))] : [];
   const date = lesson?.date || (item?.lessonDate ? parseDate(item.lessonDate) : null);
   const next = date && lesson?.subject && schedule ? nextLessonDate(date, lesson.subject, schedule) : '';
-  dialog.innerHTML = `<form id="homework-form"><div class="dialog-head"><h2>${item ? 'Изменить задание' : 'Новое задание'}</h2><button type="button" data-close-dialog aria-label="Закрыть">×</button></div><label class="sched-field">Предмет<input name="subject" list="hw-subjects" required maxlength="120" value="${esc(item?.subject || lesson?.subject || '')}"><datalist id="hw-subjects">${subjects.map(subject => `<option value="${esc(subject)}">`).join('')}</datalist></label><label class="sched-field">Задание<textarea name="text" rows="5" required maxlength="5000" placeholder="Что нужно сделать? Поддерживаются **жирный**, *курсив*, ссылки и $формулы$">${esc(item?.text || '')}</textarea></label><label class="sched-field">Срок сдачи<input type="date" name="due" value="${esc(item?.due || next)}"></label><div class="sched-presets"><button type="button" data-hw-due="next">К следующей паре</button><button type="button" data-hw-due="week">Через неделю</button><button type="button" data-hw-due="none">Без срока</button></div><label class="sched-field">Ссылка на материалы (http/https)<input type="url" name="url" value="${esc(item?.links?.[0]?.url || '')}" placeholder="https://..."></label><label class="sched-field">Название ссылки<input name="linkTitle" value="${esc(item?.links?.[0]?.title || '')}" maxlength="120"></label><input type="hidden" name="lessonDate" value="${esc(item?.lessonDate || (date ? dateKey(date) : ''))}"><input type="hidden" name="lessonId" value="${esc(item?.lessonId || lesson?.id || '')}"><input type="hidden" name="lessonStart" value="${esc(item?.lessonStart || lesson?.start || '')}"><p class="form-error" id="homework-error" role="alert"></p><div class="dialog-actions"><button class="btn2" type="button" data-close-dialog>Отмена</button><button class="btn2 btn-primary" type="submit">Сохранить задание</button></div></form>`;
+  dialog.innerHTML = `<form id="homework-form"><div class="dialog-head"><h2>${item ? 'Изменить задание' : 'Новое задание'}</h2><button type="button" data-close-dialog aria-label="Закрыть">×</button></div><label class="sched-field">Предмет<input name="subject" list="hw-subjects" required maxlength="120" value="${esc(item?.subject || lesson?.subject || '')}"><datalist id="hw-subjects">${subjects.map(subject => `<option value="${esc(subject)}">`).join('')}</datalist></label><label class="sched-field">Задание<textarea name="text" rows="5" required maxlength="5000" placeholder="Что нужно сделать? Поддерживаются **жирный**, *курсив*, ссылки и $формулы$">${esc(item?.text || '')}</textarea></label><label class="sched-field">Срок сдачи<input type="date" name="due" value="${esc(item?.due || next)}"></label><div class="sched-presets"><button type="button" data-hw-due="next">К следующей паре</button><button type="button" data-hw-due="week">Через неделю</button><button type="button" data-hw-due="none">Без срока</button></div><label class="sched-field">Ссылки на материалы — по одной на строку: название | https://…<textarea name="links" rows="3" placeholder="Листок | https://example.com/file.pdf">${esc((item?.links || []).map(link => `${link.title} | ${link.url}`).join('\n'))}</textarea></label><input type="hidden" name="lessonDate" value="${esc(item?.lessonDate || (date ? dateKey(date) : ''))}"><input type="hidden" name="lessonId" value="${esc(item?.lessonId || lesson?.id || '')}"><input type="hidden" name="lessonStart" value="${esc(item?.lessonStart || lesson?.start || '')}"><p class="form-error" id="homework-error" role="alert"></p><div class="dialog-actions"><button class="btn2" type="button" data-close-dialog>Отмена</button><button class="btn2 btn-primary" type="submit">Сохранить задание</button></div></form>`;
   dialog.showModal(); dialog.querySelector('[name=text]').focus();
 }
 function saveForm(form) {
-  const values = Object.fromEntries(new FormData(form)), url = values.url.trim();
-  if (url && !validUrl(url)) { form.querySelector('#homework-error').textContent = 'Ссылка должна начинаться с http:// или https://'; return; }
+  const values = Object.fromEntries(new FormData(form));
+  const links = values.links.split('\n').filter(Boolean).map(line => { const [title, ...rest] = line.split('|'); const raw = rest.length ? rest.join('|').trim() : title.trim(); return { title: rest.length ? title.trim() || raw : raw, url: validUrl(raw) }; });
+  if (links.some(link => !link.url)) { form.querySelector('#homework-error').textContent = 'Ссылки должны начинаться с http:// или https://'; return; }
   if (values.due && !parseDate(values.due)) { form.querySelector('#homework-error').textContent = 'Проверьте срок сдачи.'; return; }
   const old = homework.items.find(item => item.id === editingId), now = new Date().toISOString();
-  const item = { id: old?.id || crypto.randomUUID(), subject: values.subject.trim(), lessonDate: values.lessonDate, lessonId: values.lessonId, lessonStart: values.lessonStart, text: values.text.trim(), due: values.due, links: url ? [{ title: values.linkTitle.trim() || url, url: validUrl(url) }] : [], createdAt: old?.createdAt || now, updatedAt: now };
+  const item = { id: old?.id || crypto.randomUUID(), subject: values.subject.trim(), lessonDate: values.lessonDate, lessonId: values.lessonId, lessonStart: values.lessonStart, text: values.text.trim(), due: values.due, links, createdAt: old?.createdAt || now, updatedAt: now };
   if (!item.subject || !item.text) { form.querySelector('#homework-error').textContent = 'Заполните предмет и задание.'; return; }
   if (old) homework.items = homework.items.map(row => row.id === old.id ? item : row); else homework.items.push(item);
   saveDraft(); form.closest('dialog').close();

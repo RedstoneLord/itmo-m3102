@@ -69,16 +69,19 @@ function updateIndicator() {
   if (!current || !indicator) return;
   indicator.style.width = `${current.offsetWidth}px`;
   indicator.style.transform = `translateX(${current.offsetLeft}px)`;
+  if (!track.classList.contains('is-ready')) requestAnimationFrame(() => track.classList.add('is-ready'));
 }
 function fillWeek(animate = false) {
   const track = document.querySelector('.week-pills');
   if (!track || !data) return;
   const monday = mondayOf(selected), existing = track.querySelector('.week-pill')?.dataset.date;
   if (existing !== dateKey(monday)) {
-    track.innerHTML = '<span class="week-indicator" aria-hidden="true"></span>' + Array.from({ length: 7 }, (_, i) => {
+    if (!track.querySelector('.week-indicator')) track.innerHTML = '<span class="week-indicator" aria-hidden="true"></span>';
+    track.querySelectorAll('.week-pill').forEach(pill => pill.remove());
+    track.insertAdjacentHTML('beforeend', Array.from({ length: 7 }, (_, i) => {
       const date = addDays(monday, i), key = dateKey(date), count = lessonsOn(date, data).filter(lesson => !lesson.break).length;
       return `<button type="button" class="week-pill" data-date="${key}" aria-current="${key === dateKey(new Date()) ? 'date' : 'false'}" aria-selected="false"><span>${weekdays[i]}</span><strong>${date.getDate()}</strong><i aria-label="${count} занятий" class="week-dots">${count ? '•'.repeat(Math.min(count, 4)) : ''}</i>${data.overrides[key] ? '<b class="week-edited" aria-label="Изменено"></b>' : ''}</button>`;
-    }).join('');
+    }).join(''));
     if (animate && !reduceMotion()) track.animate([{ opacity: .4, transform: 'translateX(18px)' }, { opacity: 1, transform: 'translateX(0)' }], { duration: 280, easing: 'cubic-bezier(.2,.8,.2,1)' });
   }
   track.querySelectorAll('.week-pill').forEach(pill => pill.setAttribute('aria-selected', String(pill.dataset.date === dateKey(selected))));
@@ -136,7 +139,6 @@ export function refreshSchedule() {
   stopAnimations();
   const stage = document.querySelector('#sched-stage');
   stage.innerHTML = `<div class="sched-layer">${dayMarkup(selected)}</div>`;
-  document.querySelector('.week-pills').innerHTML = '';
   updateHeader(); fillWeek(); updateLive();
   document.dispatchEvent(new CustomEvent('schedule:day', { detail: { date: selected, layer: stage.firstElementChild } }));
 }

@@ -165,7 +165,7 @@ const EXT_ICON={pdf:'PDF',docx:'DOC',doc:'DOC',md:'MD',html:'WEB',htm:'WEB',mp3:
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 // Файлы и папки, которые не должны отображаться при просмотре материалов
-const HIDDEN_FILE_NAMES=['site.css','package.json','README.md','.gitignore'];
+const HIDDEN_FILE_NAMES=['site.css','package.json','readme.md','.gitignore'];
 const HIDDEN_FOLDER_NAMES=['tests','inner','data','js','css','docs'];
 function isHiddenPath(path){
   if(!path)return false;

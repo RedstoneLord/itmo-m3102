@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { cycleDayIndex, dateKey, isVacation, lessonsOn, nextLessonDate, normalizeSchedule, parseDate, validateLessons, weekParity } from '../js/schedule.js';
+import { cycleDayIndex, dateKey, isVacation, lessonsOn, loadSchedule, nextLessonDate, normalizeSchedule, parseDate, SCHEDULE_CACHE_KEY, validateLessons, weekParity } from '../js/schedule.js';
 
 const schedule = normalizeSchedule(JSON.parse(readFileSync(new URL('../data/schedule.json', import.meta.url))));
 const day = key => parseDate(key);
@@ -33,4 +33,13 @@ test('следующая пара учитывает override', () => {
 test('валидация времени и предупреждение о пересечении', () => {
   assert.deepEqual(validateLessons([{ subject: 'A', start: '09:50', end: '11:20' }, { subject: 'B', start: '11:00', end: '12:00' }]).overlaps, ['A и B пересекаются']);
   assert.equal(validateLessons([{ subject: '', start: '10:00', end: '09:00' }]).errors.length, 2);
+});
+
+test('при ошибке сети используется последняя сохранённая версия', async () => {
+  const oldFetch = globalThis.fetch, oldStorage = globalThis.localStorage;
+  const saved = new Map([[SCHEDULE_CACHE_KEY, JSON.stringify(schedule)]]);
+  globalThis.localStorage = { getItem: key => saved.get(key) || null, setItem: (key, value) => saved.set(key, value) };
+  globalThis.fetch = async () => { throw new Error('offline'); };
+  try { const loaded = await loadSchedule(); assert.equal(loaded.stale, true); assert.equal(lessonsOn(day('2026-09-22'), loaded.data).length, 2); }
+  finally { globalThis.fetch = oldFetch; globalThis.localStorage = oldStorage; }
 });
