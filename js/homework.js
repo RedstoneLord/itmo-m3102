@@ -1,12 +1,11 @@
 import { addDays, dateKey, lessonsOn, nextLessonDate, parseDate, readStored, writeStored } from './schedule.js';
 import { ensureSchedule, getSchedule, selectedDate } from './schedule-ui.js';
 import { getToken, mergeHomework, readRepoFile, repoEditUrl, saveToken, writeRepoFile } from './github.js';
+import { esc, renderText, validUrl } from './homework-text.js';
 
-const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const cacheKey = 'm3102-cache-homework-v1', draftKey = 'm3102-draft-homework-v1', pendingKey = 'm3102-pending-homework-v1', doneKey = 'm3102-hw-done-v1';
 let base = null, homework = null, loading = null, filter = 'active', showEmpty = false, editingId = '', listAnimation = null;
 let done = readStored(doneKey) || {};
-const validUrl = raw => { try { const url = new URL(raw); return /^https?:$/.test(url.protocol) ? url.href : ''; } catch { return ''; } };
 const dateLabel = key => parseDate(key)?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) || '';
 const dueOrder = item => item.due || '9999-12-31';
 function dueStatus(key) {
@@ -40,13 +39,6 @@ export async function ensureHomework() {
 }
 export const getHomework = () => homework;
 function saveDraft() { writeStored(draftKey, homework); renderAll(); }
-function renderText(text) {
-  const parts = String(text).split(/(\$[^$\n]+\$)/g);
-  return parts.map((part, i) => {
-    if (i % 2 && typeof katex !== 'undefined') { try { return katex.renderToString(part.slice(1, -1), { throwOnError: false, trust: false }); } catch { return esc(part); } }
-    return esc(part).replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => `<a href="${esc(validUrl(url.replace(/&amp;/g, '&')))}" target="_blank" rel="noopener noreferrer">${label}</a>`).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\n/g, '<br>');
-  }).join('');
-}
 function itemMarkup(item, compact = false) {
   const checked = Boolean(done[item.id]);
   return `<article class="hw-item${checked ? ' is-done' : ''}" data-hw="${esc(item.id)}"><label class="hw-check"><input type="checkbox" data-hw-done="${esc(item.id)}" ${checked ? 'checked' : ''} aria-label="Отметить ${esc(item.subject)} выполненным"></label><div class="hw-content"><div class="hw-item-top"><strong>${esc(item.subject)}</strong><span class="hw-due${item.due && item.due < dateKey(new Date()) && !checked ? ' overdue' : ''}">${esc(dueStatus(item.due))}</span></div><div class="hw-text">${renderText(item.text)}</div>${item.links.map(link => `<a class="hw-link" href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">${esc(link.title)} ↗</a>`).join('')}${!compact && item.lessonDate ? `<a class="hw-origin" href="#/schedule/${esc(item.lessonDate)}">С пары ${esc(dateLabel(item.lessonDate))}${item.lessonStart ? `, ${esc(item.lessonStart)}` : ''} ↗</a>` : ''}</div>${!compact ? `<div class="hw-actions"><button type="button" data-hw-edit="${esc(item.id)}" aria-label="Изменить задание">✎</button><button type="button" data-hw-delete="${esc(item.id)}" aria-label="Удалить задание">×</button></div>` : ''}</article>`;
