@@ -41,3 +41,10 @@ test('подписи экранируются, ошибки содержат с�
   assert.match(figure, /&lt;script&gt;/);
   assert.match(codeFigure('graph', 'graph\nA -> B\nA => B'), /Строка 3/);
 });
+
+test('параметрический график, касательная и несколько серий', () => {
+  const plot = renderDiagram('plot', 'plot\nx: -2..2 y: -2..2 grid\n(cos(t), sin(t)) t: 0..2*pi\ntangent y = x^2 at 1').svg;
+  assert.match(plot, /clipPath/);
+  const chart = renderDiagram('chart', 'chart bar\nseries: Тест | Экзамен\nДМ | 70 | 85\nАлгебра | 66 | 90').svg;
+  assert.match(chart, /Экзамен/);
+});

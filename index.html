@@ -120,6 +120,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 <link rel="stylesheet" href="./site.css">
 <link rel="stylesheet" href="./css/schedule.css">
 <link rel="stylesheet" href="./css/homework.css">
+<link rel="stylesheet" href="./css/diagrams.css">
 </head>
 <body>
 <div class="wrap">
@@ -130,6 +131,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
       <a class="tab" id="tab-materials" href="#/materials">Материалы</a>
       <a class="tab" id="tab-schedule" href="#/schedule">Расписание</a>
       <a class="tab" id="tab-homework" href="#/homework">Домашнее задание</a>
+      <a class="tab" id="tab-diagrams" href="#/diagrams">Диаграммы</a>
       <a class="tab" id="tab-deadlines" href="./Дедлайны/">Дедлайны</a>
     </nav>
     <div class="navlinks">
@@ -150,6 +152,8 @@ import { mountSchedule, ensureSchedule, getSchedule } from './js/schedule-ui.js'
 import { installScheduleEditor } from './js/schedule-editor.js';
 import { githubFetch } from './js/github.js';
 import { installHomework, renderHomeHomework, renderHomeworkPage } from './js/homework.js';
+import { hasDiagram, codeFigure } from './js/diagrams/index.js';
+import { bindNoteDiagrams, installDiagramEditor, renderDiagramEditor } from './js/diagrams/editor.js';
 const OWNER='RedstoneLord', REPO='itmo-m3102', BRANCH='master';
 const SUBTITLES={
   'Записи лекций':'Аудиозаписи лекций',
@@ -161,7 +165,7 @@ const EXT_ICON={pdf:'PDF',docx:'DOC',doc:'DOC',md:'MD',html:'WEB',htm:'WEB',mp3:
 
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 // Файлы и папки, которые не должны отображаться при просмотре материалов
-const HIDDEN_FILE_NAMES=['site.css','package.json','README.md'];
+const HIDDEN_FILE_NAMES=['site.css','package.json','README.md','.gitignore'];
 const HIDDEN_FOLDER_NAMES=['tests','inner','data','js','css','docs'];
 function isHiddenPath(path){
   if(!path)return false;
@@ -231,6 +235,7 @@ function highlightCode(code,lang){
 function renderCodeBlock(code,infostring){
   const lang=(infostring||'').trim().split(/\s+/)[0].toLowerCase();
   if(lang==='mermaid')return renderMermaidBlock(code);
+  if(hasDiagram(lang))return codeFigure(lang,code);
   return highlightCode(code,lang);
 }
 
@@ -238,7 +243,7 @@ function renderCodeBlock(code,infostring){
 let notesBasePath='';
 function resolveNotePath(url,basePath){
   if(!url)return url;
-  if(/^([a-z][a-z0-9+.-]*:)?\/\//i.test(url)||url.startsWith('data:')||url.startsWith('#')||url.startsWith('mailto:'))return null;
+  if(/^[a-z][a-z0-9+.-]*:/i.test(url)||url.startsWith('//')||url.startsWith('#'))return null;
   const dir=basePath.includes('/')?basePath.slice(0,basePath.lastIndexOf('/')):'';
   const combined=(dir?dir+'/':'')+url;
   const parts=[];
@@ -261,9 +266,11 @@ marked.use({
         .replace(/[^\p{L}\p{N}\s-]/gu,'').replace(/\s+/g,'-');
       return `<h${level} id="${esc(slug)}">${text}<a class="heading-anchor" href="#${esc(slug)}" aria-hidden="true">#</a></h${level}>\n`;
     },
+    html(html){return esc(html);},
     image(href,title,text){
       const resolved=resolveNotePath(href,notesBasePath);
-      const src=resolved?rawUrl(resolved):href;
+      const src=resolved?rawUrl(resolved):/^https?:\/\//i.test(href)?href:'';
+      if(!src)return esc(text||'');
       const cap=title||text;
       return `<figure class="img-figure"><img src="${esc(src)}" alt="${esc(text||'')}" loading="lazy" data-lightbox="${esc(src)}">${cap?`<figcaption>${esc(cap)}</figcaption>`:''}</figure>`;
     },
@@ -273,7 +280,8 @@ marked.use({
         if(/\.md$/i.test(resolved))return `<a href="#/note/${encodePath(resolved)}" title="${esc(title||'')}">${text}</a>`;
         return `<a href="${esc(rawUrl(resolved))}" target="_blank" rel="noopener" title="${esc(title||'')}">${text}</a>`;
       }
-      return `<a href="${esc(href)}" target="_blank" rel="noopener" title="${esc(title||'')}">${text}</a>`;
+      if(!/^https?:\/\//i.test(href))return text;
+      return `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="${esc(title||'')}">${text}</a>`;
     }
   }
 });
@@ -347,6 +355,7 @@ function initMermaidOnce(){
 }
 async function runNoteExtras(container){
   if(!container)return;
+  bindNoteDiagrams(container);
   // диаграммы
   const nodes=container.querySelectorAll('.mermaid[data-mermaid-id]');
   if(nodes.length){
@@ -521,6 +530,7 @@ function parseHash(){
   if(h==='materials')return{mode:'browse',path:''};
   if(h==='schedule')return{mode:'schedule',path:''};
   if(h==='homework')return{mode:'homework',path:''};
+  if(h==='diagrams'||h.startsWith('diagrams?'))return{mode:'diagrams',path:''};
   if(/^schedule\/\d{4}-\d{2}-\d{2}$/.test(h))return{mode:'schedule',path:h.slice(9)};
   if(h.startsWith('view/'))return{mode:'view',path:decodePath(h.slice(5))};
   if(h.startsWith('note/'))return{mode:'note',path:decodePath(h.slice(5))};
@@ -532,6 +542,7 @@ function updateActiveTab(mode,path){
   if(mode==='home')id='tab-home';
   else if(mode==='schedule')id='tab-schedule';
   else if(mode==='homework')id='tab-homework';
+  else if(mode==='diagrams')id='tab-diagrams';
   else if(mode==='browse'&&path&&path.split('/')[0]==='Дедлайны')id='tab-deadlines';
   const el=document.getElementById(id);
   if(el)el.classList.add('active');
@@ -645,11 +656,13 @@ function route(){
   else if(mode==='home')renderHome();
   else if(mode==='schedule')mountSchedule(parseDate(path)||new Date());
   else if(mode==='homework')renderHomeworkPage();
+  else if(mode==='diagrams')renderDiagramEditor();
   else renderBrowse(path);
 }
 window.addEventListener('hashchange',route);
 installScheduleEditor();
 installHomework();
+installDiagramEditor();
 route();
 </script>
 </body>

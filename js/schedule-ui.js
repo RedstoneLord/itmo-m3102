@@ -8,6 +8,7 @@ const dateTitle = date => date.toLocaleDateString('ru-RU', { weekday: 'long', da
 const shortTeacher = name => { const parts = name.trim().split(/\s+/); return parts.length > 1 ? `${parts[0]} ${parts.slice(1).map(part => part[0] + '.').join(' ')}` : name; };
 const subjectTone = subject => [...subject].reduce((value, char) => (value * 31 + char.charCodeAt(0)) >>> 0, 7) % 6;
 let base = null, data = null, loading = null, selected = new Date(), animations = [], sequence = 0, editor = null;
+const cardAnimations = new WeakMap();
 
 export const getSchedule = () => data;
 export const getBaseSchedule = () => base;
@@ -150,6 +151,18 @@ export function mountSchedule(date = selected) {
   content.querySelector('#sched-today').onclick = () => showDay(new Date());
   content.querySelector('#sched-edit').onclick = () => editor?.();
   content.querySelector('#sched-stage').addEventListener('click', event => {
+    const summary = event.target.closest('.sched-card summary');
+    if (summary && !reduceMotion()) {
+      event.preventDefault();
+      const card = summary.parentElement, opening = !card.open, start = card.offsetHeight;
+      cardAnimations.get(card)?.cancel();
+      card.style.height = `${start}px`; card.style.overflow = 'hidden';
+      if (opening) card.open = true;
+      const end = opening ? card.scrollHeight : summary.offsetHeight;
+      const animation = card.animate([{ height: `${start}px` }, { height: `${end}px` }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      cardAnimations.set(card, animation);
+      animation.finished.then(() => { if (!opening) card.open = false; card.style.height = ''; card.style.overflow = ''; cardAnimations.delete(card); }).catch(() => {});
+    }
     const button = event.target.closest('[data-edit-lesson]');
     if (button) editor?.(Number(button.dataset.editLesson));
   });

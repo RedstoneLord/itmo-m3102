@@ -91,10 +91,10 @@ function drawGraph(model) {
   const defs = `<marker id="${id}" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="var(--muted)"/></marker>`;
   const edges = model.edges.map((edge, index) => {
     const a = points.get(edge.from), b = points.get(edge.to), color = edge.color || 'var(--muted)', dash = edge.dashed ? 'stroke-dasharray="5 5"' : '';
-    if (edge.from === edge.to) return `<path d="M ${format(a.x + 15)} ${format(a.y - 14)} C ${format(a.x + 70)} ${format(a.y - 75)}, ${format(a.x - 70)} ${format(a.y - 75)}, ${format(a.x - 15)} ${format(a.y - 14)}" fill="none" stroke="${color}" stroke-width="2" ${dash} ${edge.directed ? `marker-end="url(#${id})"` : ''}/>`;
+    if (edge.from === edge.to) return `<g data-dgm-edge="${index}"><path d="M ${format(a.x + 15)} ${format(a.y - 14)} C ${format(a.x + 70)} ${format(a.y - 75)}, ${format(a.x - 70)} ${format(a.y - 75)}, ${format(a.x - 15)} ${format(a.y - 14)}" fill="none" stroke="${color}" stroke-width="2" ${dash} ${edge.directed ? `marker-end="url(#${id})"` : ''}/></g>`;
     const angle = Math.atan2(b.y - a.y, b.x - a.x), offset = model.edges.slice(0, index).filter(other => other.from === edge.from && other.to === edge.to).length * 12;
     const x1 = a.x + Math.cos(angle) * 23, y1 = a.y + Math.sin(angle) * 23 + offset, x2 = b.x - Math.cos(angle) * 25, y2 = b.y - Math.sin(angle) * 25 + offset;
-    return `<path d="M ${format(x1)} ${format(y1)} L ${format(x2)} ${format(y2)}" fill="none" stroke="${color}" stroke-width="2" ${dash} ${edge.directed ? `marker-end="url(#${id})"` : ''}/>${edge.weight ? textSvg((x1 + x2) / 2, (y1 + y2) / 2 - 7, edge.weight, 'text-anchor="middle" fill="var(--muted)" font-size="12"') : ''}`;
+    return `<g data-dgm-edge="${index}"><path d="M ${format(x1)} ${format(y1)} L ${format(x2)} ${format(y2)}" fill="none" stroke="${color}" stroke-width="2" ${dash} ${edge.directed ? `marker-end="url(#${id})"` : ''}/>${edge.weight ? textSvg((x1 + x2) / 2, (y1 + y2) / 2 - 7, edge.weight, 'text-anchor="middle" fill="var(--muted)" font-size="12"') : ''}</g>`;
   }).join('');
   const nodes = [...model.nodes.values()].map(node => { const p = points.get(node.id); return `<g data-dgm-node="${escape(node.id)}"><circle cx="${format(p.x)}" cy="${format(p.y)}" r="23" fill="var(--card)" stroke="${node.color || 'var(--accent)'}" stroke-width="2.5"/>${textSvg(p.x, p.y + 5, node.label || node.id, 'text-anchor="middle" fill="var(--text)" font-size="13" font-weight="650"')}</g>`; }).join('');
   return svg(model, edges + nodes, width, height, defs);
@@ -316,7 +316,7 @@ function drawCanvas(model) {
     const path = p.join(' ').replace(/(?:fill|color)=\S+/g, '').trim();
     if (!/^[MmLlHhVvCcQqZz0-9.,\s-]+$/.test(path)) throw new Error('Путь содержит недопустимую команду');
     return `<path d="${escape(path)}" fill="none" stroke="${fill}" stroke-width="2"/>`;
-  }).join('');
+  }).map((item, index) => `<g data-dgm-shape="${index}">${item}</g>`).join('');
   return svg(model, body, width, height, defs);
 }
 registerDiagram('canvas', { parse: parseCanvas, render: drawCanvas, serialize: model => model.source });
