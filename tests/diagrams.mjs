@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { codeFigure, diagramLanguages, parseDiagram, renderDiagram, serializeDiagram } from '../js/diagrams/index.js';
 import { parseExpression } from '../js/diagrams/expression.js';
-import { importGraphText } from '../js/diagrams/editor.js';
+import { importGraphText, plotCoordinates } from '../js/diagrams/editor.js';
 
 test('выражения соблюдают приоритет и не исполняют JavaScript', () => {
   assert.equal(parseExpression('2+3*4')({}), 14);
@@ -60,4 +60,8 @@ test('импорт графа из рёбер и матрицы', () => {
   assert.equal(importGraphText('A B 5\nB C 2'), 'A -> B : 5\nB -> C : 2');
   assert.equal(importGraphText('A B\n0 3\n0 0', 'matrix'), 'A -> B : 3');
   assert.throws(() => importGraphText('A B\n0 1', 'matrix'), /квадратная/);
+});
+
+test('точка холста переводится в координаты графика', () => {
+  assert.deepEqual(plotCoordinates({ x: 320, y: 180 }, { x: [-5, 5], y: [-3, 3] }), { x: 0, y: 0 });
 });
