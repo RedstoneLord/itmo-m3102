@@ -131,7 +131,10 @@ export function showDay(date, { updateHash = true } = {}) {
   animations = [outgoing, incoming, height];
   Promise.all(animations.map(animation => animation.finished.catch(() => null))).then(() => {
     if (id !== sequence) return;
-    old.remove(); stage.style.height = ''; animations = [];
+    old.remove();
+    stage.style.height = ''; 
+    animations.forEach(animation => animation.cancel());
+    animations = [];
   });
 }
 export function refreshSchedule() {
