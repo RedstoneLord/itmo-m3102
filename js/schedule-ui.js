@@ -15,7 +15,7 @@ export const getBaseSchedule = () => base;
 export const setBaseSchedule = next => { base = next; };
 export function setSchedule(next) { data = next; document.dispatchEvent(new CustomEvent('schedule:change')); refreshSchedule(); }
 export async function ensureSchedule() {
-  if (data) return data;
+  if (data) { refreshSchedule(); return data; }
   if (!loading) loading = loadSchedule().then(result => {
     base = result.base; data = result.data;
     const alert = document.querySelector('#sched-alert');
@@ -163,7 +163,12 @@ export function mountSchedule(date = selected) {
       const end = opening ? card.scrollHeight : summary.offsetHeight;
       const animation = card.animate([{ height: `${start}px` }, { height: `${end}px` }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
       cardAnimations.set(card, animation);
-      animation.finished.then(() => { if (!opening) card.open = false; card.style.height = ''; card.style.overflow = ''; cardAnimations.delete(card); }).catch(() => {});
+      const finish = () => {
+        if (cardAnimations.get(card) !== animation) return;
+        if (!opening) card.open = false;
+      card.style.height = ''; card.style.overflow = ''; cardAnimations.delete(card);
+    };
+    animation.finished.then(finish, finish);
     }
     const button = event.target.closest('[data-edit-lesson]');
     if (button) editor?.(Number(button.dataset.editLesson));

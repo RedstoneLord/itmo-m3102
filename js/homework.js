@@ -60,9 +60,11 @@ function renderList() {
   const old = container.firstElementChild, oldHeight = old?.offsetHeight || 0; container.append(layer);
   if (old && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const height = layer.offsetHeight; container.style.height = `${oldHeight}px`; container.style.overflow = 'hidden';
+    const outgoing = old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease-out' });
     const incoming = layer.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' });
     listAnimation = container.animate([{ height: `${oldHeight}px` }, { height: `${height}px` }], { duration: 220, easing: 'ease-out' });
-    Promise.all([incoming.finished, listAnimation.finished]).then(() => { old.remove(); container.style.height = ''; container.style.overflow = ''; listAnimation = null; }).catch(() => {});
+    const finish = () => { old.remove(); container.style.height = ''; container.style.overflow = ''; listAnimation = null; };
+    Promise.all([outgoing.finished, incoming.finished, listAnimation.finished]).then(finish, finish);
   } else old?.remove();
   container.querySelectorAll('[data-filter]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.filter === filter)));
 }
