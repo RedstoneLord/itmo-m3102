@@ -118,9 +118,9 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 .lesson-break{opacity:.65;}
 .print-logo{display:none;}
  @media print{
-  @page{margin:12mm 12mm 20mm 12mm;}
+  @page{margin:10mm 10mm 30mm 10mm;}
   :root{--bg:#fff;--card:#fff;--text:#111;--muted:#555;--border:#ccc;}
-  header,footer,.tabs,.navlinks,.crumbs,.sched-alert,.viewbar #back-btn,.viewbar a{display:none !important;}
+  header,footer,.tabs,.navlinks,.crumbs,.sched-alert,.viewbar{display:none !important;}
   body{padding:0;background:#fff;}
   .wrap{max-width:100%;padding:0;margin:0;}
   .prose{
@@ -139,10 +139,11 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
     position:fixed;
     left:8mm;
     bottom:6mm;
-    width:20mm;
+    width:18mm;
+    max-height:18mm;
     z-index:9999;
   }
-  .print-logo img{width:100%;display:block;}
+  .print-logo img{width:100%;height:auto;max-height:18mm;object-fit:contain;display:block;}
 }
 </style>
 <link rel="stylesheet" href="./site.css">
@@ -171,7 +172,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
   <div id="content"><p class="state">Загрузка…</p></div>
   <footer>Файлы загружаются напрямую из GitHub-репозитория RedstoneLord/itmo-m3102</footer>
 </div>
-<div class="print-logo"><img src="img/logo.png" alt="logo"></div>
+<div class="print-logo"><img src="logo.png" alt="logo"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
