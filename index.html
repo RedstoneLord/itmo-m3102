@@ -116,6 +116,23 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 .lesson-subject{font-weight:600;font-size:.92rem;}
 .lesson-meta{color:var(--muted);font-size:.78rem;margin-top:2px;}
 .lesson-break{opacity:.65;}
+ @media print{
+  :root{--bg:#fff;--card:#fff;--text:#111;--muted:#555;--border:#ccc;}
+  header,footer,.tabs,.navlinks,.crumbs,.sched-alert,.viewbar #back-btn,.viewbar a{display:none !important;}
+  body{padding:0;background:#fff;}
+  .wrap{max-width:100%;padding:0;margin:0;}
+  .prose{
+    max-width:100%;margin:0;font-size:12pt;line-height:1.5;color:#111;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><text x="0" y="150" font-size="28" font-family="Arial, sans-serif" fill="rgba(0,0,0,0.08)" transform="rotate(-30 150 150)">M3102</text></svg>');
+    background-repeat:repeat;
+  }
+  .prose pre{background:#f2f2f2 !important;color:#111 !important;border:1px solid #ddd;}
+  .prose .mermaid{background:#fff !important;}
+  .prose a{color:#111 !important;text-decoration:underline;}
+  .prose img{max-width:100% !important;}
+  .callout{break-inside:avoid;}
+  .prose h1,.prose h2,.prose h3{break-after:avoid;}
+}
 </style>
 <link rel="stylesheet" href="./site.css">
 <link rel="stylesheet" href="./css/schedule.css">
@@ -559,8 +576,8 @@ function breadcrumbs(path){
   parts.forEach(p=>{acc=acc?acc+'/'+p:p;html+=' / <a data-p="'+esc(acc)+'">'+esc(p)+'</a>';});
   return html+'</div>';
 }
-function viewBar(icon,name,path){
-  return `<div class="viewbar"><button class="btn2" id="back-btn">← Назад</button><div class="viewname">${icon} ${esc(name)}</div><a class="btn2" href="${rawUrl(path)}" target="_blank" rel="noopener" download>Скачать</a></div>`;
+function viewBar(icon,name,path,extra=''){
+  return `<div class="viewbar"><button class="btn2" id="back-btn">← Назад</button><div class="viewname">${icon} ${esc(name)}</div>${extra}<a class="btn2" href="${rawUrl(path)}" target="_blank" rel="noopener" download>Скачать</a></div>`;
 }
 function bindBack(path){document.getElementById('back-btn').onclick=()=>goto(path.split('/').slice(0,-1).join('/'));}
 
@@ -641,8 +658,12 @@ function renderPdfView(path){
 function renderNoteView(path){
   const name=path.split('/').pop();
   const c=document.getElementById('content');
-  c.innerHTML=viewBar('MD',name,path)+'<p class="state" id="note-status">Загрузка…</p><div class="prose" id="note-body"></div>';
+  c.innerHTML=viewBar('MD',name,path,'<button class="btn2" id="note-print-btn" type="button">🖨 Печать / PDF</button>')+'<p class="state" id="note-status">Загрузка…</p><div class="prose" id="note-body"></div>';
   bindBack(path);
+  document.getElementById('note-print-btn').onclick=()=>{
+    document.title=`${name.replace(/\.md$/i,'')} — М3102`;
+    window.print();
+  };
   fetch(rawUrl(path)).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
     .then(text=>{
       const s=document.getElementById('note-status');if(s)s.remove();
