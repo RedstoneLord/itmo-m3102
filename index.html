@@ -121,6 +121,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 <link rel="stylesheet" href="./css/schedule.css">
 <link rel="stylesheet" href="./css/homework.css">
 <link rel="stylesheet" href="./css/diagrams.css">
+<link rel="stylesheet" href="./css/memes.css">
 </head>
 <body>
 <div class="wrap">
@@ -132,6 +133,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
       <a class="tab" id="tab-schedule" href="#/schedule">Расписание</a>
       <a class="tab" id="tab-homework" href="#/homework">Домашнее задание</a>
       <a class="tab" id="tab-diagrams" href="#/diagrams">Диаграммы</a>
+      <a class="tab" id="tab-memes" href="#/memes">Мемы</a>
       <a class="tab" id="tab-deadlines" href="./Дедлайны/">Дедлайны</a>
     </nav>
     <div class="navlinks">
@@ -154,6 +156,7 @@ import { githubFetch } from './js/github.js';
 import { installHomework, renderHomeHomework, renderHomeworkPage } from './js/homework.js';
 import { hasDiagram, codeFigure } from './js/diagrams/index.js';
 import { bindNoteDiagrams, installDiagramEditor, renderDiagramEditor } from './js/diagrams/editor.js';
+import { installMemes, renderMemesPage } from './js/memes.js';
 const OWNER='RedstoneLord', REPO='itmo-m3102', BRANCH='master';
 const SUBTITLES={
   'Записи лекций':'Аудиозаписи лекций',
@@ -166,7 +169,7 @@ const EXT_ICON={pdf:'PDF',docx:'DOC',doc:'DOC',md:'MD',html:'WEB',htm:'WEB',mp3:
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 // Файлы и папки, которые не должны отображаться при просмотре материалов
 const HIDDEN_FILE_NAMES=['site.css','package.json','readme.md','.gitignore'];
-const HIDDEN_FOLDER_NAMES=['tests','inner','data','js','css','docs'];
+const HIDDEN_FOLDER_NAMES=['tests','inner','data','js','css','docs','img'];
 function isHiddenPath(path){
   if(!path)return false;
   const parts=path.split('/');
@@ -531,6 +534,7 @@ function parseHash(){
   if(h==='schedule')return{mode:'schedule',path:''};
   if(h==='homework')return{mode:'homework',path:''};
   if(h==='diagrams'||h.startsWith('diagrams?'))return{mode:'diagrams',path:''};
+  if(h==='memes')return{mode:'memes',path:''};
   if(/^schedule\/\d{4}-\d{2}-\d{2}$/.test(h))return{mode:'schedule',path:h.slice(9)};
   if(h.startsWith('view/'))return{mode:'view',path:decodePath(h.slice(5))};
   if(h.startsWith('note/'))return{mode:'note',path:decodePath(h.slice(5))};
@@ -543,6 +547,7 @@ function updateActiveTab(mode,path){
   else if(mode==='schedule')id='tab-schedule';
   else if(mode==='homework')id='tab-homework';
   else if(mode==='diagrams')id='tab-diagrams';
+  else if(mode==='memes')id='tab-memes';
   else if(mode==='browse'&&path&&path.split('/')[0]==='Дедлайны')id='tab-deadlines';
   const el=document.getElementById(id);
   if(el)el.classList.add('active');
@@ -657,12 +662,14 @@ function route(){
   else if(mode==='schedule')mountSchedule(parseDate(path)||new Date());
   else if(mode==='homework')renderHomeworkPage();
   else if(mode==='diagrams')renderDiagramEditor();
+  else if(mode==='memes')renderMemesPage();
   else renderBrowse(path);
 }
 window.addEventListener('hashchange',route);
 installScheduleEditor();
 installHomework();
 installDiagramEditor();
+installMemes();
 route();
 </script>
 </body>

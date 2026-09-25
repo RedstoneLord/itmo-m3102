@@ -50,6 +50,15 @@ export async function readRepoFileOptional(path) {
   const file = await response.json();
   return { sha: file.sha, text: file.content ? base64Utf8(file.content) : '' };
 }
+// Возвращает только sha файла — не декодирует содержимое (нужно для бинарных файлов вроде картинок).
+export async function readRepoFileMeta(path) {
+  const url = `${apiBase}/contents/${path.split('/').map(encodeURIComponent).join('/')}?ref=${branch}`;
+  const response = await githubFetch(url);
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(githubError(response.status));
+  const file = await response.json();
+  return file.sha ? { sha: file.sha } : null;
+}
 export async function writeRepoFileBase64(path, content, message, sha) {
   if (!getToken()) throw new Error('Для сохранения в GitHub нужен токен.');
   const url = `${apiBase}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
@@ -59,6 +68,13 @@ export async function writeRepoFileBase64(path, content, message, sha) {
 }
 export async function writeRepoFile(path, content, message, sha) {
   return writeRepoFileBase64(path, utf8Base64(content), message, sha);
+}
+export async function deleteRepoFile(path, message, sha) {
+  if (!getToken()) throw new Error('Для удаления нужен токен.');
+  const url = `${apiBase}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
+  const response = await githubFetch(url, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message, sha, branch }) });
+  if (!response.ok) throw new Error(githubError(response.status));
+  return response.json();
 }
 export const repoEditUrl = path => `https://github.com/${owner}/${repo}/edit/${branch}/${path.split('/').map(encodeURIComponent).join('/')}`;
 
