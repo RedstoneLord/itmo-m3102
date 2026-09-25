@@ -118,14 +118,13 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 .lesson-break{opacity:.65;}
 .print-logo{display:none;}
  @media print{
-  @page{margin:1mm 1mm 3mm 1mm;}
+  @page{margin:1mm 1mm 24mm 1mm;}
   :root{--bg:#fff;--card:#fff;--text:#111;--muted:#555;--border:#ccc;}
   header,footer,.tabs,.navlinks,.crumbs,.sched-alert,.viewbar{display:none !important;}
   body{padding:0;background:#fff;}
   .wrap{max-width:100%;padding:0;margin:0;}
   .prose{
     max-width:100%;margin:0;font-size:12pt;line-height:1.5;color:#111;
-    padding-bottom:26mm;
     background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><text x="0" y="150" font-size="28" font-family="Arial, sans-serif" fill="rgba(0,0,0,0.08)" transform="rotate(-30 150 150)">M3102</text></svg>');
     background-repeat:repeat;
   }
