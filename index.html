@@ -180,6 +180,8 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script type="module">
 import { dateKey, parseDate, isVacation, lessonsOn, weekParity } from './js/schedule.js';
 import { mountSchedule, ensureSchedule, getSchedule } from './js/schedule-ui.js';
@@ -428,6 +430,397 @@ async function runNoteExtras(container){
   });
 }
 
+/* ---------- собственный PDF-конвертер конспектов ---------- */
+/*
+  Вместо нативной печати браузера (window.print → «Сохранить как PDF»),
+  конспект вручную разбивается на страницы (с учётом «висячих» заголовков
+  и максимального заполнения страницы), диаграммы превращаются в квадратные
+  растровые картинки, и результат собирается в настоящий PDF-файл через
+  html2canvas + jsPDF, со своей подложкой-водяным знаком на каждой странице.
+*/
+const PDF_MM = 96/25.4;                 // px на мм при 96dpi
+const PDF_PAGE_W_MM = 210, PDF_PAGE_H_MM = 297; // A4
+const PDF_MARGIN_MM = 14;               // отступ сверху/слева/справа — чтобы не печаталось «в край»
+const PDF_LOGO_W_MM = 24;               // ширина водяного знака (было ~18мм — чуть крупнее)
+const PDF_LOGO_LEFT_MM = 10;
+const PDF_LOGO_BOTTOM_MM = 8;
+const PDF_LOGO_GAP_MM = 6;              // зазор между текстом и логотипом, чтобы не перекрывались
+const PDF_MIN_TRAILING_PX = 86;         // ~3 строки текста (12pt/1.5) + отступ — порог для заголовков
+const PDF_CONTENT_W_MM = PDF_PAGE_W_MM - PDF_MARGIN_MM*2;
+const PDF_PAGE_W_PX = Math.round(PDF_CONTENT_W_MM*PDF_MM);
+
+function pdfInjectStyleOnce(){
+  if(document.getElementById('pdf-print-style'))return;
+  const st=document.createElement('style');
+  st.id='pdf-print-style';
+  st.textContent=`
+#pdf-print-root{background:#ffffff;color:#111111;}
+#pdf-print-root h1{background:none;-webkit-text-fill-color:#111111;color:#111111;}
+#pdf-print-root .prose pre{background:#f4f4f7;color:#111111;border:1px solid #ddd;white-space:pre-wrap;word-break:break-word;}
+#pdf-print-root .prose :not(pre)>code{background:#eef0f7;color:#111111;}
+#pdf-print-root .mermaid{background:#ffffff;border-color:#ddd;}
+#pdf-print-root .prose a{color:#3730c9;text-decoration:underline;}
+#pdf-print-root .prose img{max-width:100%;}
+#pdf-print-root .heading-anchor,#pdf-print-root .code-copy{display:none !important;}
+#pdf-print-root .prose blockquote{border-left-color:#ccc;color:#555;}
+#pdf-print-root .prose table,#pdf-print-root .prose th,#pdf-print-root .prose td{border-color:#ccc;}
+#pdf-print-root .hljs-comment,#pdf-print-root .hljs-quote{color:#6a737d;}
+#pdf-print-root .hljs-keyword,#pdf-print-root .hljs-selector-tag,#pdf-print-root .hljs-subst{color:#a626a4;}
+#pdf-print-root .hljs-number,#pdf-print-root .hljs-literal,#pdf-print-root .hljs-variable,#pdf-print-root .hljs-template-variable,#pdf-print-root .hljs-tag .hljs-attr{color:#986801;}
+#pdf-print-root .hljs-string,#pdf-print-root .hljs-doctag{color:#50a14f;}
+#pdf-print-root .hljs-title,#pdf-print-root .hljs-section,#pdf-print-root .hljs-selector-id{color:#4078f2;}
+#pdf-print-root .hljs-type,#pdf-print-root .hljs-class .hljs-title{color:#c18401;}
+#pdf-print-root .hljs-tag,#pdf-print-root .hljs-name,#pdf-print-root .hljs-attribute{color:#e45649;}
+#pdf-print-root .hljs-regexp,#pdf-print-root .hljs-link{color:#50a14f;}
+#pdf-print-root .hljs-symbol,#pdf-print-root .hljs-bullet{color:#986801;}
+#pdf-print-root .hljs-built_in,#pdf-print-root .hljs-builtin-name{color:#4078f2;}
+#pdf-print-root .hljs-meta{color:#a0a1a7;}
+#pdf-print-root .hljs-deletion{background:#fdd;}
+#pdf-print-root .hljs-addition{background:#dfd;}
+#pdf-print-root .hljs-emphasis{font-style:italic;}
+#pdf-print-root .hljs-strong{font-weight:bold;}
+`;
+  document.head.appendChild(st);
+}
+
+// Ждём загрузки картинок (обычных и уже превращённых диаграмм), чтобы верно измерить высоту
+function pdfWaitForImages(root){
+  const imgs=Array.from(root.querySelectorAll('img'));
+  return Promise.all(imgs.map(img=>{
+    if(img.complete && img.naturalWidth>0)return Promise.resolve();
+    return new Promise(res=>{
+      const done=()=>{img.removeEventListener('load',done);img.removeEventListener('error',done);res();};
+      img.addEventListener('load',done);img.addEventListener('error',done);
+      setTimeout(res,8000);
+    });
+  }));
+}
+
+// Рендерит SVG (диаграмму) в квадратную растровую картинку на белой подложке
+function pdfSvgToSquareImage(svgEl){
+  return new Promise((resolve,reject)=>{
+    try{
+      const clone=svgEl.cloneNode(true);
+      const vb=clone.viewBox && clone.viewBox.baseVal;
+      let w=(clone.width && clone.width.baseVal && clone.width.baseVal.value)||0;
+      let h=(clone.height && clone.height.baseVal && clone.height.baseVal.value)||0;
+      if((!w||!h) && vb && vb.width){w=vb.width;h=vb.height;}
+      if(!w||!h){const bb=svgEl.getBoundingClientRect();w=bb.width||400;h=bb.height||300;}
+      clone.setAttribute('width',w);clone.setAttribute('height',h);
+      const xmlns='http://www.w3.org/2000/svg';
+      const bg=document.createElementNS(xmlns,'rect');
+      bg.setAttribute('x','0');bg.setAttribute('y','0');
+      bg.setAttribute('width',String(w));bg.setAttribute('height',String(h));
+      bg.setAttribute('fill','#ffffff');
+      clone.insertBefore(bg,clone.firstChild);
+      const xml=new XMLSerializer().serializeToString(clone);
+      const svg64=btoa(unescape(encodeURIComponent(xml)));
+      const img=new Image();
+      img.onload=()=>{
+        const scale=2, side=Math.max(w,h);
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.round(side*scale);canvas.height=Math.round(side*scale);
+        const ctx=canvas.getContext('2d');
+        ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,(side-w)/2*scale,(side-h)/2*scale,w*scale,h*scale);
+        resolve({dataUrl:canvas.toDataURL('image/png'), naturalW:w, naturalH:h});
+      };
+      img.onerror=()=>reject(new Error('svg render failed'));
+      img.src='data:image/svg+xml;base64,'+svg64;
+    }catch(e){reject(e);}
+  });
+}
+
+// Заменяет диаграммы (mermaid и т.п.) на квадратные картинки меньшего размера
+async function pdfSquarifyDiagrams(container){
+  const svgs=Array.from(container.querySelectorAll('svg'));
+  for(const svg of svgs){
+    try{
+      const {dataUrl,naturalW,naturalH}=await pdfSvgToSquareImage(svg);
+      // конечный размер (квадрат) делаем заметно меньше исходной высоты диаграммы,
+      // чтобы картинка реально занимала меньше места на странице
+      const targetPx=Math.max(110, Math.min(naturalH*0.9, PDF_PAGE_W_PX*0.62));
+      const img=document.createElement('img');
+      img.src=dataUrl;
+      img.alt='diagram';
+      img.style.display='block';
+      img.style.margin='6px auto';
+      img.style.width=Math.round(targetPx)+'px';
+      img.style.maxWidth='100%';
+      img.style.height='auto';
+      const holder=svg.closest('.mermaid, .diagram-figure, figure')||svg.parentElement;
+      holder.innerHTML='';
+      holder.style.textAlign='center';
+      holder.appendChild(img);
+    }catch(e){ /* если не вышло — оставляем диаграмму как есть */ }
+  }
+}
+
+function pdfCopyAttrs(from,to){
+  if(from.id)to.id=from.id;
+  if(from.className)to.className=from.className;
+  if(from.hasAttribute && from.hasAttribute('start'))to.setAttribute('start',from.getAttribute('start'));
+}
+
+function pdfInlineIsSimple(el){
+  return Array.from(el.childNodes).every(n=>n.nodeType===3||
+    ['STRONG','EM','B','I','CODE','A','SUP','SUB','SPAN','BR','ABBR','MARK','DEL','INS'].includes(n.tagName));
+}
+
+// Разбивает содержимое блока (текст + инлайн-теги) на «атомы»: слова остаются
+// словами, а форматированные фрагменты (ссылки, code, формулы) не рвутся внутри
+function pdfWordAtoms(el){
+  const atoms=[];
+  el.childNodes.forEach(node=>{
+    if(node.nodeType===3){
+      const parts=node.textContent.split(/(\s+)/).filter(s=>s!=='');
+      parts.forEach(p=>atoms.push(document.createTextNode(p)));
+    }else{
+      atoms.push(node.cloneNode(true));
+    }
+  });
+  return atoms;
+}
+
+// ---- «упаковщик» страниц: работает с реальным DOM, измеряя высоту layout'ом ----
+function pdfCreatePacker(root){
+  function newPageBuf(){
+    const div=document.createElement('div');
+    div.className='prose';
+    div.style.width=PDF_PAGE_W_PX+'px';
+    div.style.boxSizing='border-box';
+    root.appendChild(div);
+    return div;
+  }
+  const finished=[];
+  let pageBuf=newPageBuf();
+  const pageH=()=>pageBuf.scrollHeight;
+  function startNewPage(){finished.push(pageBuf);pageBuf=newPageBuf();}
+  function isEmpty(){return pageBuf.childNodes.length===0;}
+
+  function placeHeading(block,maxPx){
+    const startedEmpty=isEmpty();
+    const clone=block.cloneNode(true);
+    pageBuf.appendChild(clone);
+    const total=pageH();
+    const trailing=maxPx-total;
+    if(!startedEmpty && (total>maxPx || trailing<PDF_MIN_TRAILING_PX)){
+      pageBuf.removeChild(clone);
+      startNewPage();
+      pageBuf.appendChild(block.cloneNode(true));
+    }
+  }
+
+  function placeAtomic(block,maxPx){
+    const clone=block.cloneNode(true);
+    if(isEmpty()){pageBuf.appendChild(clone);return;}
+    pageBuf.appendChild(clone);
+    if(pageH()<=maxPx)return;
+    pageBuf.removeChild(clone);
+    startNewPage();
+    pageBuf.appendChild(block.cloneNode(true)); // если и на пустой странице не влезает — оставляем как есть
+  }
+
+  function placeInlineSplit(block,tag,maxPx){
+    const atoms=pdfWordAtoms(block);
+    let i=0;
+    while(i<atoms.length){
+      let wrapper=document.createElement(tag);
+      pdfCopyAttrs(block,wrapper);
+      pageBuf.appendChild(wrapper);
+      let placed=0;
+      while(i+placed<atoms.length){
+        wrapper.appendChild(atoms[i+placed].cloneNode(true));
+        if(pageH()<=maxPx){placed++;continue;}
+        wrapper.removeChild(wrapper.lastChild);
+        break;
+      }
+      if(placed===0){
+        pageBuf.removeChild(wrapper);
+        if(isEmpty()){
+          // пустая страница, но даже одно слово не влезает — форсируем, чтобы не зациклиться
+          wrapper=document.createElement(tag);pdfCopyAttrs(block,wrapper);
+          wrapper.appendChild(atoms[i].cloneNode(true));
+          pageBuf.appendChild(wrapper);
+          i+=1;
+        }else{
+          startNewPage();
+          continue;
+        }
+      }else{
+        i+=placed;
+      }
+      if(i<atoms.length)startNewPage();
+    }
+  }
+
+  function placeList(block,maxPx){
+    const tag=block.tagName;
+    const start=tag==='OL'?parseInt(block.getAttribute('start')||'1',10):null;
+    let wrapper=null, idx=0;
+    Array.from(block.children).forEach(li=>{
+      if(li.tagName!=='LI')return;
+      if(!wrapper){
+        wrapper=document.createElement(tag);pdfCopyAttrs(block,wrapper);
+        if(tag==='OL')wrapper.setAttribute('start',String(start+idx));
+        pageBuf.appendChild(wrapper);
+      }
+      const liClone=li.cloneNode(true);
+      wrapper.appendChild(liClone);
+      if(pageH()>maxPx){
+        wrapper.removeChild(liClone);
+        if(wrapper.childNodes.length===0){
+          wrapper.appendChild(liClone); // единственный li, и он больше страницы — оставляем как есть
+        }else{
+          startNewPage();
+          wrapper=document.createElement(tag);pdfCopyAttrs(block,wrapper);
+          if(tag==='OL')wrapper.setAttribute('start',String(start+idx));
+          pageBuf.appendChild(wrapper);
+          wrapper.appendChild(liClone);
+        }
+      }
+      idx++;
+    });
+  }
+
+  function placeTable(block,maxPx){
+    const thead=block.querySelector(':scope > thead');
+    let rows=Array.from(block.querySelectorAll(':scope > tbody > tr'));
+    if(!rows.length)rows=Array.from(block.querySelectorAll('tr')).filter(tr=>!thead||!thead.contains(tr));
+    if(!rows.length){placeAtomic(block,maxPx);return;}
+    let wrapper=null, tbody=null;
+    function open(){
+      wrapper=document.createElement('table');pdfCopyAttrs(block,wrapper);
+      if(thead)wrapper.appendChild(thead.cloneNode(true));
+      tbody=document.createElement('tbody');
+      wrapper.appendChild(tbody);
+      pageBuf.appendChild(wrapper);
+    }
+    open();
+    rows.forEach(tr=>{
+      const rowClone=tr.cloneNode(true);
+      tbody.appendChild(rowClone);
+      if(pageH()>maxPx){
+        tbody.removeChild(rowClone);
+        if(tbody.childNodes.length===0){
+          tbody.appendChild(rowClone);
+        }else{
+          startNewPage();
+          open();
+          tbody.appendChild(rowClone);
+        }
+      }
+    });
+  }
+
+  function place(block,maxPx){
+    try{
+      const tag=block.tagName;
+      if(/^H[1-6]$/.test(tag))placeHeading(block,maxPx);
+      else if(tag==='P' && pdfInlineIsSimple(block))placeInlineSplit(block,'P',maxPx);
+      else if(tag==='UL'||tag==='OL')placeList(block,maxPx);
+      else if(tag==='TABLE')placeTable(block,maxPx);
+      else placeAtomic(block,maxPx);
+    }catch(e){
+      placeAtomic(block,maxPx);
+    }
+  }
+
+  return {
+    place,
+    finish(){finished.push(pageBuf);return finished;}
+  };
+}
+
+async function pdfLoadLogo(){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const canvas=document.createElement('canvas');
+        canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+        canvas.getContext('2d').drawImage(img,0,0);
+        resolve({dataUrl:canvas.toDataURL('image/png'), ratio:(img.naturalHeight/img.naturalWidth)||1});
+      }catch(e){resolve(null);}
+    };
+    img.onerror=()=>resolve(null);
+    img.src='img/logo.png';
+  });
+}
+
+function pdfSanitizeFileName(s){
+  return String(s).replace(/[\\/:*?"<>|]+/g,'_').trim()||'note';
+}
+
+async function generateNotePdf(fileName){
+  const btn=document.getElementById('note-print-btn');
+  const bodyEl=document.getElementById('note-body');
+  if(!bodyEl)return;
+  if(!window.jspdf || !window.html2canvas){
+    alert('Не удалось загрузить библиотеки для генерации PDF. Проверьте подключение к интернету и обновите страницу.');
+    return;
+  }
+  const origText=btn?btn.textContent:null;
+  if(btn){btn.disabled=true;btn.textContent='Формирование PDF…';}
+  let root=null;
+  try{
+    pdfInjectStyleOnce();
+    const logo=await pdfLoadLogo();
+    const logoHmm=logo?Math.max(6,Math.min(60,PDF_LOGO_W_MM*logo.ratio)):16;
+    const bottomReserveMm=PDF_LOGO_BOTTOM_MM+logoHmm+PDF_LOGO_GAP_MM;
+    const contentHmm=PDF_PAGE_H_MM-PDF_MARGIN_MM-bottomReserveMm;
+    const pageHpx=Math.round(contentHmm*PDF_MM);
+
+    // офф-экранный контейнер для измерения и рендера страниц (светлая тема, фиксированная ширина)
+    root=document.createElement('div');
+    root.id='pdf-print-root';
+    Object.assign(root.style,{position:'fixed',left:'-10000px',top:'0',zIndex:'-1',background:'#ffffff'});
+    root.style.setProperty('--bg','#ffffff');
+    root.style.setProperty('--card','#ffffff');
+    root.style.setProperty('--text','#111111');
+    root.style.setProperty('--muted','#555555');
+    root.style.setProperty('--border','#cccccc');
+    root.style.setProperty('--accent','#5b5fef');
+    root.style.setProperty('--accent2','#7c7ffb');
+    root.style.fontFamily=getComputedStyle(document.body).fontFamily;
+    document.body.appendChild(root);
+
+    const source=bodyEl.cloneNode(true);
+    source.querySelectorAll('.code-copy').forEach(b=>b.remove());
+    await pdfSquarifyDiagrams(source);
+    await pdfWaitForImages(source);
+    if(document.fonts && document.fonts.ready){try{await document.fonts.ready;}catch(e){}}
+
+    const packer=pdfCreatePacker(root);
+    Array.from(source.children).forEach(block=>packer.place(block,pageHpx));
+    const pages=packer.finish().filter(p=>p.childNodes.length>0);
+    if(!pages.length){alert('В конспекте нет содержимого для PDF.');return;}
+
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({unit:'mm',format:'a4',compress:true});
+    for(let i=0;i<pages.length;i++){
+      if(btn)btn.textContent=`Формирование PDF… ${i+1}/${pages.length}`;
+      const canvas=await html2canvas(pages[i],{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
+      const imgWmm=PDF_CONTENT_W_MM;
+      const imgHmm=imgWmm*canvas.height/canvas.width;
+      const imgData=canvas.toDataURL('image/jpeg',0.93);
+      if(i>0)pdf.addPage();
+      pdf.addImage(imgData,'JPEG',PDF_MARGIN_MM,PDF_MARGIN_MM,imgWmm,imgHmm,undefined,'FAST');
+      if(logo && logo.dataUrl){
+        const y=PDF_PAGE_H_MM-PDF_LOGO_BOTTOM_MM-logoHmm;
+        pdf.addImage(logo.dataUrl,'PNG',PDF_LOGO_LEFT_MM,y,PDF_LOGO_W_MM,logoHmm);
+      }
+    }
+    pdf.setProperties({title:fileName});
+    pdf.save(pdfSanitizeFileName(fileName.replace(/\.md$/i,''))+'.pdf');
+  }catch(e){
+    alert('Не удалось сформировать PDF: '+(e&&e.message?e.message:e));
+  }finally{
+    if(root && root.parentNode)root.parentNode.removeChild(root);
+    if(btn){btn.disabled=false;btn.textContent=origText||'📄 Скачать PDF';}
+  }
+}
+
 /* ---------- home landing page ---------- */
 const HOME_TILES=[
   {name:'Конспекты',icon:'01',desc:'Лекции и практики по предметам'},
@@ -673,11 +1066,10 @@ function renderPdfView(path){
 function renderNoteView(path){
   const name=path.split('/').pop();
   const c=document.getElementById('content');
-  c.innerHTML=viewBar('MD',name,path,'<button class="btn2" id="note-print-btn" type="button">🖨 Печать / PDF</button>')+'<p class="state" id="note-status">Загрузка…</p><div class="prose" id="note-body"></div>';
+  c.innerHTML=viewBar('MD',name,path,'<button class="btn2" id="note-print-btn" type="button">📄 Скачать PDF</button>')+'<p class="state" id="note-status">Загрузка…</p><div class="prose" id="note-body"></div>';
   bindBack(path);
   document.getElementById('note-print-btn').onclick=()=>{
-    document.title=`${name.replace(/\.md$/i,'')} — М3102`;
-    window.print();
+    generateNotePdf(name);
   };
   fetch(rawUrl(path)).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
     .then(text=>{
