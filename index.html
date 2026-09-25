@@ -39,6 +39,10 @@ h1{font-size:1.7rem;margin:0 0 6px;background:linear-gradient(135deg,var(--accen
 .card .desc{color:var(--muted);font-size:.78rem;margin-top:2px;}
 .card .btn{border:1px solid var(--border);background:var(--bg);padding:6px 12px;border-radius:8px;font-size:.78rem;white-space:nowrap;text-decoration:none;color:var(--text);}
 .card .btn:hover{border-color:var(--accent);}
+.avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;background:var(--border);}
+.nick-link{color:var(--muted);font-size:.78rem;text-decoration:none;}
+.nick-link:hover{color:var(--accent);}
+.fact-pill{display:inline-block;margin-top:4px;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--accent) 12%,var(--card));color:var(--accent);font-size:.72rem;font-weight:600;}
 .state{color:var(--muted);font-size:.9rem;padding:20px 0;}
 .viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .btn2{border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 14px;border-radius:10px;font-size:.85rem;cursor:pointer;text-decoration:none;}
@@ -163,8 +167,8 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
       <a class="tab" id="tab-materials" href="#/materials">Материалы</a>
       <a class="tab" id="tab-schedule" href="#/schedule">Расписание</a>
       <a class="tab" id="tab-homework" href="#/homework">Домашнее задание</a>
-      <a class="tab" id="tab-diagrams" href="#/diagrams">Диаграммы</a>
-      <a class="tab" id="tab-memes" href="#/memes">Мемы</a>
+      <a class="tab" id="tab-students" href="#/students">Студенты</a>
+      <a class="tab" id="tab-other" href="#/other">Другое</a>
       <a class="tab" id="tab-deadlines" href="./Дедлайны/">Дедлайны</a>
     </nav>
     <div class="navlinks">
@@ -951,6 +955,65 @@ async function generateNotePdf(fileName){
 }
 
 /* ---------- home landing page ---------- */
+/* ---------- страница «Студенты» ---------- */
+// Ник — это ник на GitHub; по нему строится и фото (аватар GitHub), и ссылка
+// на коммиты студента в репозитории группы.
+const STUDENTS=[
+  {name:'Громов Алексей Алексеевич',nick:'AlexGromov63',fact:'Христианин'},
+  {name:'Гулякин Илья Александрович',nick:'OMNIlos',fact:'Баскетбол'},
+  {name:'Гурьянов Тимофей Анатольевич',nick:'yukinohidesu',fact:'Линукс'},
+  {name:'Давалов Артём Алексеевич',nick:'artemiks727',fact:'Егермейстер'},
+  {name:'Дедков Артём Витальевич',nick:'Xnow1-jpg',fact:'Строитель'},
+  {name:'Демидов Максим Алексеевич',nick:'MaxDemidov08',fact:'Спортпрога'},
+  {name:'Демченко Алексей Владимирович',nick:'AIAlDem',fact:'42'},
+  {name:'Долинский Сергей Александрович',nick:'CHuD00',fact:'Гитара'},
+  {name:'Дрей Даниил Александрович',nick:'h1xman',fact:'Кокакола'},
+  {name:'Дусаев Радик Рустемович',nick:'Noname132089',fact:'Радик'},
+  {name:'Еланский Максим Дмитриевич',nick:'Max112008',fact:'Футбол'},
+  {name:'Жаворонкин Марк Леонидович',nick:'LazerProOk1',fact:'Гитара'},
+  {name:'Жупиков Федор Максимович',nick:'RedstoneLord',fact:'Рокер'},
+  {name:'Зюриков Андрей Артурович',nick:'zur1kov',fact:'Старс'},
+  {name:'Ильюшин Тимофей Леонидович',nick:'Ficror',fact:'Спорт'},
+  {name:'Имануилов Кирилл Дмитриевич',nick:'ima-kir-study',fact:'Разработка'},
+  {name:'Калугин Александр Михайлович',nick:'sniper2450',fact:'Фигурист'},
+  {name:'Кальнин Давид Артемович',nick:'davidossss',fact:'Карьерист'},
+  {name:'Капланян Арман Ованесович',nick:'KaplanianArman',fact:'Суворовец'},
+  {name:'Кириченко Артём Иванович',nick:'Art21kir',fact:'2.3'},
+  {name:'Новожилова Марьяна Сергеевна',nick:'maryasch',fact:'Чтение'},
+  {name:'Попова Екатерина Владимировна',nick:'EkaterinaPopova6',fact:'Вязание'}
+];
+function renderStudentsPage(){
+  const c=document.getElementById('content');
+  const cards=STUDENTS.map(s=>{
+    const ghUrl=`https://github.com/${encodeURIComponent(s.nick)}`;
+    const githubPhoto=`${ghUrl}.png?size=160`;
+    const surname=s.name.split(' ')[0];
+    const localPhoto=`img/photos/${encodeURIComponent(surname)}.png`;
+    const commitsUrl=`https://github.com/${OWNER}/${REPO}/commits?author=${encodeURIComponent(s.nick)}`;
+    return `<div class="card" style="cursor:default;">
+      <img class="avatar" src="${esc(localPhoto)}" data-gh="${esc(githubPhoto)}" alt="${esc(s.name)}" loading="lazy" onerror="if(!this.dataset.ghTried){this.dataset.ghTried='1';this.src=this.dataset.gh;}else{this.style.visibility='hidden';}">
+      <div class="meta">
+        <div class="name">${esc(s.name)}</div>
+        <a class="nick-link" href="${esc(ghUrl)}" target="_blank" rel="noopener">@${esc(s.nick)}</a><br>
+        <span class="fact-pill">${esc(s.fact)}</span>
+      </div>
+      <a class="btn" href="${esc(commitsUrl)}" target="_blank" rel="noopener">Коммиты ↗</a>
+    </div>`;
+  }).join('');
+  c.innerHTML=`<div class="intro"><h1>Студенты группы М3102</h1><p class="sub">Ник — ссылка на GitHub-профиль, «Коммиты» — история правок этого студента в репозитории материалов группы.</p></div><div class="grid">${cards}</div>`;
+}
+
+/* ---------- страница «Другое» (Диаграммы + Мемы) ---------- */
+function renderOtherPage(){
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="intro"><h1>Другое</h1><p class="sub">Дополнительные разделы сайта.</p></div>
+    <div class="grid">
+      <a class="card" data-go="diagrams"><div class="ic">◇</div><div class="meta"><div class="name">Диаграммы</div><div class="desc">Конструктор диаграмм для конспектов</div></div></a>
+      <a class="card" data-go="memes"><div class="ic">😂</div><div class="meta"><div class="name">Мемы</div><div class="desc">Мемы группы</div></div></a>
+    </div>`;
+  c.querySelectorAll('[data-go]').forEach(el=>el.onclick=e=>{e.preventDefault();location.hash='#/'+el.dataset.go;});
+}
+
 const HOME_TILES=[
   {name:'Конспекты',icon:'01',desc:'Лекции и практики по предметам'},
   {name:'Записи лекций',icon:'02',desc:'Аудио прошедших занятий'},
@@ -1089,6 +1152,8 @@ function parseHash(){
   if(h==='homework')return{mode:'homework',path:''};
   if(h==='diagrams'||h.startsWith('diagrams?'))return{mode:'diagrams',path:''};
   if(h==='memes')return{mode:'memes',path:''};
+  if(h==='students')return{mode:'students',path:''};
+  if(h==='other')return{mode:'other',path:''};
   if(/^schedule\/\d{4}-\d{2}-\d{2}$/.test(h))return{mode:'schedule',path:h.slice(9)};
   if(h.startsWith('view/'))return{mode:'view',path:decodePath(h.slice(5))};
   if(h.startsWith('note/'))return{mode:'note',path:decodePath(h.slice(5))};
@@ -1100,8 +1165,8 @@ function updateActiveTab(mode,path){
   if(mode==='home')id='tab-home';
   else if(mode==='schedule')id='tab-schedule';
   else if(mode==='homework')id='tab-homework';
-  else if(mode==='diagrams')id='tab-diagrams';
-  else if(mode==='memes')id='tab-memes';
+  else if(mode==='students')id='tab-students';
+  else if(mode==='diagrams'||mode==='memes'||mode==='other')id='tab-other';
   else if(mode==='browse'&&path&&path.split('/')[0]==='Дедлайны')id='tab-deadlines';
   const el=document.getElementById(id);
   if(el)el.classList.add('active');
@@ -1220,6 +1285,8 @@ function route(){
   else if(mode==='homework')renderHomeworkPage();
   else if(mode==='diagrams')renderDiagramEditor();
   else if(mode==='memes')renderMemesPage();
+  else if(mode==='students')renderStudentsPage();
+  else if(mode==='other')renderOtherPage();
   else renderBrowse(path);
 }
 window.addEventListener('hashchange',route);

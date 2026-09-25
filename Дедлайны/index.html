@@ -13,7 +13,7 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px);}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
 .wrap{max-width:920px;margin:0 auto;padding:24px 18px 60px;}
-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:4px;flex-wrap:wrap;}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:4px;flex-wrap:wrap;}
 h1{font-size:1.6rem;margin:0 0 4px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
 .sub{color:var(--muted);font-size:.92rem;margin:0;max-width:540px;}
 .headctrls{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
@@ -42,17 +42,46 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 .state{color:var(--muted);font-size:.85rem;margin-top:10px;}
 </style>
 <link rel="stylesheet" href="./deadlines.css">
+<style>
+/* шапка сайта — идентична корневому index.html, чтобы дизайн совпадал на всех страницах */
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.brand{font-weight:700;font-size:1.05rem;text-decoration:none;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:10px;}
+.brand-logo{height:34px;width:auto;display:block;}
+.brand-divider{width:1px;height:22px;background:var(--border);display:block;}
+.brand-caption{font-size:.72rem;font-weight:600;color:var(--muted);line-height:1.25;}
+.navlinks{display:flex;gap:14px;}
+.navlinks a{color:var(--muted);font-size:.82rem;text-decoration:none;}
+.navlinks a:hover{color:var(--accent);}
+.tabs{display:flex;gap:2px;flex-wrap:wrap;}
+.tab{padding:7px 12px;border-radius:10px;font-size:.83rem;color:var(--muted);text-decoration:none;cursor:pointer;white-space:nowrap;}
+.tab:hover{color:var(--text);background:var(--border);}
+.tab.active{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card));font-weight:600;}
+</style>
 </head>
 <body>
 <div class="wrap" id="app">
-  <nav class="topbar" aria-label="Навигация"><a class="brand" href="../">М3102</a><div><a href="../">Главная</a><a href="../#/materials">Материалы</a><a href="../#/schedule">Расписание</a><a class="active" href="./">Дедлайны</a></div><a class="github" href="https://github.com/RedstoneLord/itmo-m3102" target="_blank" rel="noopener">GitHub ↗</a></nav>
   <header>
+    <a class="brand" href="../" aria-label="М3102 — главная"><img class="brand-logo" src="../img/logo-t.png" alt="М3102"><span class="brand-divider"></span><span class="brand-caption">ИТМО<br>учебное пространство</span></a>
+    <nav class="tabs" aria-label="Основная навигация">
+      <a class="tab" href="../">Главная</a>
+      <a class="tab" href="../#/materials">Материалы</a>
+      <a class="tab" href="../#/schedule">Расписание</a>
+      <a class="tab" href="../#/homework">Домашнее задание</a>
+      <a class="tab" href="../#/students">Студенты</a>
+      <a class="tab" href="../#/other">Другое</a>
+      <a class="tab active" href="./">Дедлайны</a>
+    </nav>
+    <div class="navlinks">
+      <a href="https://github.com/RedstoneLord/itmo-m3102" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+  <div class="page-header">
     <div><h1>Дедлайны<span>.</span></h1><p class="sub">Сроки сдачи и очередь группы М3102. Отмечайте выполненное — прогресс сохранится в этом браузере.</p></div>
     <div class="headctrls">
       <button class="btn" id="refresh">↻ Обновить</button>
       <a class="linkghost" id="edit-link" href="#" target="_blank">Изменить сроки на GitHub ↗</a>
     </div>
-  </header>
+  </div>
   <div id="content"><p class="state">Загрузка…</p></div>
   <footer>Очередь работает через открытые GitHub Issues с меткой <code>queue-signup</code>.</footer>
 </div>
