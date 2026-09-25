@@ -44,6 +44,19 @@ h1{font-size:1.7rem;margin:0 0 6px;background:linear-gradient(135deg,var(--accen
 .nick-link:hover{color:var(--accent);}
 .fact-pill{display:inline-block;margin-top:4px;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--accent) 12%,var(--card));color:var(--accent);font-size:.72rem;font-weight:600;}
 .state{color:var(--muted);font-size:.9rem;padding:20px 0;}
+.students-grid{display:grid;gap:20px;grid-template-columns:1fr;}
+@media(min-width:600px){.students-grid{grid-template-columns:1fr 1fr;}}
+@media(min-width:980px){.students-grid{grid-template-columns:1fr 1fr 1fr;}}
+.student-card{position:relative;overflow:hidden;padding:0;display:block;align-items:initial;gap:0;aspect-ratio:3/4;background:var(--card);}
+.student-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;filter:brightness(.62) saturate(1.05);transition:filter .2s,transform .3s;background:var(--border);}
+.student-card:hover .student-photo{filter:brightness(.5) saturate(1.05);transform:scale(1.03);}
+.student-overlay{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:16px 16px 14px;background:linear-gradient(180deg,rgba(10,10,14,0) 0%,rgba(10,10,14,.55) 35%,rgba(10,10,14,.86) 100%);}
+.student-overlay .name{color:#fff;font-size:1.02rem;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+.student-overlay .nick-link{color:rgba(255,255,255,.75);}
+.student-overlay .nick-link:hover{color:#fff;}
+.student-overlay .fact-pill{background:rgba(255,255,255,.16);color:#fff;backdrop-filter:blur(3px);}
+.student-card .btn{position:absolute;top:12px;right:12px;z-index:1;background:rgba(20,20,26,.55);border-color:rgba(255,255,255,.3);color:#fff;backdrop-filter:blur(3px);}
+.student-card .btn:hover{border-color:#fff;background:rgba(20,20,26,.75);}
 .viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .btn2{border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 14px;border-radius:10px;font-size:.85rem;cursor:pointer;text-decoration:none;}
 .btn2:hover{border-color:var(--accent);}
@@ -990,17 +1003,17 @@ function renderStudentsPage(){
     const surname=s.name.split(' ')[0];
     const localPhoto=`img/photos/${encodeURIComponent(surname)}.png`;
     const commitsUrl=`https://github.com/${OWNER}/${REPO}/commits?author=${encodeURIComponent(s.nick)}`;
-    return `<div class="card" style="cursor:default;">
-      <img class="avatar" src="${esc(localPhoto)}" data-gh="${esc(githubPhoto)}" alt="${esc(s.name)}" loading="lazy" onerror="if(!this.dataset.ghTried){this.dataset.ghTried='1';this.src=this.dataset.gh;}else{this.style.visibility='hidden';}">
-      <div class="meta">
+    return `<div class="card student-card" style="cursor:default;">
+      <img class="student-photo" src="${esc(localPhoto)}" data-gh="${esc(githubPhoto)}" alt="${esc(s.name)}" loading="lazy" onerror="if(!this.dataset.ghTried){this.dataset.ghTried='1';this.src=this.dataset.gh;}else{this.style.visibility='hidden';}">
+      <a class="btn" href="${esc(commitsUrl)}" target="_blank" rel="noopener">Коммиты ↗</a>
+      <div class="student-overlay">
         <div class="name">${esc(s.name)}</div>
         <a class="nick-link" href="${esc(ghUrl)}" target="_blank" rel="noopener">@${esc(s.nick)}</a><br>
         <span class="fact-pill">${esc(s.fact)}</span>
       </div>
-      <a class="btn" href="${esc(commitsUrl)}" target="_blank" rel="noopener">Коммиты ↗</a>
     </div>`;
   }).join('');
-  c.innerHTML=`<div class="intro"><h1>Студенты группы М3102</h1><p class="sub">Ник — ссылка на GitHub-профиль, «Коммиты» — история правок этого студента в репозитории материалов группы.</p></div><div class="grid">${cards}</div>`;
+  c.innerHTML=`<div class="intro"><h1>Студенты группы М3102</h1><p class="sub">Ник — ссылка на GitHub-профиль, «Коммиты» — история правок этого студента в репозитории материалов группы.</p></div><div class="students-grid">${cards}</div>`;
 }
 
 /* ---------- страница «Другое» (Диаграммы + Мемы) ---------- */
