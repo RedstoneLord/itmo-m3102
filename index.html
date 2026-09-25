@@ -500,6 +500,12 @@ function pdfInjectStyleOnce(){
 #pdf-print-root .hljs-addition{background:#dfd;}
 #pdf-print-root .hljs-emphasis{font-style:italic;}
 #pdf-print-root .hljs-strong{font-weight:bold;}
+/* html2canvas ненадёжно рисует нативные маркеры списков (номер/буллит может
+   наехать на текст) — поэтому в PDF отключаем list-style и рисуем маркер
+   обычным текстовым span'ом с фиксированным отступом (см. pdfDelistify) */
+#pdf-print-root .prose ol,#pdf-print-root .prose ul{list-style:none;padding-left:0;}
+#pdf-print-root .prose li{position:relative;padding-left:1.7em;margin:.3em 0;}
+#pdf-print-root .prose .pdf-li-marker{position:absolute;left:0;top:0;min-width:1.3em;font-weight:600;}
 `;
   document.head.appendChild(st);
 }
@@ -595,11 +601,47 @@ function pdfDiagramTargetSize(naturalW,naturalH,budgetPx){
 // Заменяет диаграммы (mermaid и любые другие svg-диаграммы) на квадратные
 // картинки меньшего размера, полностью убирая исходную рамку/фон/паддинги
 // контейнера — только сама картинка занимает место на странице
+// Проверяет, что цвет (строка вида "white"/"#fff"/"rgb(...)"), возвращённая
+// getComputedStyle, «почти белый» — т.е. на белом фоне PDF станет невидимым
+function pdfIsNearWhite(colorStr){
+  if(!colorStr)return false;
+  const s=colorStr.trim().toLowerCase();
+  if(s==='white'||s==='#fff'||s==='#ffffff')return true;
+  const m=/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(s);
+  if(m){
+    const r=+m[1],g=+m[2],b=+m[3];
+    return r>235&&g>235&&b>235;
+  }
+  return false;
+}
+
+// Оси, деления и подписи графиков (например, xychart-beta) иногда получают
+// явный белый цвет прямо в коде диаграммы (рассчитанный на тёмный фон) — такой
+// цвет «зашит» в саму SVG и не перекрывается принудительной светлой темой из
+// pdfForceLightMermaid (та лечит только цвета, идущие из темы Mermaid). На
+// белой странице PDF это делает оси/подписи невидимыми. Подстраховка: находим
+// почти-белые обводки и подписи и перекрашиваем их в тёмно-серый — не трогая
+// заливки прочих фигур (чтобы не испортить легитимно белые области)
+function pdfFixWhiteOnWhite(svgEl){
+  try{
+    svgEl.querySelectorAll('path,line,polyline,circle,rect').forEach(el=>{
+      const cs=window.getComputedStyle(el);
+      if(cs.fill==='none'&&pdfIsNearWhite(cs.stroke))el.style.stroke='#333333';
+    });
+    svgEl.querySelectorAll('text,tspan').forEach(el=>{
+      const cs=window.getComputedStyle(el);
+      if(pdfIsNearWhite(cs.fill))el.style.fill='#333333';
+      if(pdfIsNearWhite(cs.stroke))el.style.stroke='#333333';
+    });
+  }catch(e){ /* если не вышло — оставляем как есть, это лишь подстраховка */ }
+}
+
 async function pdfSquarifyDiagrams(container,budgetPx){
   await pdfForceLightMermaid(container);
   const svgs=Array.from(container.querySelectorAll('svg'));
   for(const svg of svgs){
     try{
+      pdfFixWhiteOnWhite(svg);
       const {dataUrl,naturalW,naturalH}=await pdfSvgToSquareImage(svg);
       const targetPx=pdfDiagramTargetSize(naturalW,naturalH,budgetPx);
       const img=document.createElement('img');
@@ -617,6 +659,75 @@ async function pdfSquarifyDiagrams(container,budgetPx){
   }
 }
 
+// Заменяет нативную нумерацию/буллиты списков на обычный текстовый маркер
+// внутри каждого <li> — html2canvas не всегда корректно рисует native
+// list-style (маркер может наложиться на первую строку текста), а обычный
+// текст рисуется надёжно всегда
+function pdfDelistify(container){
+  container.querySelectorAll('ol, ul').forEach(list=>{
+    const ordered=list.tagName==='OL';
+    const start=ordered?(parseInt(list.getAttribute('start')||'1',10)||1):null;
+    let idx=0;
+    Array.from(list.children).forEach(li=>{
+      if(li.tagName!=='LI')return;
+      const marker=document.createElement('span');
+      marker.className='pdf-li-marker';
+      marker.textContent=ordered?`${start+idx}.`:'•';
+      li.insertBefore(marker,li.firstChild);
+      idx++;
+    });
+  });
+}
+
+// Измеряет, насколько нижний край формулы отстоит от базовой линии строки
+// рядом с ней (сравнивая с контрольным символом-«соседом») — нужно, чтобы
+// после растрирования формулы в <img> сохранить её вертикальное положение
+// относительно окружающего текста
+function pdfMeasureBaselineOffset(el){
+  const parent=el.parentNode;
+  if(!parent)return 0;
+  const ref=document.createTextNode('H');
+  parent.insertBefore(ref,el);
+  let offset=0;
+  try{
+    const range=document.createRange();
+    range.selectNodeContents(ref);
+    const refRect=range.getBoundingClientRect();
+    const elRect=el.getBoundingClientRect();
+    if(refRect.bottom&&elRect.bottom)offset=elRect.bottom-refRect.bottom;
+  }catch(e){ /* если не вышло измерить — считаем смещение нулевым */ }
+  parent.removeChild(ref);
+  return offset;
+}
+
+// KaTeX рисует формулы сложной вложенной разметкой (стопки span'ов с
+// отрицательными отступами — т.н. vlist, нужны для дробей/степеней/индексов),
+// которую html2canvas регулярно рисует неверно — буквы и знаки съезжают и
+// накладываются друг на друга (в отличие от обычного текста). Поэтому, как и
+// диаграммы (см. pdfSquarifyDiagrams), формулы заранее растрируем в
+// картинку — html2canvas тогда просто копирует пиксели, без риска криво
+// уложить вложенную структуру KaTeX
+async function pdfRasterizeMath(container){
+  const displays=Array.from(container.querySelectorAll('.katex-display'));
+  const inline=Array.from(container.querySelectorAll('.katex')).filter(el=>!el.closest('.katex-display'));
+  const targets=displays.map(el=>({el,display:true})).concat(inline.map(el=>({el,display:false})));
+  for(const {el,display} of targets){
+    try{
+      const rect=el.getBoundingClientRect();
+      if(rect.width<1||rect.height<1)continue;
+      const baselineOffset=display?0:pdfMeasureBaselineOffset(el);
+      const canvas=await html2canvas(el,{backgroundColor:null,scale:PDF_RENDER_SCALE*2,useCORS:true,logging:false});
+      const img=document.createElement('img');
+      img.src=canvas.toDataURL('image/png');
+      img.alt='formula';
+      img.style.cssText=display
+        ?`display:block;width:${rect.width}px;height:${rect.height}px;margin:.4em auto;`
+        :`display:inline-block;width:${rect.width}px;height:${rect.height}px;vertical-align:${-baselineOffset}px;`;
+      if(el.parentNode)el.parentNode.replaceChild(img,el);
+    }catch(e){ /* если конкретную формулу растрировать не вышло — оставляем её как есть */ }
+  }
+}
+
 function pdfCopyAttrs(from,to){
   if(from.id)to.id=from.id;
   if(from.className)to.className=from.className;
@@ -625,7 +736,9 @@ function pdfCopyAttrs(from,to){
 
 function pdfInlineIsSimple(el){
   return Array.from(el.childNodes).every(n=>n.nodeType===3||
-    ['STRONG','EM','B','I','CODE','A','SUP','SUB','SPAN','BR','ABBR','MARK','DEL','INS'].includes(n.tagName));
+    // IMG — сюда попадают в т.ч. растрированные формулы (см. pdfRasterizeMath);
+    // они должны так же участвовать в обычной построчной упаковке абзаца
+    ['STRONG','EM','B','I','CODE','A','SUP','SUB','SPAN','BR','ABBR','MARK','DEL','INS','IMG'].includes(n.tagName));
 }
 
 // Разбивает содержимое блока (текст + инлайн-теги) на «атомы»: слова остаются
@@ -920,9 +1033,11 @@ async function generateNotePdf(fileName){
     // диаграмм могут посчитаться неверно
     root.appendChild(source);
     source.querySelectorAll('.code-copy').forEach(b=>b.remove());
+    pdfDelistify(source);
+    if(document.fonts && document.fonts.ready){try{await document.fonts.ready;}catch(e){}}
+    await pdfRasterizeMath(source);
     await pdfSquarifyDiagrams(source,pageHpx);
     await pdfWaitForImages(source);
-    if(document.fonts && document.fonts.ready){try{await document.fonts.ready;}catch(e){}}
 
     const packer=pdfCreatePacker(root);
     packer.packAll(Array.from(source.children),pageHpx);
