@@ -16,7 +16,8 @@ html{scroll-padding-top:env(safe-area-inset-top,0px);}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
 .wrap{max-width:960px;margin:0 auto;padding:22px 18px 60px;}
 header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
-.brand{font-weight:700;font-size:1.05rem;text-decoration:none;color:var(--text);cursor:pointer;}
+.brand{font-weight:700;font-size:1.05rem;text-decoration:none;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:10px;}
+.brand-logo{height:34px;width:auto;display:block;}
 .navlinks{display:flex;gap:14px;}
 .navlinks a{color:var(--muted);font-size:.82rem;text-decoration:none;}
 .navlinks a:hover{color:var(--accent);}
@@ -156,7 +157,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
 <body>
 <div class="wrap">
   <header>
-    <a class="brand" id="home-link" href="./" aria-label="М3102 — главная"><span class="brand-mark">М3102</span><span class="brand-divider"></span><span class="brand-caption">ИТМО<br>учебное пространство</span></a>
+    <a class="brand" id="home-link" href="./" aria-label="М3102 — главная"><img class="brand-logo" src="img/logo.png" alt="М3102"><span class="brand-divider"></span><span class="brand-caption">ИТМО<br>учебное пространство</span></a>
     <nav class="tabs" aria-label="Основная навигация">
       <a class="tab" id="tab-home" href="./">Главная</a>
       <a class="tab" id="tab-materials" href="#/materials">Материалы</a>
