@@ -259,8 +259,10 @@ const calloutExtension={
 let mermaidSeq=0;
 function renderMermaidBlock(code){
   const id='mermaid-'+(++mermaidSeq);
-  // сам рендеринг SVG выполняется асинхронно после вставки в DOM (см. runMermaid)
-  return `<div class="mermaid" data-mermaid-id="${id}">${esc(code)}</div>`;
+  // сам рендеринг SVG выполняется асинхронно после вставки в DOM (см. runMermaid);
+  // исходный код диаграммы дублируем в data-атрибут, чтобы позже (при экспорте в PDF)
+  // можно было перерендерить её заново в светлой теме, даже если на странице сейчас тёмная
+  return `<div class="mermaid" data-mermaid-id="${id}" data-mermaid-src="${esc(code)}">${esc(code)}</div>`;
 }
 function highlightCode(code,lang){
   let out;
@@ -435,8 +437,9 @@ async function runNoteExtras(container){
   Вместо нативной печати браузера (window.print → «Сохранить как PDF»),
   конспект вручную разбивается на страницы (с учётом «висячих» заголовков
   и максимального заполнения страницы), диаграммы превращаются в квадратные
-  растровые картинки, и результат собирается в настоящий PDF-файл через
-  html2canvas + jsPDF, со своей подложкой-водяным знаком на каждой странице.
+  растровые картинки без исходной рамки, и результат собирается в настоящий
+  PDF-файл через html2canvas + jsPDF, со своей подложкой-водяным знаком на
+  каждой странице.
 */
 const PDF_MM = 96/25.4;                 // px на мм при 96dpi
 const PDF_PAGE_W_MM = 210, PDF_PAGE_H_MM = 297; // A4
@@ -448,6 +451,7 @@ const PDF_LOGO_GAP_MM = 6;              // зазор между текстом 
 const PDF_MIN_TRAILING_PX = 86;         // ~3 строки текста (12pt/1.5) + отступ — порог для заголовков
 const PDF_CONTENT_W_MM = PDF_PAGE_W_MM - PDF_MARGIN_MM*2;
 const PDF_PAGE_W_PX = Math.round(PDF_CONTENT_W_MM*PDF_MM);
+const PDF_RENDER_SCALE = 2;             // разрешение растеризации страниц
 
 function pdfInjectStyleOnce(){
   if(document.getElementById('pdf-print-style'))return;
@@ -496,6 +500,36 @@ function pdfWaitForImages(root){
   }));
 }
 
+// Перед конвертацией в картинки — перерисовываем Mermaid-диаграммы заново в
+// принудительно светлой теме. Если конспект открыт в тёмной теме, исходная SVG
+// уже содержит «зашитые» тёмные (светлые на прозрачном фоне) цвета, которые на
+// белой странице PDF выглядят блёкло-серыми — почти чёрно-белыми. Перерендер
+// с нуля из исходного кода диаграммы (сохранён в data-mermaid-src) решает это.
+async function pdfForceLightMermaid(container){
+  const nodes=Array.from(container.querySelectorAll('.mermaid[data-mermaid-src]'));
+  if(!nodes.length || typeof mermaid==='undefined')return;
+  let dark=false;
+  try{
+    dark=document.documentElement.getAttribute('data-theme')==='dark'||
+      (document.documentElement.getAttribute('data-theme')!=='light'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }catch(e){}
+  try{
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'default'});
+    for(const node of nodes){
+      const src=node.dataset.mermaidSrc;
+      if(!src)continue;
+      try{
+        const suffix='pdf-'+(node.dataset.mermaidId||Math.random().toString(36).slice(2));
+        const {svg}=await mermaid.render(suffix+'-svg',src);
+        node.innerHTML=svg;
+      }catch(e){ /* не удалось перерендерить — оставляем то, что уже было отрисовано */ }
+    }
+  }finally{
+    // возвращаем тему как было, чтобы не сломать диаграммы на живой странице
+    try{mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:dark?'dark':'default'});}catch(e){}
+  }
+}
+
 // Рендерит SVG (диаграмму) в квадратную растровую картинку на белой подложке
 function pdfSvgToSquareImage(svgEl){
   return new Promise((resolve,reject)=>{
@@ -531,27 +565,37 @@ function pdfSvgToSquareImage(svgEl){
   });
 }
 
-// Заменяет диаграммы (mermaid и т.п.) на квадратные картинки меньшего размера
-async function pdfSquarifyDiagrams(container){
+// Подбирает конечный размер квадратной картинки: заметно меньше исходной
+// диаграммы, но не переусердствуя — иначе диаграмма становится нечитаемой
+function pdfDiagramTargetSize(naturalW,naturalH,budgetPx){
+  const maxDim=Math.max(naturalW,naturalH,1);
+  const capW=PDF_PAGE_W_PX*0.8;          // не шире 80% ширины страницы
+  const capH=Math.max(budgetPx*0.75,180); // не выше 75% доступной высоты страницы
+  const target=Math.min(maxDim*0.9,capW,capH);
+  return Math.max(150,Math.round(target));
+}
+
+// Заменяет диаграммы (mermaid и любые другие svg-диаграммы) на квадратные
+// картинки меньшего размера, полностью убирая исходную рамку/фон/паддинги
+// контейнера — только сама картинка занимает место на странице
+async function pdfSquarifyDiagrams(container,budgetPx){
+  await pdfForceLightMermaid(container);
   const svgs=Array.from(container.querySelectorAll('svg'));
   for(const svg of svgs){
     try{
       const {dataUrl,naturalW,naturalH}=await pdfSvgToSquareImage(svg);
-      // конечный размер (квадрат) делаем заметно меньше исходной высоты диаграммы,
-      // чтобы картинка реально занимала меньше места на странице
-      const targetPx=Math.max(110, Math.min(naturalH*0.9, PDF_PAGE_W_PX*0.62));
+      const targetPx=pdfDiagramTargetSize(naturalW,naturalH,budgetPx);
       const img=document.createElement('img');
       img.src=dataUrl;
       img.alt='diagram';
-      img.style.display='block';
-      img.style.margin='6px auto';
-      img.style.width=Math.round(targetPx)+'px';
-      img.style.maxWidth='100%';
-      img.style.height='auto';
+      img.style.cssText=`display:block;width:${targetPx}px;max-width:100%;height:auto;margin:0 auto;`;
+      // полностью заменяем контейнер диаграммы (.mermaid/.diagram-figure/figure/…),
+      // а не только его содержимое — иначе остаются рамка, паддинги и фон исходного блока
       const holder=svg.closest('.mermaid, .diagram-figure, figure')||svg.parentElement;
-      holder.innerHTML='';
-      holder.style.textAlign='center';
-      holder.appendChild(img);
+      const wrapper=document.createElement('div');
+      wrapper.style.cssText='margin:10px auto;padding:0;border:none;background:none;text-align:center;';
+      wrapper.appendChild(img);
+      if(holder && holder.parentNode)holder.parentNode.replaceChild(wrapper,holder);
     }catch(e){ /* если не вышло — оставляем диаграмму как есть */ }
   }
 }
@@ -582,6 +626,9 @@ function pdfWordAtoms(el){
   return atoms;
 }
 
+function pdfIsHeadingTag(tag){return /^H[1-6]$/.test(tag);}
+function pdfIsSplittableTag(tag){return tag==='UL'||tag==='OL'||tag==='TABLE';}
+
 // ---- «упаковщик» страниц: работает с реальным DOM, измеряя высоту layout'ом ----
 function pdfCreatePacker(root){
   function newPageBuf(){
@@ -598,16 +645,56 @@ function pdfCreatePacker(root){
   function startNewPage(){finished.push(pageBuf);pageBuf=newPageBuf();}
   function isEmpty(){return pageBuf.childNodes.length===0;}
 
-  function placeHeading(block,maxPx){
+  // измеряет, сколько места (в px) занял бы блок сам по себе на странице такой
+  // же ширины — используется для «взгляда вперёд» после заголовка
+  function measureStandalone(block){
+    const probe=document.createElement('div');
+    probe.className='prose';
+    probe.style.cssText=`position:absolute;visibility:hidden;left:-99999px;top:0;width:${PDF_PAGE_W_PX}px;box-sizing:border-box;`;
+    probe.appendChild(block.cloneNode(true));
+    root.appendChild(probe);
+    const h=probe.scrollHeight;
+    root.removeChild(probe);
+    return h;
+  }
+
+  // Заголовок (или несколько идущих подряд заголовков) вместе со следующим
+  // содержательным блоком: заголовок переносится на следующую страницу, если
+  // после него на текущей странице остаётся меньше ~3 строк содержимого —
+  // либо потому, что осталось мало места, либо потому, что следующий блок
+  // (диаграмма, таблица, картинка, код…) целиком не помещается и будет
+  // перенесён на новую страницу сам по себе, оставив заголовок «висеть».
+  function placeHeadingGroup(headings,nextBlock,maxPx){
+    function appendHeadings(){return headings.map(h=>{const c=h.cloneNode(true);pageBuf.appendChild(c);return c;});}
+    function removeNodes(nodes){nodes.forEach(n=>{if(n.parentNode)n.parentNode.removeChild(n);});}
+
     const startedEmpty=isEmpty();
-    const clone=block.cloneNode(true);
-    pageBuf.appendChild(clone);
-    const total=pageH();
-    const trailing=maxPx-total;
-    if(!startedEmpty && (total>maxPx || trailing<PDF_MIN_TRAILING_PX)){
-      pageBuf.removeChild(clone);
+    let nodes=appendHeadings();
+    if(!startedEmpty && pageH()>maxPx){
+      removeNodes(nodes);
       startNewPage();
-      pageBuf.appendChild(block.cloneNode(true));
+      nodes=appendHeadings();
+    }
+    if(nextBlock){
+      const pageHasOtherContent=pageBuf.childNodes.length>nodes.length;
+      if(pageHasOtherContent){
+        const remaining=maxPx-pageH();
+        let insufficient;
+        if((nextBlock.tagName==='P' && pdfInlineIsSimple(nextBlock))||pdfIsSplittableTag(nextBlock.tagName)){
+          insufficient = remaining<PDF_MIN_TRAILING_PX;
+        }else{
+          // неразбиваемый блок (картинка/диаграмма/код/цитата и т.п.):
+          // если целиком он поместится на свежей странице, но не в остаток
+          // текущей — переносим заголовок вместе с ним
+          const naturalH=measureStandalone(nextBlock);
+          insufficient = naturalH<=maxPx && naturalH>remaining;
+        }
+        if(insufficient){
+          removeNodes(nodes);
+          startNewPage();
+          appendHeadings();
+        }
+      }
     }
   }
 
@@ -716,7 +803,7 @@ function pdfCreatePacker(root){
   function place(block,maxPx){
     try{
       const tag=block.tagName;
-      if(/^H[1-6]$/.test(tag))placeHeading(block,maxPx);
+      if(pdfIsHeadingTag(tag))placeHeadingGroup([block],null,maxPx);
       else if(tag==='P' && pdfInlineIsSimple(block))placeInlineSplit(block,'P',maxPx);
       else if(tag==='UL'||tag==='OL')placeList(block,maxPx);
       else if(tag==='TABLE')placeTable(block,maxPx);
@@ -726,8 +813,29 @@ function pdfCreatePacker(root){
     }
   }
 
+  // Проходит по всем блокам верхнего уровня; заголовки (и идущие подряд серии
+  // заголовков) обрабатываются вместе со следующим содержательным блоком, чтобы
+  // не оставлять их «висящими» в конце страницы без материала под ними
+  function packAll(blocks,maxPx){
+    let i=0;
+    while(i<blocks.length){
+      const block=blocks[i];
+      if(pdfIsHeadingTag(block.tagName)){
+        const group=[block];
+        let j=i+1;
+        while(j<blocks.length && pdfIsHeadingTag(blocks[j].tagName)){group.push(blocks[j]);j++;}
+        placeHeadingGroup(group,blocks[j],maxPx);
+        i=j;
+      }else{
+        place(block,maxPx);
+        i++;
+      }
+    }
+  }
+
   return {
     place,
+    packAll,
     finish(){finished.push(pageBuf);return finished;}
   };
 }
@@ -786,21 +894,42 @@ async function generateNotePdf(fileName){
     document.body.appendChild(root);
 
     const source=bodyEl.cloneNode(true);
+    source.removeAttribute('id');
+    source.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+    source.style.cssText=`position:absolute;visibility:hidden;width:${PDF_PAGE_W_PX}px;box-sizing:border-box;`;
+    // важно: подключаем клон к живому дереву документа (внутри root, уже
+    // оформленного в светлой теме) ДО обработки диаграмм — иначе унаследованные
+    // цвета/переменные темы не резолвятся у отсоединённого узла и рамка/цвета
+    // диаграмм могут посчитаться неверно
+    root.appendChild(source);
     source.querySelectorAll('.code-copy').forEach(b=>b.remove());
-    await pdfSquarifyDiagrams(source);
+    await pdfSquarifyDiagrams(source,pageHpx);
     await pdfWaitForImages(source);
     if(document.fonts && document.fonts.ready){try{await document.fonts.ready;}catch(e){}}
 
     const packer=pdfCreatePacker(root);
-    Array.from(source.children).forEach(block=>packer.place(block,pageHpx));
+    packer.packAll(Array.from(source.children),pageHpx);
+    root.removeChild(source);
     const pages=packer.finish().filter(p=>p.childNodes.length>0);
     if(!pages.length){alert('В конспекте нет содержимого для PDF.');return;}
 
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({unit:'mm',format:'a4',compress:true});
+    const maxContentPxAtScale=Math.round(pageHpx*PDF_RENDER_SCALE);
     for(let i=0;i<pages.length;i++){
       if(btn)btn.textContent=`Формирование PDF… ${i+1}/${pages.length}`;
-      const canvas=await html2canvas(pages[i],{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
+      let canvas=await html2canvas(pages[i],{backgroundColor:'#ffffff',scale:PDF_RENDER_SCALE,useCORS:true,logging:false});
+      // подстраховка: если контент всё же перелился за расчётный бюджет высоты
+      // (например, неразбиваемый блок крупнее целой страницы), обрезаем
+      // картинку по высоте, чтобы она физически не могла залезть на область
+      // водяного знака внизу страницы
+      if(canvas.height>maxContentPxAtScale){
+        const cropped=document.createElement('canvas');
+        cropped.width=canvas.width;
+        cropped.height=maxContentPxAtScale;
+        cropped.getContext('2d').drawImage(canvas,0,0);
+        canvas=cropped;
+      }
       const imgWmm=PDF_CONTENT_W_MM;
       const imgHmm=imgWmm*canvas.height/canvas.width;
       const imgData=canvas.toDataURL('image/jpeg',0.93);
