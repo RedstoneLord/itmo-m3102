@@ -642,7 +642,7 @@ async function pdfSquarifyDiagrams(container,budgetPx){
   for(const svg of svgs){
     try{
       pdfFixWhiteOnWhite(svg);
-      const {dataUrl,naturalW,naturalH}=await pdfSvgToSquareImage(svg);
+      const {dataUrl,naturalW,naturalH}=await pdfWithTimeout(pdfSvgToSquareImage(svg),8000,'диаграмма');
       const targetPx=pdfDiagramTargetSize(naturalW,naturalH,budgetPx);
       const img=document.createElement('img');
       img.src=dataUrl;
@@ -700,6 +700,52 @@ function pdfMeasureBaselineOffset(el){
   return offset;
 }
 
+// Каждый вызов html2canvas несёт заметные фиксированные накладные расходы
+// (обход стилей, клонирование и т.д.) — при формуле «в каждый вызов по одной»
+// (как было раньше) конспект с полусотней формул мог рендериться минуты.
+// Поэтому все формулы одной «пачкой» клонируем в скрытую полосу-контейнер
+// и растрируем ОДНИМ вызовом html2canvas на пачку, затем нарезаем результат
+// на отдельные картинки по координатам. batchSize ограничивает размер
+// пачки — иначе полоса из сотен формул может упереться в лимит размера
+// canvas в браузере.
+const PDF_MATH_BATCH_SIZE=40;
+
+// Оборачивает промис таймаутом, чтобы зависшая (по любой причине) операция
+// не оставляла кнопку «Формирование PDF…» крутиться бесконечно — она либо
+// успевает уложиться в срок, либо процесс завершается понятной ошибкой
+function pdfWithTimeout(promise,ms,label){
+  return new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>reject(new Error(`Превышено время ожидания (${label||'операция'})`)),ms);
+    promise.then(v=>{clearTimeout(timer);resolve(v);},e=>{clearTimeout(timer);reject(e);});
+  });
+}
+
+// Рендерит одну формулу в изолированном офф-экранном холдере с явным
+// visibility:visible (контейнер конспекта — source — целиком visibility:hidden,
+// а это свойство наследуется; html2canvas не рисует visibility:hidden контент,
+// поэтому холдер обязан явно переопределить его обратно на visible)
+async function pdfRasterizeOneFormula(container,el,display,w,h,baselineOffset){
+  const holder=document.createElement('div');
+  holder.style.cssText=`position:absolute;left:0;top:0;visibility:visible;width:${Math.ceil(w)}px;height:${Math.ceil(h)}px;overflow:visible;`;
+  holder.appendChild(el.cloneNode(true));
+  container.appendChild(holder);
+  try{
+    const canvas=await pdfWithTimeout(
+      html2canvas(holder,{backgroundColor:null,scale:PDF_RENDER_SCALE,useCORS:true,logging:false}),
+      8000,'формула'
+    );
+    const img=document.createElement('img');
+    img.src=canvas.toDataURL('image/png');
+    img.alt='formula';
+    img.style.cssText=display
+      ?`display:block;width:${w}px;height:${h}px;margin:.4em auto;`
+      :`display:inline-block;width:${w}px;height:${h}px;vertical-align:${-baselineOffset}px;`;
+    if(el.parentNode)el.parentNode.replaceChild(img,el);
+  }finally{
+    if(holder.parentNode)holder.parentNode.removeChild(holder);
+  }
+}
+
 // KaTeX рисует формулы сложной вложенной разметкой (стопки span'ов с
 // отрицательными отступами — т.н. vlist, нужны для дробей/степеней/индексов),
 // которую html2canvas регулярно рисует неверно — буквы и знаки съезжают и
@@ -711,20 +757,65 @@ async function pdfRasterizeMath(container){
   const displays=Array.from(container.querySelectorAll('.katex-display'));
   const inline=Array.from(container.querySelectorAll('.katex')).filter(el=>!el.closest('.katex-display'));
   const targets=displays.map(el=>({el,display:true})).concat(inline.map(el=>({el,display:false})));
-  for(const {el,display} of targets){
+  // измеряем всё заранее (до любых мутаций DOM), чтобы размеры/база не «поплыли»
+  const items=targets.map(({el,display})=>{
+    const rect=el.getBoundingClientRect();
+    return {el,display,w:rect.width,h:rect.height,baselineOffset:display?0:pdfMeasureBaselineOffset(el)};
+  }).filter(it=>it.w>=1&&it.h>=1);
+  if(!items.length)return;
+
+  for(let start=0;start<items.length;start+=PDF_MATH_BATCH_SIZE){
+    const batch=items.slice(start,start+PDF_MATH_BATCH_SIZE);
+    // строим офф-экранную полосу внутри того же контейнера (тот же каскад
+    // цветов/тем, что и у оригиналов), клонируем в неё формулы одну под другой.
+    // visibility:visible обязателен и здесь — см. пояснение к pdfRasterizeOneFormula
+    const strip=document.createElement('div');
+    strip.style.cssText='position:absolute;left:0;top:0;visibility:visible;';
+    const stripW=Math.ceil(Math.max(...batch.map(it=>it.w)));
+    let y=0;
+    const gap=6;
+    const laidOut=batch.map(it=>{
+      const holder=document.createElement('div');
+      holder.style.cssText=`position:absolute;left:0;top:${y}px;width:${Math.ceil(it.w)}px;height:${Math.ceil(it.h)}px;overflow:visible;`;
+      holder.appendChild(it.el.cloneNode(true));
+      strip.appendChild(holder);
+      const top=y;
+      y+=Math.ceil(it.h)+gap;
+      return {...it,top};
+    });
+    strip.style.width=stripW+'px';
+    strip.style.height=y+'px';
+    container.appendChild(strip);
     try{
-      const rect=el.getBoundingClientRect();
-      if(rect.width<1||rect.height<1)continue;
-      const baselineOffset=display?0:pdfMeasureBaselineOffset(el);
-      const canvas=await html2canvas(el,{backgroundColor:null,scale:PDF_RENDER_SCALE*2,useCORS:true,logging:false});
-      const img=document.createElement('img');
-      img.src=canvas.toDataURL('image/png');
-      img.alt='formula';
-      img.style.cssText=display
-        ?`display:block;width:${rect.width}px;height:${rect.height}px;margin:.4em auto;`
-        :`display:inline-block;width:${rect.width}px;height:${rect.height}px;vertical-align:${-baselineOffset}px;`;
-      if(el.parentNode)el.parentNode.replaceChild(img,el);
-    }catch(e){ /* если конкретную формулу растрировать не вышло — оставляем её как есть */ }
+      const stripCanvas=await pdfWithTimeout(
+        html2canvas(strip,{backgroundColor:null,scale:PDF_RENDER_SCALE,useCORS:true,logging:false}),
+        20000,'формулы (пачка)'
+      );
+      laidOut.forEach(it=>{
+        const sx=0, sy=Math.round(it.top*PDF_RENDER_SCALE);
+        const sw=Math.round(it.w*PDF_RENDER_SCALE), sh=Math.round(it.h*PDF_RENDER_SCALE);
+        const canvas=document.createElement('canvas');
+        canvas.width=sw;canvas.height=sh;
+        canvas.getContext('2d').drawImage(stripCanvas,sx,sy,sw,sh,0,0,sw,sh);
+        const img=document.createElement('img');
+        img.src=canvas.toDataURL('image/png');
+        img.alt='formula';
+        img.style.cssText=it.display
+          ?`display:block;width:${it.w}px;height:${it.h}px;margin:.4em auto;`
+          :`display:inline-block;width:${it.w}px;height:${it.h}px;vertical-align:${-it.baselineOffset}px;`;
+        if(it.el.parentNode)it.el.parentNode.replaceChild(img,it.el);
+      });
+    }catch(e){
+      // пакетный рендер не уложился в срок/не удался — подстраховка:
+      // пробуем отрендерить формулы этой пачки по одной (медленнее, но
+      // с собственным таймаутом на каждую, так что зависнуть не может)
+      for(const it of batch){
+        try{await pdfRasterizeOneFormula(container,it.el,it.display,it.w,it.h,it.baselineOffset);}
+        catch(e2){ /* и это не вышло — оставляем формулу как есть */ }
+      }
+    }finally{
+      if(strip.parentNode)strip.parentNode.removeChild(strip);
+    }
   }
 }
 
@@ -1003,7 +1094,8 @@ async function generateNotePdf(fileName){
   let root=null;
   try{
     pdfInjectStyleOnce();
-    const logo=await pdfLoadLogo();
+    let logo=null;
+    try{logo=await pdfWithTimeout(pdfLoadLogo(),6000,'логотип');}catch(e){ /* без логотипа — не критично, продолжаем */ }
     const logoHmm=logo?Math.max(6,Math.min(60,PDF_LOGO_W_MM*logo.ratio)):16;
     const bottomReserveMm=PDF_LOGO_BOTTOM_MM+logoHmm+PDF_LOGO_GAP_MM;
     const contentHmm=PDF_PAGE_H_MM-PDF_MARGIN_MM-bottomReserveMm;
@@ -1034,7 +1126,7 @@ async function generateNotePdf(fileName){
     root.appendChild(source);
     source.querySelectorAll('.code-copy').forEach(b=>b.remove());
     pdfDelistify(source);
-    if(document.fonts && document.fonts.ready){try{await document.fonts.ready;}catch(e){}}
+    if(document.fonts && document.fonts.ready){try{await pdfWithTimeout(document.fonts.ready,5000,'загрузка шрифтов');}catch(e){}}
     await pdfRasterizeMath(source);
     await pdfSquarifyDiagrams(source,pageHpx);
     await pdfWaitForImages(source);
@@ -1050,7 +1142,10 @@ async function generateNotePdf(fileName){
     const maxContentPxAtScale=Math.round(pageHpx*PDF_RENDER_SCALE);
     for(let i=0;i<pages.length;i++){
       if(btn)btn.textContent=`Формирование PDF… ${i+1}/${pages.length}`;
-      let canvas=await html2canvas(pages[i],{backgroundColor:'#ffffff',scale:PDF_RENDER_SCALE,useCORS:true,logging:false});
+      let canvas=await pdfWithTimeout(
+        html2canvas(pages[i],{backgroundColor:'#ffffff',scale:PDF_RENDER_SCALE,useCORS:true,logging:false}),
+        25000,`страница ${i+1}/${pages.length}`
+      );
       // подстраховка: если контент всё же перелился за расчётный бюджет высоты
       // (например, неразбиваемый блок крупнее целой страницы), обрезаем
       // картинку по высоте, чтобы она физически не могла залезть на область
