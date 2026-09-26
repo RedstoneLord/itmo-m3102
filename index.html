@@ -1123,7 +1123,9 @@ function renderStudentsPage(){
       <a class="btn" href="${esc(commitsUrl)}" target="_blank" rel="noopener">Коммиты ↗</a>
 <div class="student-overlay">
   <div class="name">${esc(s.name)}</div>
-  <a class="nick-link" href="${esc(ghUrl)}" target="_blank" rel="noopener">Github · @${esc(s.nick)}</a>${s.tg ? ` · <a class="nick-link" href="https://t.me/${esc(s.tg)}" target="_blank" rel="noopener">Telegram · @${esc(s.tag || s.tg)}</a>` : ''}<br>
+  <a class="nick-link" href="${esc(ghUrl)}" target="_blank" rel="noopener">
+    Github · @${esc(s.nick)}
+  </a>${s.tg ? ` · <a class="nick-link" href="https://t.me/${esc(s.tg)}" target="_blank" rel="noopener">Telegram · @${esc(s.tg)}</a>` : ''}<br>
   <span class="fact-pill">${esc(s.fact)}</span>${s.role ? `<span class="role-pill">${esc(s.role)}</span>` : ''}
 </div>
     </div>`;
