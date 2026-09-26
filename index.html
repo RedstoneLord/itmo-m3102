@@ -1121,7 +1121,11 @@ function renderStudentsPage(){
     return `<div class="card student-card" style="cursor:default;">
       <img class="student-photo" src="${esc(localPhoto)}" data-gh="${esc(githubPhoto)}" alt="${esc(s.name)}" loading="lazy" onerror="if(!this.dataset.ghTried){this.dataset.ghTried='1';this.src=this.dataset.gh;}else{this.style.visibility='hidden';}">
       <a class="btn" href="${esc(commitsUrl)}" target="_blank" rel="noopener">Коммиты ↗</a>
-<div class="student-overlay"> <div class="name">${esc(s.name)}</div> Github · <a class="nick-link" href="${esc(ghUrl)}" target="_blank" rel="noopener">@${esc(s.nick)}</a>${s.tg?` · <a class="nick-link" href="https://t.me/${esc(s.tg)}" target="_blank" rel="noopener">Telegram</a>`:''}${s.tag?` · @${esc(s.tag)}`:''}<br> <span class="fact-pill">${esc(s.fact)}</span>${s.role?`<span class="role-pill">${esc(s.role)}</span>`:''} </div>
+<div class="student-overlay">
+  <div class="name">${esc(s.name)}</div>
+  <a class="nick-link" href="${esc(ghUrl)}" target="_blank" rel="noopener">Github · @${esc(s.nick)}</a>${s.tg ? ` · <a class="nick-link" href="https://t.me/${esc(s.tg)}" target="_blank" rel="noopener">Telegram · @${esc(s.tag || s.tg)}</a>` : ''}<br>
+  <span class="fact-pill">${esc(s.fact)}</span>${s.role ? `<span class="role-pill">${esc(s.role)}</span>` : ''}
+</div>
     </div>`;
   }).join('');
   c.innerHTML=`<div class="intro"><h1>Студенты группы М3102</h1><p class="sub">Ник — ссылка на GitHub-профиль, «Коммиты» — история правок этого студента в репозитории материалов группы.</p></div><div class="students-grid">${cards}</div>`;
