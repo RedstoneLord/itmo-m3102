@@ -181,7 +181,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
       <a class="tab" id="tab-home" href="./">Главная</a>
       <a class="tab" id="tab-materials" href="#/materials">Материалы</a>
       <a class="tab" id="tab-schedule" href="#/schedule">Расписание</a>
-      <a class="tab" id="tab-hwdl" href="#/homework">ДЗ и Дедлайны</a>
+      <a class="tab" id="tab-homework" href="#/homework">ДЗ и Дедлайны</a>
       <a class="tab" id="tab-other" href="#/other">Другое</a>
     </nav>
     <div class="navlinks">
@@ -1306,7 +1306,7 @@ function updateActiveTab(mode,path){
   let id='tab-materials';
   if(mode==='home')id='tab-home';
   else if(mode==='schedule')id='tab-schedule';
-  else if(mode==='homework')id='tab-hwdl';
+  else if(mode==='homework')id='tab-homework';
   else if(mode==='students')id='tab-students';
   else if(mode==='diagrams'||mode==='memes'||mode==='other')id='tab-other';
   else if(mode==='browse'&&path&&path.split('/')[0]==='Дедлайны')id='tab-deadlines';
