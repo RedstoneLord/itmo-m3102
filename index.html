@@ -43,6 +43,7 @@ h1{font-size:1.7rem;margin:0 0 6px;background:linear-gradient(135deg,var(--accen
 .nick-link{color:var(--muted);font-size:.78rem;text-decoration:none;}
 .nick-link:hover{color:var(--accent);}
 .fact-pill{display:inline-block;margin-top:4px;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--accent) 12%,var(--card));color:var(--accent);font-size:.72rem;font-weight:600;}
+.role-pill{display:inline-block;margin-top:4px;margin-left:6px;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,#22c55e 15%,var(--card));color:#1a9c4a;font-size:.72rem;font-weight:600;}
 .state{color:var(--muted);font-size:.9rem;padding:20px 0;}
 .students-grid{display:grid;gap:20px;grid-template-columns:1fr;}
 @media(min-width:600px){.students-grid{grid-template-columns:1fr 1fr;}}
@@ -55,6 +56,7 @@ h1{font-size:1.7rem;margin:0 0 6px;background:linear-gradient(135deg,var(--accen
 .student-overlay .nick-link{color:rgba(255,255,255,.75);}
 .student-overlay .nick-link:hover{color:#fff;}
 .student-overlay .fact-pill{background:rgba(255,255,255,.16);color:#fff;backdrop-filter:blur(3px);}
+.student-overlay .role-pill{background:rgba(34,197,94,.35);color:#fff;backdrop-filter:blur(3px);}
 .student-card .btn{position:absolute;top:12px;right:12px;z-index:1;background:rgba(20,20,26,.55);border-color:rgba(255,255,255,.3);color:#fff;backdrop-filter:blur(3px);}
 .student-card .btn:hover{border-color:#fff;background:rgba(20,20,26,.75);}
 .viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
@@ -1087,28 +1089,28 @@ async function generateNotePdf(fileName){
 // Ник — это ник на GitHub; по нему строится и фото (аватар GitHub), и ссылка
 // на коммиты студента в репозитории группы.
 const STUDENTS=[
-  {name:'Громов Алексей Алексеевич',nick:'AlexGromov63',fact:'Христианин'},
-  {name:'Гулякин Илья Александрович',nick:'OMNIlos',fact:'Баскетбол'},
-  {name:'Гурьянов Тимофей Анатольевич',nick:'yukinohidesu',fact:'Линукс'},
-  {name:'Давалов Артём Алексеевич',nick:'artemiks727',fact:'Егермейстер'},
-  {name:'Дедков Артём Витальевич',nick:'Xnow1-jpg',fact:'Строитель'},
-  {name:'Демидов Максим Алексеевич',nick:'MaxDemidov08',fact:'Спортпрога'},
-  {name:'Демченко Алексей Владимирович',nick:'AIAlDem',fact:'42'},
-  {name:'Долинский Сергей Александрович',nick:'CHuD00',fact:'Гитара'},
-  {name:'Дрей Даниил Александрович',nick:'h1xman',fact:'Кокакола'},
-  {name:'Дусаев Радик Рустемович',nick:'Noname132089',fact:'Радик'},
-  {name:'Еланский Максим Дмитриевич',nick:'Max112008',fact:'Футбол'},
-  {name:'Жаворонкин Марк Леонидович',nick:'LazerProOk1',fact:'Гитара'},
-  {name:'Жупиков Федор Максимович',nick:'RedstoneLord',fact:'Рокер'},
-  {name:'Зюриков Андрей Артурович',nick:'zur1kov',fact:'Старс'},
-  {name:'Ильюшин Тимофей Леонидович',nick:'Ficror',fact:'Спорт'},
-  {name:'Имануилов Кирилл Дмитриевич',nick:'ima-kir-study',fact:'Разработка'},
-  {name:'Калугин Александр Михайлович',nick:'sniper2450',fact:'Фигурист'},
-  {name:'Кальнин Давид Артемович',nick:'davidossss',fact:'Карьерист'},
-  {name:'Капланян Арман Ованесович',nick:'KaplanianArman',fact:'Суворовец'},
-  {name:'Кириченко Артём Иванович',nick:'Art21kir',fact:'2.3'},
-  {name:'Новожилова Марьяна Сергеевна',nick:'maryasch',fact:'Чтение'},
-  {name:'Попова Екатерина Владимировна',nick:'EkaterinaPopova6',fact:'Вязание'}
+  {name:'Громов Алексей Алексеевич',nick:'AlexGromov63',fact:'Христианин',tg:'xalex63gr'},
+  {name:'Гулякин Илья Александрович',nick:'OMNIlos',fact:'Баскетбол',tg:'I1yaGul'},
+  {name:'Гурьянов Тимофей Анатольевич',nick:'yukinohidesu',fact:'Линукс',tg:'magicalseal'},
+  {name:'Давалов Артём Алексеевич',nick:'artemiks727',fact:'Егермейстер',tg:'braindead96'},
+  {name:'Дедков Артём Витальевич',nick:'Xnow1-jpg',fact:'Строитель',tg:'Xnow12'},
+  {name:'Демидов Максим Алексеевич',nick:'MaxDemidov08',fact:'Спортпрога',tg:'Ya_chme_n'},
+  {name:'Демченко Алексей Владимирович',nick:'AIAlDem',fact:'42',tg:'Valbamyor'},
+  {name:'Долинский Сергей Александрович',nick:'CHuD00',fact:'Гитара',tg:'Prst_CHuD0'},
+  {name:'Дрей Даниил Александрович',nick:'h1xman',fact:'Кокакола',tg:'talantlshe'},
+  {name:'Дусаев Радик Рустемович',nick:'Noname132089',fact:'Радик',tg:'Raadiusik'},
+  {name:'Еланский Максим Дмитриевич',nick:'Max112008',fact:'Футбол',tg:'maxelanskiy'},
+  {name:'Жаворонкин Марк Леонидович',nick:'LazerProOk1',fact:'Гитара',tg:'ntmarki'},
+  {name:'Жупиков Федор Максимович',nick:'RedstoneLord',fact:'Рокер',tg:'zhupikoff',role:'Староста'},
+  {name:'Зюриков Андрей Артурович',nick:'zur1kov',fact:'Старс',tg:'zurikov'},
+  {name:'Ильюшин Тимофей Леонидович',nick:'Ficror',fact:'Спорт',tg:'ficror'},
+  {name:'Имануилов Кирилл Дмитриевич',nick:'ima-kir-study',fact:'Разработка',tg:'bird_6138'},
+  {name:'Калугин Александр Михайлович',nick:'sniper2450',fact:'Фигурист',tg:'Sniper2_45'},
+  {name:'Кальнин Давид Артемович',nick:'davidossss',fact:'Карьерист',tg:'happydolcevita'},
+  {name:'Капланян Арман Ованесович',nick:'KaplanianArman',fact:'Суворовец',tg:'Arman_Kaplanyan'},
+  {name:'Кириченко Артём Иванович',nick:'Art21kir',fact:'2.3',tg:'Art21kir'},
+  {name:'Новожилова Марьяна Сергеевна',nick:'maryasch',fact:'Чтение',tg:'cgsg67'},
+  {name:'Попова Екатерина Владимировна',nick:'EkaterinaPopova6',fact:'Вязание',tg:'epv08'}
 ];
 function renderStudentsPage(){
   const c=document.getElementById('content');
@@ -1123,8 +1125,8 @@ function renderStudentsPage(){
       <a class="btn" href="${esc(commitsUrl)}" target="_blank" rel="noopener">Коммиты ↗</a>
       <div class="student-overlay">
         <div class="name">${esc(s.name)}</div>
-        <a class="nick-link" href="${esc(ghUrl)}" target="_blank" rel="noopener">@${esc(s.nick)}</a><br>
-        <span class="fact-pill">${esc(s.fact)}</span>
+        <a class="nick-link" href="${esc(ghUrl)}" target="_blank" rel="noopener">@${esc(s.nick)}</a>${s.tg?` · <a class="nick-link" href="https://t.me/${esc(s.tg)}" target="_blank" rel="noopener">Telegram</a>`:''}<br>
+        <span class="fact-pill">${esc(s.fact)}</span>${s.role?`<span class="role-pill">${esc(s.role)}</span>`:''}
       </div>
     </div>`;
   }).join('');
