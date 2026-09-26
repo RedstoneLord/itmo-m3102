@@ -181,10 +181,8 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
       <a class="tab" id="tab-home" href="./">Главная</a>
       <a class="tab" id="tab-materials" href="#/materials">Материалы</a>
       <a class="tab" id="tab-schedule" href="#/schedule">Расписание</a>
-      <a class="tab" id="tab-homework" href="#/homework">Домашнее задание</a>
-      <a class="tab" id="tab-students" href="#/students">Студенты</a>
+      <a class="tab" id="tab-hwdl" href="#/hwdl">ДЗ и Дедлайны</a>
       <a class="tab" id="tab-other" href="#/other">Другое</a>
-      <a class="tab" id="tab-deadlines" href="./Дедлайны/">Дедлайны</a>
     </nav>
     <div class="navlinks">
       <a href="https://github.com/RedstoneLord/itmo-m3102" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
@@ -1138,8 +1136,20 @@ function renderOtherPage(){
   const c=document.getElementById('content');
   c.innerHTML=`<div class="intro"><h1>Другое</h1><p class="sub">Дополнительные разделы сайта.</p></div>
     <div class="grid">
+      <a class="card" data-go="students"><div class="ic">🎓</div><div class="meta"><div class="name">Студенты</div><div class="desc">Список группы и контакты</div></div></a>
       <a class="card" data-go="diagrams"><div class="ic">◇</div><div class="meta"><div class="name">Диаграммы</div><div class="desc">Конструктор диаграмм для конспектов</div></div></a>
       <a class="card" data-go="memes"><div class="ic">😂</div><div class="meta"><div class="name">Мемы</div><div class="desc">Мемы группы</div></div></a>
+    </div>`;
+  c.querySelectorAll('[data-go]').forEach(el=>el.onclick=e=>{e.preventDefault();location.hash='#/'+el.dataset.go;});
+}
+
+/* ---------- страница «ДЗ и Дедлайны» ---------- */
+function renderHwDeadlinesPage(){
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="intro"><h1>ДЗ и Дедлайны</h1><p class="sub">Задания по предметам и общие сроки сдачи.</p></div>
+    <div class="grid">
+      <a class="card" data-go="homework"><div class="ic">✎</div><div class="meta"><div class="name">Домашнее задание</div><div class="desc">Задания по предметам, выполнение видно только вам</div></div></a>
+      <a class="card deadline-card" href="./Дедлайны/"><div class="ic">ДД</div><div class="meta"><div class="name">Дедлайны</div><div class="desc">Сроки сдачи и важные даты</div></div></a>
     </div>`;
   c.querySelectorAll('[data-go]').forEach(el=>el.onclick=e=>{e.preventDefault();location.hash='#/'+el.dataset.go;});
 }
