@@ -6,11 +6,11 @@ const SOURCE = `<!DOCTYPE html><html><head><link rel="manifest" href="manifest.w
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 </script></body></html>`;
 
-it('патч классического сайта группы: без service worker и манифеста, с переключателем стиля в <head>', () => {
+it('патч классического сайта группы: без манифеста, с его service worker и переключателем стиля в <head>', () => {
   const html = patchClassicIndex(SOURCE);
-  expect(html).not.toContain('sw.js');
   expect(html).not.toContain('manifest');
-  expect(html).toContain("window.addEventListener('load', () => Promise.resolve())");
+  // Его офлайн-режим сохраняем: регистрация воркера остаётся как есть
+  expect(html).toContain("navigator.serviceWorker.register('./sw.js')");
   expect(html.indexOf('./switch/site-switch.js')).toBeLessThan(html.indexOf('</head>'));
   expect(html).toContain('<html data-site-style="classic">');
 });
