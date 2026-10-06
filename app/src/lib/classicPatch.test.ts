@@ -15,6 +15,14 @@ it('патч классического сайта группы: без service 
   expect(html).toContain('<html data-site-style="classic">');
 });
 
+it('патч классического сайта группы: список скрытых файлов приводится к нижнему регистру (иначе AGENTS.md и CLAUDE.md видны)', () => {
+  const html = patchClassicIndex(
+    "<html><head></head><body><script>const HIDDEN_FILE_NAMES=['site.css','sw.js', 'CLAUDE.md', 'AGENTS.md', '.git-blame-ignore-revs'];</script></body></html>",
+  );
+  expect(html).toContain("['site.css','sw.js', 'claude.md', 'agents.md', '.git-blame-ignore-revs']");
+  expect(html).toContain('HIDDEN_FILE_NAMES');
+});
+
 it('патч классического сайта группы: разметка без </head> — понятная ошибка, а не тихо сломанная копия', () => {
   expect(() => patchClassicIndex('<html></html>')).toThrow(/patchClassicIndex/);
 });

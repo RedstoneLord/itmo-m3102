@@ -3,6 +3,8 @@
  * репозитория не меняем, все отличия — только в собранной копии. Что и зачем:
  *  - service worker не регистрируем: у нас тот же домен и свой воркер, два воркера делили бы кеши;
  *  - манифест убираем: «установить как приложение» остаётся за приложением (/app/);
+ *  - список скрытых файлов его «Материалов» приводим к нижнему регистру: он сравнивает с `base.toLowerCase()`, поэтому
+ *    записи «AGENTS.md» и «CLAUDE.md» никогда не совпадали и эти файлы показывались как материалы;
  *  - помечаем сторону (data-site-style) и подключаем общий переключатель стиля (switch/site-switch.js, лежит рядом) — в
  *    <head>, чтобы слой перехода появился до первой отрисовки.
  */
@@ -12,6 +14,7 @@ export function patchClassicIndex(html: string): string {
   return html
     .replace(/navigator\.serviceWorker\.register\([^)]*\)(\.catch\(\(\) => \{\}\))?/g, 'Promise.resolve()')
     .replace(/<link[^>]*rel=["']manifest["'][^>]*>\s*/g, '')
+    .replace(/(HIDDEN_FILE_NAMES\s*=\s*\[)([^\]]*)(\])/, (_all, open: string, list: string, close: string) => open + list.toLowerCase() + close)
     .replace(/<html(\s|>)/, '<html data-site-style="classic"$1')
     .replace('</head>', '    <script src="./switch/site-switch.js" charset="utf-8"></script>\n  </head>');
 }
