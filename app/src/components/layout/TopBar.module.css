@@ -1,0 +1,69 @@
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* На всю ширину колонки, а не по центральной колонке страницы: название раздела — сразу у боковой панели,
+   кнопки — у правого края (на широком экране иначе между панелью и названием большая пустота) */
+.inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--topbar-height);
+  padding: 0 var(--space-6);
+}
+
+.mobileBrand {
+  display: none;
+  margin-left: calc(-1 * var(--space-2));
+}
+
+/* «Открыть боковую панель»: иконка по левому краю содержимого, как текст под ней */
+.sidebarToggle {
+  display: none;
+  margin-left: calc(-1 * var(--space-2));
+}
+
+/* Только когда меню свёрнуто (атрибут — useSidebarAttribute в Sidebar.tsx) */
+:global(:root[data-sidebar='collapsed']) .sidebarToggle {
+  display: inline-flex;
+}
+
+.section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+@media (max-width: 767px) {
+  .inner {
+    padding: 0 var(--space-4);
+  }
+
+  .mobileBrand {
+    display: block;
+  }
+
+  .section,
+  .sidebarToggle,
+  :global(:root[data-sidebar='collapsed']) .sidebarToggle {
+    display: none;
+  }
+}
+
+/* Под сиянием шапка полупрозрачная — без backdrop-filter, он дорог на прокрутке */
+:global(:root[data-aurora='on']) .bar {
+  background: color-mix(in srgb, var(--color-bg) 86%, transparent);
+}

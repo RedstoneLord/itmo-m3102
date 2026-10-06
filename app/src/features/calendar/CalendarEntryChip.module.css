@@ -1,0 +1,99 @@
+.chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  width: 100%;
+  height: 22px;
+  padding: 0 var(--space-1-5);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+
+@media (hover: hover) {
+  .chip:hover {
+    background: var(--color-bg-hover);
+  }
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+}
+
+.eventDot {
+  background: var(--color-accent);
+}
+
+.deadlineIcon {
+  flex-shrink: 0;
+  color: var(--color-warning);
+}
+
+.deadline {
+  color: var(--color-warning);
+}
+
+/* ДЗ группы — цветом акцента, дедлайны — предупреждением */
+.homeworkIcon {
+  flex-shrink: 0;
+  color: var(--color-accent-text);
+}
+
+.time {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.deadline .time {
+  color: var(--color-warning);
+}
+
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Телефон: в клетке ~48px ни время, ни название не помещаются — вместо строки цветная полоска по типу пары
+   (как в мобильных календарях), подробности — по нажатию на день (MonthCell) */
+@media (max-width: 767px) {
+  .monthChip {
+    height: 5px;
+    padding: 0;
+    pointer-events: none;
+  }
+
+  .monthChip .dot {
+    width: 100%;
+    height: 5px;
+    border-radius: 999px;
+  }
+
+  .monthChip .time,
+  .monthChip .title,
+  .monthChip .deadlineIcon {
+    display: none;
+  }
+
+  .monthChip.deadline {
+    border-radius: 999px;
+    background: var(--color-warning);
+  }
+
+  .monthChip .homeworkIcon {
+    display: none;
+  }
+
+  .monthChip.homework {
+    border-radius: 999px;
+    background: var(--color-accent);
+  }
+}

@@ -1,0 +1,107 @@
+import { motion } from 'framer-motion';
+import { lazy, Suspense, useCallback, useState } from 'react';
+import { Outlet, useLocation } from 'react-router';
+import { ShortcutsDialog, useShortcutsKey } from '../../features/help/ShortcutsDialog';
+import { useProfileStore } from '../../features/group/profileStore';
+import { SearchDialog } from '../../features/search/SearchDialog';
+import { HomeworkDialog } from '../../features/homework/HomeworkDialog';
+import { useSearchShortcut } from '../../features/search/useSearchShortcut';
+import { useApplyAppearance } from '../../features/settings/appearance';
+import { useApplyTheme } from '../../features/settings/theme';
+import { useMorphLinks } from '../../lib/morph';
+import { usePrefersReducedMotion } from '../../lib/motion';
+import { useScrollMemory } from '../../lib/useScrollMemory';
+import { CelebrateHedgehog } from '../hedgehog/CelebrateHedgehog';
+import { RadioCapsule } from '../radio/RadioCapsule';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
+import { PageSkeleton } from '../ui/PageSkeleton';
+import { MobileNav } from './MobileNav';
+import { Sidebar, useSidebarAttribute, useSidebarShortcut } from './Sidebar';
+import { TopBar } from './TopBar';
+import styles from './AppShell.module.css';
+
+// Профиль студента — отдельным куском: грузится при первом открытии и дальше остаётся (для анимации закрытия)
+const StudentProfile = lazy(() => import('../../features/group/StudentProfile').then((module) => ({ default: module.StudentProfile })));
+
+/**
+ * Каркас приложения: боковое меню + верхняя панель + область страницы.
+ * На телефоне боковое меню скрывается, внизу появляется панель вкладок.
+ * <Outlet /> — место, куда React Router подставляет текущую страницу.
+ */
+export function AppShell() {
+  const [isSearchOpen, setSearchOpen] = useState(false);
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+  const location = useLocation();
+  const reduceMotion = usePrefersReducedMotion();
+
+  useApplyTheme();
+  useApplyAppearance();
+  useScrollMemory();
+  useSearchShortcut(openSearch);
+  useMorphLinks();
+  useShortcutsKey();
+  useSidebarShortcut();
+  useSidebarAttribute();
+
+  return (
+    <div className={styles.shell}>
+      {/* Кнопка, а не ссылка #main: адрес после # занят роутером */}
+      <button type="button" className="skip-link" onClick={() => document.getElementById('main')?.focus()}>
+        Перейти к содержимому
+      </button>
+      {/* Слой сияния за страницей (styles/aurora.css), выключается в настройках оформления */}
+      <div className="aurora" aria-hidden>
+        <i />
+        <i />
+        <i />
+      </div>
+      <Sidebar />
+
+      <div className={styles.column}>
+        <TopBar onOpenSearch={openSearch} />
+        <main id="main" tabIndex={-1} className={styles.content}>
+          {/*
+           * Нарочно без AnimatePresence/exit-анимации ухода: <Outlet/> — общий на всё
+           * приложение компонент, подписанный на роутер-контекст. Если "замороженную"
+           * уходящую копию держит в DOM AnimatePresence, её Outlet всё равно перерисуется
+           * на НОВЫЙ маршрут при смене контекста (контекст пробивает любые bailout'ы React) —
+           * так старая и новая страница на деле превращались в две копии одного и того же
+           * нового контента, что и читалось как "мигание"/задержавшаяся предыдущая страница.
+           * Поэтому уходящая страница просто убирается сразу — только новая мягко появляется.
+           */}
+          <motion.div
+            key={location.pathname}
+            // Страница видна сразу (с 0.5, а не из полной прозрачности): переход ощущается мгновенным
+            initial={reduceMotion ? false : { opacity: 0.5, y: 4 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.16, ease: [0.16, 1, 0.3, 1] } }}
+          >
+            {/* Сломалась страница — только она: меню и шапка работают, переход на другую — с чистого листа (key) */}
+            <ErrorBoundary>
+              <Suspense fallback={<PageSkeleton />}>
+                <Outlet />
+              </Suspense>
+            </ErrorBoundary>
+          </motion.div>
+        </main>
+      </div>
+
+      <MobileNav />
+      <RadioCapsule />
+      <SearchDialog open={isSearchOpen} onClose={() => setSearchOpen(false)} />
+      <HomeworkDialog />
+      <LazyStudentProfile />
+      <ShortcutsDialog />
+      <CelebrateHedgehog />
+    </div>
+  );
+}
+
+/** Подписка — здесь, а не в AppShell: иначе первое открытие профиля перерисовало бы всё приложение */
+function LazyStudentProfile() {
+  const used = useProfileStore((state) => state.login !== null || state.used);
+  return used ? (
+    <Suspense fallback={null}>
+      <StudentProfile />
+    </Suspense>
+  ) : null;
+}

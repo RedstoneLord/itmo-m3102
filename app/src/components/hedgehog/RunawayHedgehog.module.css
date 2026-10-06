@@ -1,0 +1,25 @@
+/* Весь экран под шапкой; на телефоне — без нижнего меню. Нажатия проходят насквозь, кроме самого ёжика */
+.area {
+  position: fixed;
+  inset: calc(var(--topbar-height) + var(--space-4)) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom));
+  z-index: var(--z-dropdown);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .area {
+    bottom: calc(var(--mobile-nav-height) + var(--space-2) + env(safe-area-inset-bottom));
+  }
+}
+
+.runner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+}
+
+/* Как на дорожке: сальто вокруг середины, приседание — от земли */
+.jumper {
+  transform-origin: 50% 65%;
+}

@@ -1,0 +1,47 @@
+.header {
+  display: flex;
+  /* Узкий телефон: длинный заголовок не сжимается кнопками — они переносятся под него */
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.text {
+  display: flex;
+  flex: 1 1 16rem;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 1rem + 1.2vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.reveal {
+  animation: clip-reveal 480ms var(--ease-luxury-out);
+}
+
+@keyframes clip-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+.subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+}

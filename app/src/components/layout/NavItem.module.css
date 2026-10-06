@@ -1,0 +1,83 @@
+.link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .link:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text);
+  }
+}
+
+.icon {
+  position: relative;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition:
+    color var(--duration-fast) var(--ease),
+    transform var(--duration-base) var(--ease-luxury-spring);
+}
+
+@media (hover: hover) {
+  .link:hover .icon {
+    color: var(--color-text-secondary);
+    transform: translateX(1px) scale(1.08);
+  }
+}
+
+/* Подсветка активного пункта — переезжает между пунктами (framer-motion layoutId) */
+.pill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-accent-soft);
+}
+
+.label {
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active {
+  background: transparent;
+  color: var(--color-accent-text);
+  font-weight: var(--weight-medium);
+}
+
+@media (hover: hover) {
+  .active:hover {
+    background: transparent;
+    color: var(--color-accent-text);
+    font-weight: var(--weight-medium);
+  }
+}
+
+.active .icon {
+  color: var(--color-accent);
+}
+
+@media (hover: hover) {
+  .active:hover .icon {
+    color: var(--color-accent);
+  }
+}
+
+:global(:root[data-glow='on']) .pill {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 22%, transparent),
+    0 0 18px -6px color-mix(in srgb, var(--color-accent) 60%, transparent);
+}

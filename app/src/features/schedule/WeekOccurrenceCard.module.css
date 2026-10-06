@@ -1,0 +1,198 @@
+.card {
+  container-type: inline-size;
+  position: relative;
+  padding: var(--space-2) var(--space-2-5) var(--space-2) 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  /* Лёгкий оттенок цветом типа пары — карточки читаются как цветные плашки, без жёстких рамок */
+  background: color-mix(in srgb, var(--type-color, transparent) 7%, transparent);
+  cursor: pointer;
+  box-shadow: 0 0 #0000;
+  /* y/scale на hover/tap — Framer Motion spring (WeekOccurrenceCard.tsx), не CSS:
+     иначе карточка в покое ловит свой stacking context и запирает в себе popover деталей */
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    box-shadow 140ms var(--ease-luxury-out);
+}
+
+@media (hover: hover) {
+  .card:not(.now):not(.cancelled):hover {
+    background: var(--color-bg-hover);
+    box-shadow: var(--shadow-xs);
+  }
+}
+
+/* Полоска типа пары внутри карточки — не изгибается на скруглённых углах, как border-left */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 5px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--type-color, transparent);
+}
+
+.card + .card {
+  margin-top: var(--space-2);
+}
+
+/* В сетке по часам (WeekView): карточка занимает свой отрезок времени и непрозрачна — цветная плашка поверх
+   линий часов: оттенок типа пары, замешанный в цвет поверхности, и тонкая рамка того же цвета */
+.filled {
+  height: 100%;
+  overflow: hidden;
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--type-color, transparent) 13%, var(--color-bg-elevated));
+}
+
+@media (hover: hover) {
+  .filled:not(.now):not(.cancelled):hover {
+    background: color-mix(in srgb, var(--type-color, transparent) 20%, var(--color-bg-elevated));
+  }
+}
+
+/* Прошедшая пара: плашка остаётся, тише только её содержимое и цвет — неделя не превращается в серые плиты */
+.past {
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--type-color, transparent) 5%, var(--color-bg-elevated));
+}
+
+.past > *,
+.past::before {
+  opacity: 0.55;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+
+.past:focus-visible > * {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .past:hover > *,
+  .past:hover::before {
+    opacity: 1;
+  }
+}
+
+.filled .subject {
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/* Кнопка на всю карточку: под текстом, над фоном; фокус — рамка вокруг карточки */
+.open {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.open:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Меню «⋯» — поверх кнопки карточки, своё нажатие */
+.menu {
+  position: relative;
+  z-index: 1;
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+.time {
+  white-space: nowrap;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Название — до двух строк: в узкой колонке «Дискретная …» ничего не говорит */
+.subject {
+  display: -webkit-box;
+  margin-top: var(--space-1);
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  /* Переносим по словам; слово, которое целиком не влезает, — рвём, а не обрезаем */
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+/* Узкая колонка (телефон, 7 дней): шрифт мельче и до трёх строк — длинные названия целиком, без «Дискретн…» */
+@container (max-width: 140px) {
+  .subject {
+    font-size: var(--text-xs);
+    /* Только здесь — с дефисом: в широкой колонке «математи-ка» при свободном месте выглядит ошибкой */
+    hyphens: auto;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-0-5);
+  font-size: var(--text-2xs);
+  color: var(--color-text-muted);
+}
+
+.room {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.badges {
+  display: flex;
+  margin-top: var(--space-1-5);
+}
+
+.badges:empty {
+  display: none;
+}
+
+.note {
+  margin-top: var(--space-1-5);
+  font-size: var(--text-2xs);
+  color: var(--color-text-muted);
+}
+
+/* Текущее занятие — самое сильное выделение на странице */
+.now {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.now .subject,
+.now .time {
+  color: var(--color-accent-text);
+}
+
+.cancelled {
+  background: var(--color-bg-subtle);
+}
+
+.cancelled .subject {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-border-hover);
+}

@@ -1,0 +1,148 @@
+/*
+ * Слой окна поверх страницы (портал в body). Анимируются только opacity и transform — их рисует композитор,
+ * поэтому открытие и закрытие идут ровно, даже если главный поток занят. Фон — без blur: размытие всей страницы
+ * пересчитывалось бы каждый кадр, на телефоне это рывки.
+ */
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  overscroll-behavior: contain;
+}
+
+/* Окно поиска — ближе к верху: под ним список результатов меняет высоту */
+.bareLayer {
+  align-items: start;
+  padding-top: 12vh;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--color-backdrop);
+  animation: backdrop-in 200ms var(--ease) both;
+}
+
+.dialog {
+  position: relative;
+  width: 100%;
+  max-height: calc(100dvh - var(--space-16));
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  box-shadow: var(--shadow-modal);
+  outline: none;
+  animation: dialog-in 260ms var(--ease-luxury-out) both;
+  will-change: transform, opacity;
+}
+
+/* Уход — короче появления и сразу (стандартная кривая): с медленным стартом окно «застывало» */
+.closing .dialog {
+  animation: dialog-out 170ms var(--ease) both;
+}
+
+.closing .backdrop {
+  animation: backdrop-out 170ms var(--ease) both;
+}
+
+.sm {
+  max-width: 400px;
+}
+
+.md {
+  max-width: 520px;
+}
+
+.lg {
+  max-width: 680px;
+}
+
+.bare {
+  max-width: 560px;
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - var(--space-16));
+}
+
+.header {
+  padding: var(--space-5) var(--space-12) 0 var(--space-5);
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+.description {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.body {
+  padding: var(--space-5);
+  overflow-y: auto;
+}
+
+.header + .body {
+  padding-top: var(--space-4);
+}
+
+.bareBody {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+}
+
+/* Появление: поднимается на 8px и чуть вырастает, без пружины и перехлёста (перехлёст выглядел «сгенерированно») */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+@keyframes dialog-out {
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes backdrop-out {
+  to {
+    opacity: 0;
+  }
+}

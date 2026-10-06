@@ -1,0 +1,273 @@
+/* Общие стили для примеров на странице Design system */
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.field {
+  width: 220px;
+}
+
+.wide {
+  width: 100%;
+  max-width: 560px;
+}
+
+.caption {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Типографика */
+.typeSample {
+  flex: 1;
+  min-width: 0;
+  line-height: var(--leading-tight);
+}
+
+/* Цвета */
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.swatch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  min-width: 0;
+}
+
+.swatchColor {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+/* Отступы и скругления */
+.spacingList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.spacingRow {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.spacingBar {
+  height: 8px;
+  border-radius: 2px;
+  background: var(--color-accent);
+  opacity: 0.4;
+}
+
+.radiusBox {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 44px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-subtle);
+  font-size: var(--text-2xs);
+  color: var(--color-text-muted);
+}
+
+/* Загрузка */
+.loadingArea {
+  margin-top: var(--space-3);
+}
+
+/* Бренд */
+.logo {
+  display: inline-block;
+  width: 160px;
+  height: 27px;
+  background: var(--color-text);
+  mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.logoAccent {
+  background: var(--color-accent);
+}
+
+.greeting {
+  margin: 0;
+  font-size: 32px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.03em;
+}
+
+.greetingPeriod {
+  color: var(--color-accent);
+}
+
+/* Движение */
+.track {
+  position: relative;
+  width: 196px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--color-bg-subtle);
+  cursor: pointer;
+}
+
+.dot {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 4px 12px -4px var(--color-accent);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.swapCard {
+  min-width: 220px;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+  font-weight: var(--weight-semibold);
+}
+
+.staggerGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 48px);
+  gap: var(--space-2);
+}
+
+.staggerCell {
+  display: grid;
+  place-items: center;
+  height: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-elevated);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+/* Демо блоков на всю ширину: без нижнего отступа, который у них на главной */
+.blocks {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.blocks.blocks > * {
+  margin-bottom: 0;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pill {
+  position: relative;
+  padding: var(--space-2) var(--space-3) var(--space-2) 16px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--type-color) 7%, transparent);
+  font-size: var(--text-sm);
+}
+
+.pill::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 6px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--type-color);
+}
+
+/* Конспект в демо — на всю ширину, как в читалке, а не по ширине содержимого */
+.wide {
+  width: 100%;
+}
+
+/* ---------- Оформление и свет ---------- */
+.accentRow,
+.glowRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.accentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 12px 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.accentChip span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--chip);
+  box-shadow: 0 0 10px -2px var(--chip);
+}
+
+.accentChip[data-active='true'] {
+  border-color: var(--chip);
+}
+
+.glowCard {
+  display: grid;
+  gap: 2px;
+  width: 170px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg-elevated);
+}
+
+.glowCard small {
+  color: var(--color-text-muted);
+}
+
+.glowIndex {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--color-accent-text);
+}
+
+.heroDemo {
+  font-size: 2rem;
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+}

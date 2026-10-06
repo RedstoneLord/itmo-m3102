@@ -1,0 +1,64 @@
+.root {
+  display: inline-flex;
+  /* Не помещается (телефон, много вариантов) — листается вбок пальцем, а не обрезается */
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: var(--space-0-5);
+  padding: var(--space-0-5);
+  border-radius: var(--radius-md);
+  background: var(--color-control-track);
+}
+
+.root::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  flex-shrink: 0;
+}
+
+.item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 var(--space-2-5);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .item:hover {
+    color: var(--color-text);
+  }
+}
+
+.active {
+  color: var(--color-text);
+}
+
+/* Один общий «ползунок» — он и переезжает между кнопками (см. layoutId в SegmentedControl.tsx) */
+.thumb {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-control-thumb);
+  box-shadow: var(--shadow-xs);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}

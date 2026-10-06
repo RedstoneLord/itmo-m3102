@@ -1,0 +1,57 @@
+.bar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .bar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-border);
+  }
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-0-5);
+  font-size: 11px;
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.active {
+  color: var(--color-accent);
+}
+
+/* Мягкая подложка под активной вкладкой — переезжает между вкладками */
+.pill {
+  position: absolute;
+  inset: 6px 10px;
+  border-radius: var(--radius-lg);
+  background: var(--color-accent-soft);
+}
+
+.iconWrap,
+.text {
+  position: relative;
+  display: grid;
+}
+
+/* Название текущего раздела на месте «Ещё» бывает длинным («Домашнее задание») — в одну строку */
+.text {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

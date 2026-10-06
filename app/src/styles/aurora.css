@@ -1,0 +1,233 @@
+/*
+ * «Сияние» — слой первого впечатления (ветка design-aurora). Всё включается атрибутами на <html>
+ * из настроек оформления (features/settings/appearance.ts) и выключается начисто:
+ *   data-aurora="on" — пятна света за страницей (оттенки одного акцента), сетка, шум;
+ *   data-glow="on"   — подсветка под курсором на карточках, светящиеся кнопки, многослойные тени.
+ * Принципы (исследования первого впечатления, стиль Linear/Vercel/Raycast): структура страницы
+ * привычная, «вау» — в свете и глубине. Анимируются только transform/opacity, никаких blur/backdrop-filter
+ * на прокрутке, без «пружинок»; при «уменьшить движение» всё зацикленное стоит.
+ */
+
+/* ---------- слой сияния за страницей ---------- */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  --aurora-strength: 0.5;
+}
+
+:root[data-theme='dark'] .aurora {
+  --aurora-strength: 0.7;
+}
+
+/* Чтение конспекта: сияние гаснет — не отвлекает от текста (отзыв группы). Ставит LectureNoteViewPage */
+.aurora {
+  transition: opacity 400ms var(--ease);
+}
+
+:root[data-reading] .aurora {
+  opacity: 0;
+}
+
+.aurora i {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--glow) 60%, transparent), transparent 72%);
+  opacity: var(--aurora-strength);
+  animation: aurora-drift 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.aurora i:nth-child(1) {
+  --glow: var(--glow-a);
+  top: -32vmax;
+  left: -4vmax;
+}
+
+.aurora i:nth-child(2) {
+  --glow: var(--glow-b);
+  top: -36vmax;
+  right: -22vmax;
+  animation-duration: 23s;
+  animation-delay: -7s;
+}
+
+.aurora i:nth-child(3) {
+  --glow: var(--glow-c);
+  bottom: -52vmax;
+  left: 18vmax;
+  opacity: calc(var(--aurora-strength) * 0.7);
+  animation-duration: 29s;
+  animation-delay: -15s;
+}
+
+/* Живой фон: appearance.ts пишет --bg-x/--bg-y (курсор, −1…1) и --bg-s (прокрутка, 0…1). У пятен разная «глубина»:
+   дальнее едва двигается, ближнее — заметнее. translate — отдельное свойство и не спорит с дрейфом transform */
+.aurora i:nth-child(1) {
+  translate: calc(var(--bg-x, 0) * 6vmax) calc(var(--bg-y, 0) * 5vmax - var(--bg-s, 0) * 14vmax);
+}
+
+.aurora i:nth-child(2) {
+  translate: calc(var(--bg-x, 0) * -9vmax) calc(var(--bg-y, 0) * -7vmax - var(--bg-s, 0) * 28vmax);
+}
+
+.aurora i:nth-child(3) {
+  translate: calc(var(--bg-x, 0) * 7vmax) calc(var(--bg-y, 0) * 9vmax - var(--bg-s, 0) * 42vmax);
+}
+
+@keyframes aurora-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(16vmax, 11vmax, 0) scale(1.3);
+  }
+}
+
+/* Тонкая сетка, тающая к низу экрана — «чертёжный» фон, как у Linear/Vercel */
+.aurora::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-text) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-text) 5%, transparent) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, #000 0%, transparent 75%);
+}
+
+/* Зерно — снимает «пластиковость» градиентов */
+.aurora::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.045;
+}
+
+:root[data-aurora='off'] .aurora {
+  display: none;
+}
+
+/* За шапкой главной — отдельный «прожектор» света: первое, что видно при открытии */
+:root[data-aurora='on'] .hero {
+  position: relative;
+}
+
+:root[data-aurora='on'] .hero::before {
+  content: '';
+  position: absolute;
+  /* Только за заголовком: не уходит под карточки ниже, иначе «плиты» света накладываются */
+  inset: -80px -40px 0 -40px;
+  z-index: -1;
+  background: radial-gradient(ellipse 50% 70% at 22% 40%, color-mix(in srgb, var(--glow-a) 18%, transparent), transparent 72%);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  pointer-events: none;
+}
+
+/* Главный заголовок — сплошной текст (градиентный перелив по тексту — штамп сгенерированных сайтов),
+   светится только акцентная точка в конце */
+:root[data-aurora='on'] .hero-title > * {
+  text-shadow: 0 0 18px color-mix(in srgb, var(--color-accent) 70%, transparent);
+}
+
+/* Карточки — почти сплошные: сияние фона не мешается с их содержимым */
+:root[data-aurora='on'] [data-spot] {
+  background-color: color-mix(in srgb, var(--color-bg-elevated) 94%, transparent);
+}
+
+/* ---------- свечение карточек ---------- */
+/* :where — нулевая специфичность: карточка, у которой своя position, её сохраняет */
+:where(:root[data-glow='on'] [data-spot]) {
+  position: relative;
+}
+
+:root[data-glow='on'] [data-spot] {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 5%, transparent),
+    0 1px 2px rgb(0 0 0 / 0.06),
+    0 10px 30px -18px rgb(0 0 0 / 0.35);
+  /* Отпускание медленнее нажатия (Josh Comeau, «3D button»): вниз щелчком, обратно — мягко */
+  transition:
+    transform 320ms var(--ease-luxury-out),
+    box-shadow 220ms var(--ease-luxury-out),
+    border-color 220ms var(--ease-luxury-out),
+    background-color 220ms ease;
+}
+
+/* Рамка, которая загорается там, где курсор: градиент в слое ::after, маской оставлена только полоска
+   толщиной в границу (mask-composite: exclude). Появляется через opacity — без перерисовки тени.
+   data-spot="own" — у карточки свои ::after и свет (блок «Следующая пара») */
+:root[data-glow='on'] [data-spot]:not([data-spot='own'])::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: radial-gradient(
+    220px circle at var(--mx, 50%) var(--my, 50%),
+    var(--color-accent),
+    color-mix(in srgb, var(--color-accent) 30%, transparent) 45%,
+    transparent 75%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: 0;
+  transition: opacity 260ms var(--ease-luxury-out);
+  pointer-events: none;
+}
+
+/* Наведение — только там, где есть настоящий курсор: на телефоне :hover «залипает» после тапа */
+@media (hover: hover) and (pointer: fine) {
+  :root[data-glow='on'] [data-spot]:hover::after {
+    opacity: 1;
+  }
+
+  /* Пятно света следует за курсором (координаты пишет appearance.ts), граница наливается акцентом */
+  :root[data-glow='on'] [data-spot]:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
+    background-image: radial-gradient(
+      320px circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in srgb, var(--color-accent) 11%, transparent),
+      transparent 65%
+    );
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 8%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--color-accent) 14%, transparent),
+      0 14px 40px -16px color-mix(in srgb, var(--color-accent) 55%, transparent);
+  }
+}
+
+/* Фокус с клавиатуры — та же рамка целиком и мягкое свечение вокруг */
+:root[data-glow='on'] [data-spot]:focus-visible::after {
+  --mx: 50%;
+  --my: 50%;
+  opacity: 1;
+}
+
+:root[data-glow='on'] [data-spot]:focus-visible {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+/* ---------- всё зацикленное стоит, если просили меньше движения ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .aurora i {
+    animation: none;
+  }
+}
+
+@media print {
+  .aurora {
+    display: none;
+  }
+}

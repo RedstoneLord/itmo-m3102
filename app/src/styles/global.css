@@ -1,0 +1,285 @@
+/* Базовые стили для всего приложения. Компонентные стили — в *.module.css рядом с компонентами. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Без серо-синего прямоугольника браузера при касании (телефон): нажатие — и сразу переключение */
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  font-feature-settings: 'cv11'; /* однокомпонентная «a» в Inter — мягче и спокойнее */
+  color: var(--color-text);
+  background: var(--color-bg-subtle);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Выделение текста — заметно (accent-soft в 10–16% почти не видно), но текст под ним читается */
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+:root[data-theme='dark'] ::selection {
+  background: color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+/* Скрыть визуально, но оставить для скринридеров */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Переходы по якорям (содержание конспекта, страницы PDF) — плавно */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Смена темы перетеканием: старая и новая картинка страницы плавно сменяют друг друга */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Каскад: карточки сетки проявляются по очереди. Тихо — сдвиг 4px без масштаба, шаг 30 мс, не дольше
+   шести карточек: длинный список не должен «ползти» полсекунды. className="stagger" на сетке */
+.stagger > * {
+  animation: stagger-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.stagger > :nth-child(2) {
+  animation-delay: 30ms;
+}
+
+.stagger > :nth-child(3) {
+  animation-delay: 60ms;
+}
+
+.stagger > :nth-child(4) {
+  animation-delay: 90ms;
+}
+
+.stagger > :nth-child(5) {
+  animation-delay: 120ms;
+}
+
+.stagger > :nth-child(n + 6) {
+  animation-delay: 150ms;
+}
+
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Нажатие на карточку — лёгкое «проседание» (у кнопок своё, в Button.tsx). Большой карточке хватает
+   0.985: 0.97, как у кнопок, на её размере уже «проваливается». Вниз — 80 мс, обратно — плавно */
+:is(a, button, [role='button'])[data-spot] {
+  transition: transform 320ms var(--ease-luxury-out);
+}
+
+:root :is(a, button, [role='button'])[data-spot]:active {
+  transform: scale(0.985);
+  transition-duration: 80ms;
+}
+
+/* Фокус с клавиатуры на карточках — кольцо в цвет акцента */
+[data-spot]:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* «Перейти к содержимому» — первая остановка Tab, видна только при фокусе */
+.skip-link {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 100;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  transform: translateY(-160%);
+  cursor: pointer;
+}
+
+.skip-link:focus-visible {
+  transform: none;
+}
+
+/* ---------- Печать и «Сохранить как PDF»: A4, светлая тема (tokens.css), колонтитул ---------- */
+@page {
+  size: A4;
+  margin: 16mm 14mm 18mm;
+
+  /* Водяной знак — логотип М3102: SVG с размером в мм (фон в поле страницы Chrome не печатает, а у PNG в content
+     размер не задать). Делается из src/assets/logo-mask.webp — public/pdf-watermark.png и .svg */
+  @bottom-left {
+    content: url('/pdf-watermark.svg') '   lazerprook1.github.io/itmo-m3102';
+    white-space: pre;
+    font-family: 'Inter Variable', Inter, sans-serif;
+    font-size: 8pt;
+    color: #8a8a93;
+  }
+
+  @bottom-right {
+    content: counter(page) ' / ' counter(pages);
+    font-family: 'Inter Variable', Inter, sans-serif;
+    font-size: 8pt;
+    color: #8a8a93;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  /* Ничего не обрезается по краю листа: прокрутка вбок на бумаге не работает. Кроме формул: KaTeX прячет
+     обрезкой «хвосты» знака корня и дробей — без неё через страницу тянется линия */
+  main :not(.katex):not(.katex *) {
+    overflow: visible !important;
+  }
+
+  pre,
+  pre code {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere;
+  }
+
+  table {
+    width: 100%;
+    font-size: 10pt;
+  }
+
+  img,
+  svg {
+    max-width: 100% !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+
+  figure,
+  pre,
+  table,
+  img,
+  blockquote,
+  [data-callout] {
+    break-inside: avoid;
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+/* Перетекание заголовка карточки в заголовок страницы (lib/morph.ts). Пока снимается старое состояние
+   (класс morph-from), у заголовка текущей страницы имени нет — два одинаковых имени браузер не принимает */
+:root:not(.morph-from) [data-morph-target] {
+  view-transition-name: morph-title;
+}
+
+/* Переход по ссылке должен ощущаться мгновенным: заголовок перетекает быстро, страница меняется ещё быстрее
+   (420 мс у смены темы здесь давали «залипание» на телефоне) */
+:root.morphing::view-transition-old(root),
+:root.morphing::view-transition-new(root) {
+  animation-duration: 160ms;
+}
+
+::view-transition-group(morph-title) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Текст масштабируется по высоте и прижат влево — без растягивания, когда ширина карточки и заголовка разная */
+::view-transition-old(morph-title),
+::view-transition-new(morph-title) {
+  width: auto;
+  height: 100%;
+}
+
+/* Искры и конфетти за «сделано» (lib/celebrate.ts) — поверх всего, не ловят клики */
+.burst-piece {
+  position: fixed;
+  z-index: 1000;
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* Пометки в конспекте (features/materials/NoteMarks.tsx) — как маркер по бумаге */
+::highlight(note-marks) {
+  background-color: color-mix(in srgb, var(--color-warning) 28%, transparent);
+}

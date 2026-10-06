@@ -1,0 +1,300 @@
+.page {
+  max-width: 760px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.label {
+  display: block;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+}
+
+.description {
+  margin-top: var(--space-0-5);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+}
+
+.dateInput {
+  width: 180px;
+}
+
+@media (max-width: 767px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+}
+
+.hiddenFileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.importError {
+  margin-top: calc(-1 * var(--space-3));
+  padding-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.syncIcon {
+  transition: transform var(--duration-base) var(--ease-luxury-out);
+}
+
+/* Вращение вместо дефолтного спиннера — та же иконка действия, просто крутится, пока идёт запрос */
+.syncIconSpinning {
+  animation: sync-spin 1s linear infinite;
+}
+
+@keyframes sync-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.syncResult {
+  margin-top: calc(-1 * var(--space-3));
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.syncResultTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+}
+
+.syncResultStats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+}
+
+.syncResultStats > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.syncResultStats dt {
+  color: var(--color-text-muted);
+}
+
+.syncResultStats dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.syncResultWarning {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-warning);
+}
+
+.syncResultList {
+  margin: var(--space-1-5) 0 0;
+  padding-left: var(--space-5);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.syncResultList li + li {
+  margin-top: var(--space-1);
+}
+
+.tokenFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+/* ---------- выбор акцента ---------- */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.swatch {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--swatch);
+  color: #fff;
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.12),
+    0 2px 8px -3px var(--swatch);
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) {
+  .swatch:hover {
+    transform: scale(1.1);
+  }
+}
+
+.swatch[aria-checked='true'] {
+  box-shadow:
+    0 0 0 2px var(--color-bg),
+    0 0 0 4px var(--swatch),
+    0 4px 14px -4px var(--swatch);
+}
+
+.swatch:focus-within,
+.swatch:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.pipette {
+  color: var(--color-text-secondary);
+}
+
+/* ---------- свой цвет: окно под пипеткой ---------- */
+.pickerRoot {
+  position: relative;
+}
+
+.picker {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: var(--space-3);
+  width: min(280px, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+  box-shadow: var(--shadow-modal);
+  transform-origin: top right;
+}
+
+.pickerPreview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pickerPreview > span {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.pickerPreview strong {
+  display: block;
+  font-size: var(--text-sm);
+}
+
+.pickerPreview small {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.pickerLabel {
+  display: grid;
+  gap: var(--space-1-5);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.pickerRange {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.pickerRange::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+  appearance: none;
+}
+
+.pickerRange::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+
+.offlineButtons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* Полоска прогресса «Работы без интернета» — тонкая, акцентом, без системного вида */
+.offlineProgress {
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin: calc(-1 * var(--space-2)) 0 var(--space-3);
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-bg-subtle);
+  appearance: none;
+}
+
+.offlineProgress::-webkit-progress-bar {
+  background: var(--color-bg-subtle);
+}
+
+.offlineProgress::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--color-accent);
+  transition: width var(--duration-base) var(--ease);
+}
+
+.offlineProgress::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--color-accent);
+}
+
+.offlineUsage {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}

@@ -1,0 +1,139 @@
+.block {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-10);
+  padding: var(--space-5) var(--space-6);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+/* Едва заметное пятно света, идущее за курсором — координаты пишет useCursorGlow */
+.block::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(240px circle at var(--glow-x, 50%) var(--glow-y, 50%), var(--color-accent), transparent 70%);
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease);
+  pointer-events: none;
+}
+
+/* Таблетка типа пары, как у карточек расписания */
+.block::after {
+  content: '';
+  position: absolute;
+  top: var(--space-5);
+  bottom: var(--space-5);
+  left: 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--type-color, transparent);
+  transform-origin: top;
+  animation: pill-in 600ms var(--ease-luxury-out) 150ms both;
+}
+
+@keyframes pill-in {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@media (hover: hover) {
+  .block:hover::before {
+    opacity: 0.05;
+  }
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-2);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.now .eyebrow {
+  color: var(--color-accent-text);
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.details {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.details span {
+  white-space: nowrap;
+}
+
+.details span + span::before {
+  content: '·';
+  margin: 0 var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.countdown {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .block {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    /* Слева больше места: там таблетка типа пары */
+    padding: var(--space-4) var(--space-4) var(--space-4) 24px;
+  }
+
+  .block::after {
+    top: var(--space-4);
+    bottom: var(--space-4);
+    left: 10px;
+  }
+
+  /* «Следующая пара завтра в 11:30» — своей строкой, детали — следующей, без точки в начале */
+  .when {
+    flex-basis: 100%;
+    margin-bottom: 2px;
+  }
+
+  .details .when + span::before {
+    content: none;
+  }
+}
+
+.when {
+  color: var(--color-text);
+  font-weight: var(--weight-medium);
+}

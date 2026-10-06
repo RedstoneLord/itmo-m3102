@@ -1,0 +1,49 @@
+.button {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  /* transform принадлежит Framer Motion (whileTap в IconButton.tsx) — не CSS */
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .button:hover:not(:disabled) {
+    background: var(--color-bg-hover);
+    color: var(--color-text);
+  }
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sm {
+  width: 28px;
+  height: 28px;
+}
+
+.md {
+  width: 32px;
+  height: 32px;
+}
+
+/* Палец — не курсор: на сенсорных экранах кнопка-иконка крупнее (32 → 40, 28 → 36), иконка та же */
+@media (pointer: coarse) {
+  .sm {
+    width: 36px;
+    height: 36px;
+  }
+
+  .md {
+    width: 40px;
+    height: 40px;
+  }
+}

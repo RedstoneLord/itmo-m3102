@@ -1,0 +1,108 @@
+import type { CSSProperties } from 'react';
+import { AnimatedNumber } from '../../components/ui/AnimatedNumber';
+import { Badge } from '../../components/ui/Badge';
+import { cn } from '../../lib/cn';
+import { formatDuration } from '../../lib/dates';
+import { useCursorGlow } from '../../lib/useCursorGlow';
+import { classTypeColorVar, CLASS_TYPE_LABELS } from '../schedule/labels';
+import type { ClassDetails, ClassType } from '../../types/models';
+import { useSubjectName } from '../subjects/subjectsStore';
+import type { ClassStatus } from './classStatus';
+import styles from './NextClassBlock.module.css';
+
+interface NextClassBlockProps {
+  status: ClassStatus;
+}
+
+/**
+ * Главный блок Today: что идёт сейчас или что будет дальше.
+ * Единственный блок в рамке на странице — чтобы сразу выделялся.
+ */
+export function NextClassBlock({ status }: NextClassBlockProps) {
+  const glow = useCursorGlow();
+
+  if (status.kind === 'finished') {
+    return (
+      <section className={styles.block} style={typeColor(status.next?.occurrence.details.type)} {...glow} data-spot="own">
+        <div>
+          <p className={styles.eyebrow}>Пар сегодня больше нет</p>
+          {status.next ? (
+            <>
+              <p className={styles.title}>
+                <SubjectName subjectId={status.next.occurrence.details.subjectId} />
+              </p>
+              <ClassDetailsLine
+                details={status.next.occurrence.details}
+                when={`Следующая пара ${status.next.dayLabel} в ${status.next.occurrence.details.startTime}`}
+              />
+            </>
+          ) : (
+            <p className={styles.title}>Нет пар в ближайшие 7 дней</p>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  const isNow = status.kind === 'now';
+  const { details } = status.occurrence;
+
+  return (
+    <section className={cn(styles.block, isNow && styles.now)} style={typeColor(details.type)} {...glow} data-spot="own">
+      <div>
+        <p className={styles.eyebrow}>
+          {isNow && <span className={styles.liveDot} aria-hidden />}
+          {isNow ? 'Сейчас' : 'Следующая пара'}
+        </p>
+        <p className={styles.title}>
+          <SubjectName subjectId={details.subjectId} />
+        </p>
+        <ClassDetailsLine details={details} showTime />
+      </div>
+
+      {status.kind === 'now' ? (
+        <p className={styles.countdown}>
+          Закончится через{' '}
+          {status.minutesLeft < 60 ? (
+            <>
+              <AnimatedNumber value={status.minutesLeft} /> мин
+            </>
+          ) : (
+            formatDuration(status.minutesLeft)
+          )}
+        </p>
+      ) : (
+        <Badge tone="accent">через {formatDuration(status.minutesUntil)}</Badge>
+      )}
+    </section>
+  );
+}
+
+/** Таблетка слева — цвет типа пары, как в расписании */
+const typeColor = (type?: ClassType) => (type ? ({ '--type-color': classTypeColorVar(type) } as CSSProperties) : undefined);
+
+function SubjectName({ subjectId }: { subjectId: string }) {
+  return <>{useSubjectName(subjectId)}</>;
+}
+
+interface ClassDetailsLineProps {
+  details: ClassDetails;
+  showTime?: boolean;
+  /** «Следующая пара завтра в 11:30» — в начале строки, когда пар сегодня уже нет */
+  when?: string;
+}
+
+function ClassDetailsLine({ details, showTime = false, when }: ClassDetailsLineProps) {
+  return (
+    <p className={styles.details}>
+      {when && <span className={styles.when}>{when}</span>}
+      {showTime && (
+        <span>
+          {details.startTime} — {details.endTime}
+        </span>
+      )}
+      {details.room && <span>Аудитория {details.room}</span>}
+      <span>{CLASS_TYPE_LABELS[details.type]}</span>
+    </p>
+  );
+}

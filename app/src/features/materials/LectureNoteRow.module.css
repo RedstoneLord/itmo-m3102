@@ -1,0 +1,67 @@
+/* --row-icon-size — крупные списки (MaterialsPage .bigList) */
+.icon {
+  display: grid;
+  place-items: center;
+  width: var(--row-icon-size, 28px);
+  height: var(--row-icon-size, 28px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-muted);
+}
+
+.titleButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/*
+ * Нажимается вся строка, а не только текст: с тачпада по узкой ссылке не попасть (отзыв группы).
+ * Кнопка static — иначе ::after растянут только на неё (см. .subjectButton в MaterialsPage.module.css).
+ */
+.titleButton {
+  position: static;
+}
+
+.titleButton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+/* Меню «⋯» — поверх растянутой ссылки */
+.menu {
+  position: relative;
+  z-index: 1;
+}
+
+@media (hover: hover) {
+  .titleButton:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--color-border-hover);
+    text-underline-offset: 2px;
+  }
+}
+
+.date {
+  min-width: 56px;
+  text-align: right;
+}
+
+@media (max-width: 767px) {
+  .date {
+    display: none;
+  }
+}

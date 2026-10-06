@@ -1,0 +1,552 @@
+.quiz {
+  margin: var(--space-6) 0;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+  scroll-margin-top: calc(var(--topbar-height) + var(--space-4));
+}
+
+/* Файл-тест — главный блок страницы */
+.full {
+  margin-top: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: var(--weight-semibold);
+  color: var(--color-warning);
+}
+
+/* Дорожка — светлее карточки (в тёмной теме bg-subtle темнее карточки и читалась чёрной полосой) */
+.bar {
+  height: 3px;
+  margin-bottom: var(--space-5);
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-bg-active);
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+  transition: width 450ms var(--ease-luxury-out);
+}
+
+/* ---------- заставка ---------- */
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  text-align: center;
+}
+
+/* Куски Markdown внутри теста — с .quiz впереди: иначе их перебивает .markdown (цвет, размер, отступы абзацев) */
+.quiz .description {
+  max-width: 560px;
+  color: var(--color-text-secondary);
+}
+
+.introCount {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.chips span {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  font-size: var(--text-xs);
+  color: var(--color-accent-text);
+}
+
+.hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.hint kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* ---------- вопрос ---------- */
+.kind {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.quiz .question {
+  margin-bottom: var(--space-3);
+  font-weight: var(--weight-medium);
+}
+
+/* Абзацы и списки внутри — без отступов конспекта (вес .quiz.quiz + класс выше, чем у .markdown p) */
+.quiz.quiz :is(.question, .why, .note, .description) > * {
+  margin: 0;
+}
+
+.quiz.quiz :is(.question, .why, .note, .description) > * + * {
+  margin-top: var(--space-2);
+}
+
+.options {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2-5) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  /* Как строки списков сайта: прозрачные, при наведении — фон наведения */
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease),
+    opacity var(--duration-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .option:hover:not(.correct, .wrong, .missed, .dim, .static, .selected) {
+    border-color: var(--color-border-hover);
+    background: var(--color-bg-hover);
+  }
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  /* Как Checkbox сайта, чуть крупнее — по варианту попадают пальцем */
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 1px solid var(--color-border-hover);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+}
+
+.round {
+  border-radius: 50%;
+}
+
+.optionBody {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+/* Варианты и ответы — строкой, без отступов абзаца */
+.quiz .inline,
+.quiz .inline > * {
+  display: inline;
+  margin: 0;
+}
+
+.quiz .note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.selected {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.selected .mark {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.selected .round {
+  box-shadow: inset 0 0 0 4px var(--color-bg);
+}
+
+/*
+ * Итог по варианту — сдержанно, как остальной сайт: строка остаётся нейтральной, верно/неверно говорит значок
+ * слева (зелёный / красный) и чуть подкрашенная рамка. Без цветных заливок-плашек.
+ */
+.correct {
+  border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border));
+}
+
+.correct .mark {
+  border-color: var(--color-success);
+  background: var(--color-success);
+  color: #fff;
+}
+
+.wrong {
+  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+}
+
+.wrong .mark {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: #fff;
+}
+
+/* Верный вариант, который не выбрали */
+.missed {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border));
+}
+
+.missed .mark {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.dim {
+  opacity: 0.55;
+}
+
+.option.correct,
+.option.wrong,
+.option.missed,
+.option.dim {
+  cursor: default;
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-2-5) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.input.correct {
+  border-color: var(--color-success);
+}
+
+.input.wrong {
+  border-color: var(--color-danger);
+}
+
+/* ---------- ответ ---------- */
+/* Итог ответа — строка со значком и пояснение под ней, отделённые тонкой линией; без плашки */
+.feedback {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.feedbackTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.ok .feedbackTitle {
+  color: var(--color-success);
+}
+
+.bad .feedbackTitle {
+  color: var(--color-danger);
+}
+
+.answer {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.answer span {
+  font-weight: var(--weight-regular);
+  color: var(--color-text-secondary);
+}
+
+.answerItem + .answerItem::before {
+  content: ' · ';
+  font-weight: var(--weight-regular);
+}
+
+.quiz .why {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* ---------- итог ---------- */
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2) 0;
+  text-align: center;
+}
+
+.result .actions {
+  justify-content: center;
+}
+
+.good {
+  --ring: var(--color-success);
+}
+
+.so {
+  --ring: var(--color-warning);
+}
+
+.poor {
+  --ring: var(--color-danger);
+}
+
+.ring {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  margin-bottom: var(--space-3);
+}
+
+.ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ringBg,
+.ringFg {
+  fill: none;
+  stroke-width: 10;
+}
+
+.ringBg {
+  stroke: var(--color-bg-subtle);
+}
+
+.ringFg {
+  stroke: var(--ring);
+  stroke-linecap: round;
+}
+
+.ringNumber {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.resultTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.resultSub {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.error {
+  margin: var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-soft);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 767px) {
+  .quiz {
+    padding: var(--space-4);
+  }
+
+  .actions > * {
+    flex: 1;
+  }
+}
+
+/* Тесты на бумаге не нужны — как и в PDF сайта группы */
+/* Вариант в разборе — только просмотр */
+.static {
+  cursor: default;
+}
+
+/* ---------- Разбор ответов после теста ---------- */
+.review {
+  width: 100%;
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.reviewHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.reviewTitle {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Верно / неверно — значком у номера; рамка обычная, как у карточек сайта */
+.reviewItem {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.reviewQuestion {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.reviewQuestion .question {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: var(--space-3);
+}
+
+.reviewStatus {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 50%;
+  color: #fff;
+}
+
+.reviewOk .reviewStatus {
+  background: var(--color-success);
+}
+
+.reviewBad .reviewStatus {
+  background: var(--color-danger);
+}
+
+.reviewNumber {
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.yourAnswer {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.yourOk {
+  color: var(--color-success);
+}
+
+.yourBad {
+  color: var(--color-danger);
+}
+
+.reviewExplain {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.reviewItem > button {
+  margin-top: var(--space-3);
+}
+
+@media print {
+  .quiz,
+  .bar,
+  .actions {
+    display: none;
+  }
+}

@@ -1,0 +1,149 @@
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * Строка шире колонки на 8px с каждой стороны: фон при наведении
+ * не прилипает к тексту, а сам текст стоит ровно по краю контента.
+ */
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  margin: 0 calc(-1 * var(--space-2));
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+/* Разделитель между строками — ровно по ширине контента */
+.item + .item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: var(--space-2);
+  left: var(--space-2);
+  height: 1px;
+  background: var(--color-border);
+}
+
+@media (hover: hover) {
+  .item:hover {
+    background: var(--color-bg-hover);
+  }
+}
+
+.highlighted {
+  background: var(--color-accent-soft);
+}
+
+@media (hover: hover) {
+  .highlighted:hover {
+    background: var(--color-accent-soft);
+  }
+}
+
+/* Рядом с подсвеченной строкой линии не нужны */
+.highlighted::before,
+.highlighted + .item::before {
+  opacity: 0;
+}
+
+@media (hover: hover) {
+  .item:hover::before,
+  .item:hover + .item::before {
+    opacity: 0;
+  }
+}
+
+.leading {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  color: var(--color-text-muted);
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  overflow: hidden;
+  /* --list-title-size / --list-meta-size — крупные списки (папки и конспекты в «Материалах») */
+  font-size: var(--list-title-size, var(--text-base));
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  margin-top: 1px;
+  overflow: hidden;
+  font-size: var(--list-meta-size, var(--text-xs));
+  color: var(--color-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trailing {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted .title {
+  color: var(--color-text-muted);
+}
+
+/*
+ * Главное действие строки — на всю строку (как в «Материалах»): по узкой надписи с тачпада не попасть.
+ * Ссылка или кнопка в title с data-row-action растягивает ::after на <li>; static — иначе с relative у кнопки
+ * слой закрыл бы только саму надпись. Чекбокс, меню «⋯» и ссылки сбоку — поверх слоя.
+ */
+.item:has([data-row-action]) {
+  --list-title-size: var(--text-md);
+  min-height: 64px;
+  cursor: pointer;
+}
+
+.item [data-row-action] {
+  position: static;
+}
+
+.item [data-row-action]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.item:has([data-row-action]) :is(.leading, .trailing, .meta) :is(a, button, input, label, select, [role='button'], [tabindex]) {
+  position: relative;
+  z-index: 1;
+}
+
+/* wrapOnPhone: на узком экране бейджи и дата — второй строкой ровно под заголовком (сетка), меню — справа */
+@media (max-width: 600px) {
+  .wrapPhone {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: var(--space-1-5);
+  }
+
+  .wrapPhone .trailing {
+    grid-column: 2;
+  }
+
+  .wrapPhone .trailing > :last-child {
+    margin-left: auto;
+  }
+}

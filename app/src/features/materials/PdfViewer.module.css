@@ -1,0 +1,160 @@
+.viewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  animation: viewer-in var(--duration-slow) var(--ease-luxury-out);
+}
+
+@keyframes viewer-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Панель прилипает под шапкой сайта, пока листаешь */
+.toolbar {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--space-2));
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  /* Без backdrop-filter: размытие под прилипшей панелью пересчитывается на каждом кадре прокрутки */
+  background: var(--color-bg-elevated);
+  box-shadow: var(--shadow-xs);
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pageLabel {
+  min-width: 56px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.open {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .open:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text);
+  }
+}
+
+/* При увеличении страница шире колонки — прокручивается по горизонтали только сам PDF */
+.scroller {
+  overflow-x: auto;
+}
+
+.document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: fit-content;
+  min-width: 100%;
+}
+
+.page {
+  display: block;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  box-shadow:
+    0 0 0 1px var(--color-border),
+    0 8px 24px -16px rgb(0 0 0 / 0.35);
+}
+
+/* Тёмные страницы: инверсия с поворотом оттенка — чёрный текст становится светлым, а цвета схем
+   остаются примерно своими (красный не превращается в бирюзовый) */
+.dark > .page {
+  background: #000;
+  filter: invert(0.88) hue-rotate(180deg);
+}
+
+.resume {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 28px;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-soft);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-accent-text);
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .resume:hover {
+    background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+}
+
+@media (max-width: 480px) {
+  .resumeText {
+    display: none;
+  }
+}
+
+.loading {
+  padding: var(--space-8);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.openLink {
+  color: var(--color-accent-text);
+}
+
+@media (hover: hover) {
+  .openLink:hover {
+    text-decoration: underline;
+  }
+}
+
+@media print {
+  .toolbar {
+    display: none;
+  }
+
+  .dark > .page {
+    filter: none;
+  }
+}

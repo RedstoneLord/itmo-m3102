@@ -1,0 +1,33 @@
+/* Сплошная карточка: сияние фона не просвечивает пятнами сквозь пустые клетки */
+.month {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow:
+    0 0 0 1px var(--color-border),
+    0 12px 32px -20px rgb(0 0 0 / 0.35);
+}
+
+.weekdayRow {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
+}
+
+.weekdayHeader {
+  padding: var(--space-2) var(--space-2-5);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-left: 1px solid var(--color-border);
+}

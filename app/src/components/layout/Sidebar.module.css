@@ -1,0 +1,76 @@
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  min-width: 0;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-width);
+  height: 100%;
+  padding: var(--space-2-5) var(--space-3) var(--space-3);
+  /* Сворачивание: колонка сужается до 0 (AppShell), а меню той же длительности уезжает влево — край меню идёт
+     ровно по краю колонки, ничего не мнётся и не наезжает на страницу. Не overflow: hidden — обрезал бы подсказки */
+  transition:
+    transform var(--sidebar-duration) var(--ease-luxury-out),
+    visibility 0s;
+}
+
+:global(:root[data-sidebar='collapsed']) .inner {
+  visibility: hidden;
+  transform: translateX(-100%);
+  transition:
+    transform var(--sidebar-duration) var(--ease-luxury-out),
+    visibility 0s var(--sidebar-duration);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: calc(var(--topbar-height) - var(--space-2-5));
+  margin-bottom: var(--space-3);
+}
+
+.nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.divider {
+  margin: var(--space-3) var(--space-2);
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.footerLink {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .sidebar {
+    display: none;
+  }
+}

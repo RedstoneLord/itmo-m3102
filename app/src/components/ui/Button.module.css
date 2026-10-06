@@ -1,0 +1,115 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  text-decoration: none;
+  /* transform принадлежит Framer Motion (whileHover/whileTap в Button.tsx) — не CSS,
+     иначе кнопка в покое создаёт свой stacking context и запирает соседние оверлеи в себе */
+  box-shadow: 0 0 #0000;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease),
+    box-shadow 120ms var(--ease-luxury-out);
+}
+
+/* Тень появляется на hover синхронно с пружинным подъёмом кнопки в Button.tsx */
+@media (hover: hover) {
+  .primary:hover:not(:disabled),
+  .secondary:hover:not(:disabled) {
+    box-shadow: var(--shadow-xs);
+  }
+}
+
+.button:disabled:not([aria-busy='true']) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button[aria-busy='true'] {
+  cursor: progress;
+}
+
+/* Размеры */
+.sm {
+  height: 28px;
+  padding: 0 var(--space-2-5);
+  font-size: var(--text-xs);
+}
+
+.md {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* Варианты */
+.primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+@media (hover: hover) {
+  .primary:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
+}
+
+.secondary {
+  background: var(--color-bg);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+@media (hover: hover) {
+  .secondary:hover:not(:disabled) {
+    background: var(--color-bg-hover);
+  }
+}
+
+.ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+@media (hover: hover) {
+  .ghost:hover:not(:disabled) {
+    background: var(--color-bg-hover);
+    color: var(--color-text);
+  }
+}
+
+.danger {
+  background: transparent;
+  color: var(--color-danger);
+}
+
+@media (hover: hover) {
+  .danger:hover:not(:disabled) {
+    background: var(--color-danger-soft);
+  }
+}
+
+/* Свечение: главная кнопка — объёмный градиент, блик сверху и мягкое свечение акцентом */
+:global(:root[data-glow='on']) .primary {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--color-accent) 85%, white), var(--color-accent));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    0 1px 2px rgb(0 0 0 / 0.15),
+    0 6px 18px -8px color-mix(in srgb, var(--color-accent) 80%, transparent);
+}
+
+@media (hover: hover) {
+  :global(:root[data-glow='on']) .primary:hover:not(:disabled) {
+    background: linear-gradient(180deg, color-mix(in oklab, var(--color-accent) 75%, white), var(--color-accent));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.3),
+      0 1px 2px rgb(0 0 0 / 0.15),
+      0 10px 28px -8px color-mix(in srgb, var(--color-accent) 90%, transparent);
+  }
+}
