@@ -1,0 +1,51 @@
+name: Normalize names and rebuild indexes
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'Конспекты/**'
+      - 'Записи лекций/**'
+      - 'Лабораторные/**'
+      - 'Материалы/**'
+      - 'tools/**'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: repo-index
+  cancel-in-progress: false
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pdftotext
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Rebuild, commit and push (with retry)
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          build() {
+            node tools/normalize-names.mjs
+            node tools/build-lectures-index.mjs
+            node tools/build-search-index.mjs
+            git add -A
+          }
+          build
+          git diff --cached --quiet && exit 0
+          git commit -m "Авто-переименование и индексы [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase origin master && git push origin HEAD:master && exit 0
+            git rebase --abort || true
+            git fetch origin master
+            git reset --hard origin/master
+            build
+            git diff --cached --quiet && exit 0
+            git commit -m "Авто-переименование и индексы [skip ci]"
+          done
+          exit 1
