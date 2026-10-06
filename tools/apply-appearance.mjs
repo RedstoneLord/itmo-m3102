@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
-  Подключает к настройкам сайта: тему (авто / светлая / тёмная), скругления (округлые / классические / строгие)
+  Подключает к настройкам сайта: тему (авто / светлая / тёмная), скругления (округлые / мягкие / классические / умеренные / строгие)
   и загрузку URW Gothic из папки fonts/. Правит существующие файлы; новые (js/appearance.js,
   css/appearance.css, fonts/README.md) должны уже лежать в репозитории.
 
@@ -50,9 +50,9 @@ function step(rel, what, done, apply) {
 const replace = (rel, what, done, from, to) => step(rel, what, done, t => (t.includes(from) ? t.replace(from, () => to) : null));
 
 /* ---------------- index.html ---------------- */
-const HEAD_SCRIPT = `<script>try{var s=JSON.parse(localStorage.getItem('m3102-settings-v1'))||{},r=document.documentElement;if(s.font)r.setAttribute('data-font',s.font);if(s.palette&&s.palette!=='purple')r.setAttribute('data-palette',s.palette);if(s.theme==='light'||s.theme==='dark')r.setAttribute('data-theme',s.theme);if(s.radius==='bubbly'||s.radius==='strict')r.setAttribute('data-radius',s.radius)}catch(e){}</script>`;
+const HEAD_SCRIPT = `<script>try{var s=JSON.parse(localStorage.getItem('m3102-settings-v1'))||{},r=document.documentElement;if(s.font)r.setAttribute('data-font',s.font);if(s.palette&&s.palette!=='purple')r.setAttribute('data-palette',s.palette);if(s.theme==='light'||s.theme==='dark')r.setAttribute('data-theme',s.theme);if(/^(bubbly|soft|firm|strict)$/.test(s.radius))r.setAttribute('data-radius',s.radius)}catch(e){}</script>`;
 
-step('index.html', 'inline-скрипт в <head> (тема и скругления)', t => t.includes("s.radius==='bubbly'"), t => {
+step('index.html', 'inline-скрипт в <head> (тема и скругления)', t => t.includes('bubbly|soft|firm|strict'), t => {
   const old = /<script>try\{var \w=JSON\.parse\(localStorage\.getItem\('m3102-settings-v1'\)\)[^<]*<\/script>/;
   return old.test(t) ? t.replace(old, () => HEAD_SCRIPT) : null;
 });

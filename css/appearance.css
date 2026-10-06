@@ -3,6 +3,8 @@
    это делает tools/apply-appearance.mjs. Фиксированные px ниже (превью) намеренно не масштабируются. */
 :root{--rs:1;--rp:1}
 :root[data-radius="bubbly"]{--rs:1.45;--rp:1}
+:root[data-radius="soft"]{--rs:1.2;--rp:1}
+:root[data-radius="firm"]{--rs:.6;--rp:1}
 :root[data-radius="strict"]{--rs:.2;--rp:0}
 
 /* Принудительная тема: формы и полосы прокрутки браузера следуют ей же */
@@ -11,6 +13,7 @@
 
 /* ===================== Карточки выбора на странице настроек ===================== */
 .choice-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.radius-options{grid-template-columns:repeat(5,minmax(0,1fr))}
 .choice-option{display:grid;justify-items:center;gap:8px;padding:16px 10px 14px;border:1px solid var(--border);border-radius:calc(12px * var(--rs,1));background:color-mix(in srgb,var(--card) 60%,transparent);color:var(--text);cursor:pointer;transition:border-color .25s,background .25s,transform .25s}
 .choice-option:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
 .choice-option[aria-checked="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
@@ -25,8 +28,11 @@
 .theme-swatch[data-v="auto"]{background:linear-gradient(110deg,#f4f5fa 50%,#11131b 50%)}
 .radius-swatch{border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .radius-swatch[data-v="bubbly"]{border-radius:20px}
+.radius-swatch[data-v="soft"]{border-radius:15px}
 .radius-swatch[data-v="classic"]{border-radius:11px}
+.radius-swatch[data-v="firm"]{border-radius:6px}
 .radius-swatch[data-v="strict"]{border-radius:2px}
 
-@media(max-width:650px){.choice-options{grid-template-columns:1fr}.choice-option{grid-template-columns:auto 1fr;justify-items:start;text-align:left;column-gap:14px}.choice-note{grid-column:2;text-align:left}.choice-name{grid-column:2}.theme-swatch,.radius-swatch{grid-row:1/3}}
+@media(max-width:900px){.radius-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.choice-options,.radius-options{grid-template-columns:1fr}.choice-option{grid-template-columns:auto 1fr;justify-items:start;text-align:left;column-gap:14px}.choice-note{grid-column:2;text-align:left}.choice-name{grid-column:2}.theme-swatch,.radius-swatch{grid-row:1/3}}
 @media(prefers-reduced-motion:reduce){.choice-option{transition-duration:.01ms}}
