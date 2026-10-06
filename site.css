@@ -2,7 +2,8 @@
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#11131b;--card:#1b1e29;--text:#f4f4f8;--muted:#a9adbc;--border:#323542}}
 :root[data-theme="dark"]{--bg:#11131b;--card:#1b1e29;--text:#f4f4f8;--muted:#a9adbc;--border:#323542}
 html{scroll-behavior:smooth}
-body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.012em}
+button,input,select,textarea{font-family:inherit}
+body{font-family:"Noto Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.012em}
 .wrap{max-width:1420px;padding:0 32px 52px}
 header{min-height:82px;margin:0;flex-wrap:nowrap;border-bottom:1px solid var(--border)}
 .brand{display:inline-flex;align-items:center;gap:16px;white-space:nowrap;line-height:1.1}
