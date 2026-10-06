@@ -6,7 +6,8 @@
     <title>M3102</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400..800;1,400..800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400..800;1,400..800&family=Ubuntu+Sans:ital,wght@0,100..800;1,100..800&family=Arimo:ital,wght@0,400..700;1,400..700&display=swap">
+    <script>try{var s=JSON.parse(localStorage.getItem('m3102-settings-v1'))||{};if(s.font)document.documentElement.setAttribute('data-font',s.font);if(s.palette&&s.palette!=='purple')document.documentElement.setAttribute('data-palette',s.palette)}catch(e){}</script>
     <link rel="icon" type="image/png" sizes="32x32" href="img/icons/favicon-32.png">
     <link rel="icon" type="image/png" sizes="48x48" href="img/icons/favicon-48.png">
     <link rel="apple-touch-icon" href="img/icons/apple-touch-icon.png">
@@ -290,7 +291,19 @@
 .hh-prev{cursor:pointer;}
 .hh-prev.hh-boing{animation:hhboing .38s;}
 @keyframes hhboing{0%{transform:scale(1);}35%{transform:scale(1.28,.78);}70%{transform:scale(.9,1.18);}100%{transform:scale(1);}}
+/* Мягкая тень под заголовками: читаемость светлого текста на светлых полосах/свечении фона */
+:root{--hd-shadow:0 1px 2px rgba(255,255,255,.55)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--hd-shadow:0 1px 3px rgba(0,0,0,.6),0 0 14px rgba(0,0,0,.28)}}
+:root[data-theme="dark"]{--hd-shadow:0 1px 3px rgba(0,0,0,.6),0 0 14px rgba(0,0,0,.28)}
 
+.intro h1,.intro .sub,
+.panel-head h2,
+.sched-day-info h2,.sched-day-info p,
+.crumbs,.link-group-head h2,.hw-group-head h2{text-shadow:var(--hd-shadow)}
+
+/* Герой всегда тёмный (белый текст на фиолетовом свечении), поэтому тень там всегда тёмная */
+.home-hero h1,.home-hero .sub,
+.hero-date strong,.hero-date span{text-shadow:0 1px 3px rgba(0,0,0,.55),0 0 14px rgba(0,0,0,.25)}
     </style>
     <link rel="stylesheet" href="./site.css">
     <link rel="stylesheet" href="./css/schedule.css">
@@ -307,6 +320,7 @@
     <link rel="stylesheet" href="./css/transitions.css">
     <link rel="stylesheet" href="./css/backdrop.css">
     <link rel="stylesheet" href="./css/glass.css">
+    <link rel="stylesheet" href="./css/settings.css">
     </head>
 
 <script>
@@ -366,6 +380,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     import { installOffline, mountOfflinePanel } from './js/offline.js';
     import { ic, hydrateIcons, installGlyphIcons, LOADER } from './js/icons.js';
     import { installBackdrop } from './js/backdrop.js';
+    import { installSettings, renderSettingsPage } from './js/settings.js';
 
     const OWNER='RedstoneLord', REPO='itmo-m3102', BRANCH='master';
     const SUBTITLES={
@@ -1367,6 +1382,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
           <a class="card" data-go="diagrams"><div class="ic">${ic('diagram',22)}</div><div class="meta"><div class="name">Диаграммы</div><div class="desc">Конструктор диаграмм для конспектов</div></div></a>
           <a class="card" data-go="memes"><div class="ic">${ic('smile',22)}</div><div class="meta"><div class="name">Мемы</div><div class="desc">Мемы группы</div></div></a>
           <a class="card" data-go="hedgehog"><div class="ic">🦔</div><div class="meta"><div class="name">Ёжик-кувырок</div><div class="desc">Мини-игра: катись с холмов, делай кувырки, не засыпай</div></div></a>
+          <a class="card" data-go="settings"><div class="ic">${ic('settings',22)}</div><div class="meta"><div class="name">Настройки</div><div class="desc">Цвета, шрифт и внешний вид сайта</div></div></a>
         </div><div id="offline-panel" style="margin-top:18px"></div>`;
       c.querySelectorAll('[data-go]').forEach(el=>el.onclick=e=>{e.preventDefault();location.hash='#/'+el.dataset.go;});
         mountOfflinePanel(c.querySelector('#offline-panel'));
@@ -3010,6 +3026,7 @@ global.HedgehogGame={mount,_test:{Game,World,Terrain,loadSave}};
       if(h==='links')return{mode:'links',path:''};
       if(h==='students')return{mode:'students',path:''};
       if(h==='other')return{mode:'other',path:''};
+      if(h==='settings')return{mode:'settings',path:''};
       if(/^schedule\/\d{4}-\d{2}-\d{2}$/.test(h))return{mode:'schedule',path:h.slice(9)};
       if(h.startsWith('view/'))return{mode:'view',path:decodePath(h.slice(5))};
       if(h.startsWith('note/'))return{mode:'note',path:decodePath(h.slice(5))};
@@ -3022,7 +3039,7 @@ global.HedgehogGame={mount,_test:{Game,World,Terrain,loadSave}};
       if(mode==='home')key='home';
       else if(mode==='schedule')key='schedule';
       else if(['homework','hw-deadlines','deadlines'].includes(mode))key='homework';
-      else if(['diagrams','memes','hedgehog','other','students'].includes(mode))key='other';
+      else if(['diagrams','memes','hedgehog','other','students','settings'].includes(mode))key='other';
       document.querySelectorAll(`#tab-${key},#bn-${key}`).forEach(el=>{el.classList.add('active');el.setAttribute('aria-current','page');});
     }
     function breadcrumbs(path){
@@ -3232,7 +3249,7 @@ function renderPdfView(path){
     });
     }
 
-const TAB_ORDER={home:0,browse:1,note:1,view:1,links:1,schedule:2,homework:3,'hw-deadlines':3,deadlines:3,other:4,students:4,diagrams:4,memes:4,hedgehog:4};
+const TAB_ORDER={home:0,browse:1,note:1,view:1,links:1,schedule:2,homework:3,'hw-deadlines':3,deadlines:3,other:4,students:4,diagrams:4,memes:4,hedgehog:4,settings:4};
 let currentMode=null,currentHash=null,transitionToken=0;
 const reducedMotion=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -3253,6 +3270,7 @@ function renderRoute(){
   else if(mode==='students')renderStudentsPage();
   else if(mode==='other')renderOtherPage();
   else if(mode==='hedgehog')renderHedgehogPage();
+  else if(mode==='settings')renderSettingsPage();
   else renderBrowse(path);
 }
 
@@ -3306,6 +3324,7 @@ function route(){
     hydrateIcons();
     installGlyphIcons();
     installBackdrop();
+    installSettings();
     route();
     </script>
     </body>

@@ -1,0 +1,132 @@
+/* ===================== Шрифты сайта =====================
+   Выбор хранится в <html data-font="…"> (ставит js/settings.js и inline-скрипт в <head>) */
+:root{
+  --ff-noto:"Noto Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --ff-liberation:"Liberation Sans",Arimo,Arial,Helvetica,sans-serif;
+  --ff-ubuntu:"Ubuntu Sans","Ubuntu",-apple-system,"Segoe UI",sans-serif;
+  --ff-urw:"URW Gothic Site","URW Gothic","TeX Gyre Adventor","Avant Garde",sans-serif;
+  --font-ui:var(--ff-noto);
+}
+:root[data-font="noto"]{--font-ui:var(--ff-noto)}
+:root[data-font="liberation"]{--font-ui:var(--ff-liberation)}
+:root[data-font="ubuntu"]{--font-ui:var(--ff-ubuntu)}
+:root[data-font="urw"]{--font-ui:var(--ff-urw)}
+
+/* URW Gothic нет в Google Fonts: берём системный, а если его нет — свой файл из репозитория */
+@font-face{font-family:"URW Gothic Site";font-weight:400;font-style:normal;font-display:swap;
+  src:local("URW Gothic Book"),local("URWGothic-Book"),url("../fonts/URWGothic-Book.woff2") format("woff2")}
+@font-face{font-family:"URW Gothic Site";font-weight:600 800;font-style:normal;font-display:swap;
+  src:local("URW Gothic Demi"),local("URWGothic-Demi"),url("../fonts/URWGothic-Demi.woff2") format("woff2")}
+
+body,button,input,select,textarea{font-family:var(--font-ui)}
+.dgm svg{font-family:var(--font-ui)}
+
+/* ===================== Цветовые темы =====================
+   Фиолетовая — исходная, для неё атрибута data-palette нет и ничего ниже не действует.
+   Остальные задаются двумя цветами (основной и вторичный); всё остальное — фон, стекло, шапка
+   главной, ёжик и полосы на заднем плане — считается от них через color-mix. */
+:root{
+  --pal-purple-a:#6548e8;--pal-purple-b:#8068f1;
+  --pal-orange-a:#e06a12;--pal-orange-b:#f19a4f;
+  --pal-green-a:#1f9d63;--pal-green-b:#4cbd88;
+  --pal-blue-a:#2f6fe0;--pal-blue-b:#5f95ee;
+  --pal-cyan-a:#4a9fae;--pal-cyan-b:#82bfca;
+}
+:root[data-palette="orange"]{--accent:var(--pal-orange-a);--accent2:var(--pal-orange-b)}
+:root[data-palette="green"]{--accent:var(--pal-green-a);--accent2:var(--pal-green-b)}
+:root[data-palette="blue"]{--accent:var(--pal-blue-a);--accent2:var(--pal-blue-b)}
+:root[data-palette="cyan"]{--accent:var(--pal-cyan-a);--accent2:var(--pal-cyan-b)}
+
+/* фон и стекло: светлая тема */
+:root[data-palette]{
+  --accent-hover:color-mix(in srgb,var(--accent) 80%,#000);
+  --accent-line:color-mix(in srgb,var(--accent) 40%,#fff);
+  --bgfx-base:color-mix(in srgb,var(--accent) 7%,#f5f5f8);
+  --gl-bg-a:color-mix(in srgb,var(--accent) 5%,#f6f6f9);
+  --gl-bg-b:color-mix(in srgb,var(--accent) 14%,#ececf1);
+  --bgfx-shade:color-mix(in srgb,color-mix(in srgb,var(--accent) 4%,#f6f6f9) 72%,transparent);
+}
+/* фон и стекло: тёмная тема */
+@media(prefers-color-scheme:dark){:root[data-palette]:not([data-theme="light"]){
+  --accent-line:color-mix(in srgb,var(--accent) 55%,#222);
+  --bgfx-base:color-mix(in srgb,var(--accent) 6%,#0b0c12);
+  --gl-bg-a:color-mix(in srgb,var(--accent) 8%,#0f1017);
+  --gl-bg-b:color-mix(in srgb,var(--accent) 3%,#05060a);
+  --bgfx-shade:color-mix(in srgb,color-mix(in srgb,var(--accent) 3%,#06060b) 66%,transparent);
+}}
+:root[data-theme="dark"][data-palette]{
+  --accent-line:color-mix(in srgb,var(--accent) 55%,#222);
+  --bgfx-base:color-mix(in srgb,var(--accent) 6%,#0b0c12);
+  --gl-bg-a:color-mix(in srgb,var(--accent) 8%,#0f1017);
+  --gl-bg-b:color-mix(in srgb,var(--accent) 3%,#05060a);
+  --bgfx-shade:color-mix(in srgb,color-mix(in srgb,var(--accent) 3%,#06060b) 66%,transparent);
+}
+
+/* места, где фиолетовый был прописан прямо в правилах */
+:root[data-palette] .plan-form button:hover{background:var(--accent-hover)}
+:root[data-palette] .plan-form button,
+:root[data-palette] .deadlines-page .joinrow .btn2{box-shadow:0 6px 14px color-mix(in srgb,var(--accent) 20%,transparent)}
+:root[data-palette] .deadline-row:hover{border-color:var(--accent-line);box-shadow:0 10px 24px color-mix(in srgb,var(--accent) 10%,transparent)}
+:root[data-palette] .lesson:hover,
+:root[data-palette] .deadlines-page .card:hover{border-color:var(--accent-line)}
+
+/* шапка главной */
+:root[data-palette] .home-hero:before{
+  background:radial-gradient(circle at 80% 110%,color-mix(in srgb,var(--accent) 47%,transparent),transparent 36%),
+             linear-gradient(120deg,#171821 15%,color-mix(in srgb,var(--accent) 14%,#171821) 100%)}
+:root[data-palette] .hero-period{color:color-mix(in srgb,var(--accent2) 55%,#fff)}
+:root[data-palette] .hero-orbit{
+  border-color:color-mix(in srgb,color-mix(in srgb,var(--accent) 35%,#fff) 18%,transparent);
+  box-shadow:0 0 0 65px color-mix(in srgb,color-mix(in srgb,var(--accent) 35%,#fff) 3%,transparent),
+             0 0 0 130px color-mix(in srgb,color-mix(in srgb,var(--accent) 35%,#fff) 3%,transparent)}
+
+/* фон сайта: свечение, полосы, ёжик */
+:root[data-palette] .bgfx-glow{
+  background:radial-gradient(60vmax 60vmax at 82% 42%,color-mix(in srgb,var(--accent) 55%,transparent),transparent 62%),
+             radial-gradient(90vmax 30vmax at 50% 112%,color-mix(in srgb,var(--accent2) 50%,transparent),transparent 70%)}
+:root[data-palette] .bgfx-stripes::before{
+  background:linear-gradient(135deg,
+    transparent 0 9%,
+    color-mix(in srgb,color-mix(in srgb,var(--accent) 30%,#0a0a14) 55%,transparent) 9% 22%,
+    transparent 22% 24%,
+    var(--accent) 24% 26.5%,
+    var(--accent2) 26.5% 28%,
+    transparent 28% 30%,
+    color-mix(in srgb,var(--accent2) 60%,#fff) 30% 31.2%,
+    transparent 31.2% 34%,
+    color-mix(in srgb,color-mix(in srgb,var(--accent) 12%,#fff) 85%,transparent) 34% 34.6%,
+    transparent 34.6%)}
+:root[data-palette] #bgfx-g1 stop:first-child{stop-color:color-mix(in srgb,var(--accent) 60%,#fff)}
+:root[data-palette] #bgfx-g1 stop:last-child{stop-color:color-mix(in srgb,var(--accent) 90%,#000)}
+:root[data-palette] #bgfx-g2 stop:first-child{stop-color:color-mix(in srgb,var(--accent) 85%,#fff)}
+:root[data-palette] #bgfx-g2 stop:last-child{stop-color:color-mix(in srgb,var(--accent) 50%,#000)}
+
+/* ===================== Страница настроек ===================== */
+.settings-page{max-width:1050px;margin:0 auto;padding-bottom:48px}
+.settings-group{margin-bottom:16px}
+.settings-note{color:var(--muted);font-size:.8rem;line-height:1.5;margin:0 0 16px}
+
+.font-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.font-option{display:grid;gap:8px;text-align:left;padding:16px 18px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--card) 60%,transparent);color:var(--text);cursor:pointer;transition:border-color .25s,background .25s,transform .25s}
+.font-option:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
+.font-option[aria-checked="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.font-option-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.font-option-name{font-size:1.05rem;font-weight:700}
+.font-option-tick{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;border:2px solid var(--muted);color:#fff}
+.font-option[aria-checked="true"] .font-option-tick{background:var(--accent);border-color:var(--accent)}
+.font-option-tick .ic-svg{width:14px;height:14px;opacity:0}
+.font-option[aria-checked="true"] .font-option-tick .ic-svg{opacity:1}
+.font-option-sample{font-size:.92rem;line-height:1.5;color:var(--text)}
+.font-option-sample b{font-weight:700}
+.font-option-meta{font-size:.72rem;color:var(--muted)}
+
+.palette-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.palette-option{display:grid;justify-items:center;gap:10px;padding:16px 8px 14px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--card) 60%,transparent);color:var(--text);cursor:pointer;font-size:.82rem;font-weight:650;transition:border-color .25s,background .25s,transform .25s}
+.palette-option:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
+.palette-option[aria-checked="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.palette-swatch{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35),0 6px 16px rgba(0,0,0,.18)}
+.palette-swatch .ic-svg{width:20px;height:20px;opacity:0}
+.palette-option[aria-checked="true"] .palette-swatch .ic-svg{opacity:1}
+
+@media(max-width:850px){.palette-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.font-options{grid-template-columns:1fr}.palette-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
