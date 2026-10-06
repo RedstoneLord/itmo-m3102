@@ -34,9 +34,15 @@ export function applyPalette(id) {
   const root = document.documentElement;
   if (id === DEFAULT_PALETTE) root.removeAttribute('data-palette'); else root.dataset.palette = id;
 }
+let animTimer = 0;
 export function setPalette(id) {
-  if (!PALETTES.some(p => p.id === id)) return;
-  write({ palette: id }); applyPalette(id);
+  if (!PALETTES.some(p => p.id === id) || id === getPalette()) return;
+  write({ palette: id });
+  // Плавность включается только на время смены темы (см. .palette-anim в css/settings.css)
+  const root = document.documentElement;
+  root.classList.add('palette-anim');
+  clearTimeout(animTimer); animTimer = setTimeout(() => root.classList.remove('palette-anim'), 800);
+  applyPalette(id);
 }
 
 export const installSettings = () => { applyFont(getFont()); applyPalette(getPalette()); };
@@ -60,7 +66,8 @@ export function renderSettingsPage() {
       <p class="settings-note">Применяется ко всему сайту и к PDF, которые вы формируете из конспектов.</p>
       <div class="font-options" role="radiogroup" aria-label="Шрифт сайта"></div></section></section>`;
   content.querySelector('.settings-page').onclick = event => {
-    const pal = event.target.closest('[data-palette]'), font = event.target.closest('[data-font]');
+    // Именно button[...]: у <html> тоже есть data-font / data-palette, и голый closest() находил его
+    const pal = event.target.closest('button[data-palette]'), font = event.target.closest('button[data-font]');
     if (pal) setPalette(pal.dataset.palette); else if (font) setFont(font.dataset.font); else return;
     draw();
   };

@@ -32,6 +32,14 @@ body,button,input,select,textarea{font-family:var(--font-ui)}
   --pal-blue-a:#2f6fe0;--pal-blue-b:#5f95ee;
   --pal-cyan-a:#4a9fae;--pal-cyan-b:#82bfca;
 }
+/* Плавная смена темы: --accent и --accent2 регистрируются как цвета, поэтому браузер умеет их
+   анимировать, а всё остальное (фон, стекло, ёжик, полосы) считается от них через var()/color-mix
+   и «едет» вместе с ними. Переход включается классом .palette-anim только на время смены. */
+@property --accent{syntax:'<color>';inherits:true;initial-value:#6548e8}
+@property --accent2{syntax:'<color>';inherits:true;initial-value:#8068f1}
+:root.palette-anim{transition:--accent .6s ease,--accent2 .6s ease}
+@media(prefers-reduced-motion:reduce){:root.palette-anim{transition:none}}
+
 :root[data-palette="orange"]{--accent:var(--pal-orange-a);--accent2:var(--pal-orange-b)}
 :root[data-palette="green"]{--accent:var(--pal-green-a);--accent2:var(--pal-green-b)}
 :root[data-palette="blue"]{--accent:var(--pal-blue-a);--accent2:var(--pal-blue-b)}
