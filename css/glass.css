@@ -57,14 +57,14 @@
   -webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;background:color-mix(in srgb,var(--card) 40%,transparent);
   border:1px solid color-mix(in srgb,var(--gl-border) 70%,transparent)
 }
-.dash-panel{border-radius:16px}
+.dash-panel{border-radius:calc(16px * var(--rs,1))}
 
 /* ДЗ на главной: homework.css обнуляет рамку, радиус и отступы — возвращаем карточки */
 .dash-panel.homework-panel .hw-item,
 .dash-panel.homework-panel .hw-item:first-child{
   padding:12px 14px;margin:0 0 8px;
   border:1px solid color-mix(in srgb,var(--gl-border) 80%,transparent);
-  border-radius:11px;
+  border-radius:calc(11px * var(--rs,1));
   background:var(--gl-sheen),color-mix(in srgb,var(--card) 45%,transparent);
   transition:transform .5s cubic-bezier(.22,.8,.24,1),border-color .5s cubic-bezier(.22,.8,.24,1),background-color .5s cubic-bezier(.22,.8,.24,1)
 }
@@ -112,7 +112,7 @@
 /* Типографика: чёткая иерархия внутри контейнеров */
 .panel-head{padding-bottom:14px;border-bottom:1px solid color-mix(in srgb,var(--gl-border) 70%,transparent);margin-bottom:18px}
 .panel-head h2{font-size:1.02rem;font-weight:780;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
-.panel-head h2::before{content:"";width:4px;height:1em;border-radius:3px;background:linear-gradient(180deg,var(--accent),var(--accent2))}
+.panel-head h2::before{content:"";width:4px;height:1em;border-radius:calc(3px * var(--rs,1));background:linear-gradient(180deg,var(--accent),var(--accent2))}
 .panel-head>a{font-size:.74rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
 .card .name,.material-link strong,.link-body strong,.dl-title,.sched-card-main strong,.today-detail strong{font-weight:700;letter-spacing:-.02em}
 .card .desc,.material-link small,.link-body small,.dl-note,.today-detail small,.recent-meta,.sched-card-main small{color:var(--muted);font-size:.76rem;line-height:1.5}

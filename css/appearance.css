@@ -1,0 +1,32 @@
+/* Тема и скругления. Подключается после css/settings.css.
+   Все радиусы сайта записаны как calc(Npx * var(--rs,1)) (круглые «таблетки» — через --rp):
+   это делает tools/apply-appearance.mjs. Фиксированные px ниже (превью) намеренно не масштабируются. */
+:root{--rs:1;--rp:1}
+:root[data-radius="bubbly"]{--rs:1.45;--rp:1}
+:root[data-radius="strict"]{--rs:.2;--rp:0}
+
+/* Принудительная тема: формы и полосы прокрутки браузера следуют ей же */
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
+
+/* ===================== Карточки выбора на странице настроек ===================== */
+.choice-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.choice-option{display:grid;justify-items:center;gap:8px;padding:16px 10px 14px;border:1px solid var(--border);border-radius:calc(12px * var(--rs,1));background:color-mix(in srgb,var(--card) 60%,transparent);color:var(--text);cursor:pointer;transition:border-color .25s,background .25s,transform .25s}
+.choice-option:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
+.choice-option[aria-checked="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.choice-name{font-size:.86rem;font-weight:700}
+.choice-note{font-size:.72rem;color:var(--muted);text-align:center}
+
+.theme-swatch,.radius-swatch{position:relative;display:block;width:64px;height:42px}
+.theme-swatch{border:1px solid color-mix(in srgb,var(--text) 22%,transparent);border-radius:8px;overflow:hidden}
+.theme-swatch::after{content:"";position:absolute;left:8px;right:8px;top:9px;height:8px;border-radius:4px;background:var(--accent);opacity:.85}
+.theme-swatch[data-v="light"]{background:#f4f5fa}
+.theme-swatch[data-v="dark"]{background:#11131b}
+.theme-swatch[data-v="auto"]{background:linear-gradient(110deg,#f4f5fa 50%,#11131b 50%)}
+.radius-swatch{border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.radius-swatch[data-v="bubbly"]{border-radius:20px}
+.radius-swatch[data-v="classic"]{border-radius:11px}
+.radius-swatch[data-v="strict"]{border-radius:2px}
+
+@media(max-width:650px){.choice-options{grid-template-columns:1fr}.choice-option{grid-template-columns:auto 1fr;justify-items:start;text-align:left;column-gap:14px}.choice-note{grid-column:2;text-align:left}.choice-name{grid-column:2}.theme-swatch,.radius-swatch{grid-row:1/3}}
+@media(prefers-reduced-motion:reduce){.choice-option{transition-duration:.01ms}}

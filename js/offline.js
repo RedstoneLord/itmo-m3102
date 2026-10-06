@@ -145,10 +145,10 @@ export async function clearOffline() {
 function injectStyles() {
   if (document.getElementById('offline-style')) return;
   const style = document.createElement('style'); style.id = 'offline-style';
-  style.textContent = `.off-bar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:960;display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;max-width:560px;margin:0 auto;padding:11px 14px;border:1px solid var(--border);border-radius:11px;background:var(--card);color:var(--text);box-shadow:0 14px 40px rgba(20,20,35,.2);font-size:.82rem}
+  style.textContent = `.off-bar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:960;display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;max-width:560px;margin:0 auto;padding:11px 14px;border:1px solid var(--border);border-radius:calc(11px * var(--rs,1));background:var(--card);color:var(--text);box-shadow:0 14px 40px rgba(20,20,35,.2);font-size:.82rem}
 .off-bar[hidden]{display:none}.off-bar>span{flex:1 1 220px}
 @media(max-width:760px){.off-bar{bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}}
-.off-line{margin:0 0 10px;font-size:.88rem;line-height:1.5}.off-progress{height:8px;border-radius:999px;background:var(--border);overflow:hidden;margin:0 0 10px}
+.off-line{margin:0 0 10px;font-size:.88rem;line-height:1.5}.off-progress{height:8px;border-radius:calc(999px * var(--rp,1));background:var(--border);overflow:hidden;margin:0 0 10px}
 .off-progress>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
 .off-usage{color:var(--muted);font-size:.76rem;margin:0 0 12px}.off-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}`;
   document.head.appendChild(style);

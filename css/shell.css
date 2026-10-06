@@ -30,7 +30,7 @@ header{
 .tab{display:inline-flex;align-items:center;gap:8px;padding:10px 12px}
 .header-actions{display:flex;align-items:center;gap:8px;flex:none}
 .site-search{flex:none}
-.ss-btn,.gh-link{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--card) 70%,transparent);color:var(--muted);cursor:pointer;transition:color .2s,border-color .2s,transform .2s}
+.ss-btn,.gh-link{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border);border-radius:calc(10px * var(--rs,1));background:color-mix(in srgb,var(--card) 70%,transparent);color:var(--muted);cursor:pointer;transition:color .2s,border-color .2s,transform .2s}
 .ss-btn:hover,.gh-link:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-1px)}
 .gh-link img{width:22px;height:22px;display:block;object-fit:contain}
 /* github.png чёрный? — в тёмной теме инвертируем (уберите, если картинка уже светлая) */
@@ -70,7 +70,7 @@ header{
     -webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);
     border-top:1px solid color-mix(in srgb,var(--border) 80%,transparent);
   }
-  .bn-item{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;padding:6px 2px;border-radius:10px;color:var(--muted);text-decoration:none;font-size:.66rem;font-weight:620;letter-spacing:0;-webkit-tap-highlight-color:transparent;transition:color .2s,background .2s}
+  .bn-item{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;padding:6px 2px;border-radius:calc(10px * var(--rs,1));color:var(--muted);text-decoration:none;font-size:.66rem;font-weight:620;letter-spacing:0;-webkit-tap-highlight-color:transparent;transition:color .2s,background .2s}
   .bn-item span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bn-item.active{color:var(--accent);background:color-mix(in srgb,var(--accent) 11%,transparent)}
   .bn-item:active{transform:scale(.96)}
