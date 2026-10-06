@@ -375,8 +375,8 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 
     function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
     // Файлы и папки, которые не должны отображаться при просмотре материалов
-    const HIDDEN_FILE_NAMES=['site.css','package.json','readme.md','.gitignore','sw.js','manifest.webmanifest'];
-    const HIDDEN_FOLDER_NAMES=['tests','inner','data','js','css','docs','img','tools', '.github'];
+    const HIDDEN_FILE_NAMES=['site.css','package.json','readme.md','.gitignore','sw.js','manifest.webmanifest', 'CLAUDE.md', 'AGENTS.md', '.git-blame-ignore-revs'];
+    const HIDDEN_FOLDER_NAMES=['tests','inner','data','js','css','docs','img','tools', '.github', 'app'];
     function isHiddenPath(path){
       if(!path)return false;
       const parts=path.split('/');
