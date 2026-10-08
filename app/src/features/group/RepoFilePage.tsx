@@ -110,8 +110,14 @@ function FolderView({ files, folder, embedded = false }: FolderViewProps) {
 
       {listing.folders.length === 0 && listing.files.length === 0 ? (
         <EmptyState
-          title={files.length ? 'Папка пуста' : 'Файлы ещё не загружены'}
-          description={files.length ? undefined : 'Они появятся после синхронизации с GitHub.'}
+          title={files.length ? (embedded ? 'Папка пуста' : 'Такой папки или файла нет') : 'Файлы ещё не загружены'}
+          description={
+            files.length
+              ? embedded
+                ? undefined
+                : 'Возможно, файл переименовали или удалили. Нужный раздел — в крошках выше или во вкладке «Материалы».'
+              : 'Они появятся после синхронизации с GitHub.'
+          }
         />
       ) : (
         <div className={`${styles.grid} stagger`}>
@@ -168,15 +174,21 @@ function FileView({ file }: { file: RepoFile }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (ext !== 'md') return;
+    if (ext !== 'md') return undefined;
+    // active: быстрый переход на другой файл не должен получить текст или ошибку предыдущего
+    let active = true;
     setText(null);
+    setError('');
     fetch(groupRawUrl(file.path))
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.text();
       })
-      .then((raw) => setText(quizPageToMarkdown(raw)))
-      .catch((reason: Error) => setError(`Не удалось загрузить файл (${reason.message}).`));
+      .then((raw) => active && setText(quizPageToMarkdown(raw)))
+      .catch((reason: Error) => active && setError(`Не удалось загрузить файл (${reason.message}).`));
+    return () => {
+      active = false;
+    };
   }, [ext, file.path]);
 
   return (
