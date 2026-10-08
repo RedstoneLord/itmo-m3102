@@ -43,6 +43,6 @@ export const START_PAGES = [
   { value: '/deadlines', label: 'Дедлайны' },
   { value: '/homework', label: 'Домашнее задание' },
   { value: '/materials', label: 'Материалы' },
-  { value: '/calendar', label: 'Календарь' },
+  { value: '/schedule?view=month', label: 'Календарь (месяц)' },
   { value: '/review', label: 'Повторение' },
 ] as const;

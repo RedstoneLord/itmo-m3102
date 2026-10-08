@@ -5,7 +5,7 @@ import { AppShell } from '../components/layout/AppShell';
 import { EditModeProvider } from '../features/settings/EditModeContext';
 import { TodayPage } from '../features/today/TodayPage';
 import { useSyncStore } from '../services/syncStore';
-import { SECTIONS } from './navigation';
+import { SCHEDULE_MONTH_PATH, SECTIONS } from './navigation';
 
 /**
  * Страницы грузятся отдельными кусками: при открытии сайта качается только главная (web.dev: code splitting
@@ -26,7 +26,6 @@ function page<M>(load: () => Promise<M>, name: keyof M, prefetch = true) {
   };
 }
 
-const CalendarPage = page(() => import('../features/calendar/CalendarPage'), 'CalendarPage');
 const DeadlinesPage = page(() => import('../features/deadlines/DeadlinesPage'), 'DeadlinesPage');
 const DesignSystemPage = page(() => import('../features/design/DesignSystemPage'), 'DesignSystemPage', false);
 const DiagramEditorPage = page(() => import('../features/diagrams/DiagramEditorPage'), 'DiagramEditorPage', false);
@@ -97,7 +96,8 @@ export function App() {
 
             <Route path="today" element={<TodayPage />} />
             <Route path="schedule" element={<SchedulePage />} />
-            <Route path="calendar" element={<CalendarPage />} />
+            {/* Календарь — режим «Месяц» расписания; старые ссылки открывают его */}
+            <Route path="calendar" element={<Navigate to={SCHEDULE_MONTH_PATH} replace />} />
             <Route path="tasks" element={<TasksPage />} />
             <Route path="deadlines" element={<DeadlinesPage />} />
             <Route path="subjects" element={<SubjectsPage />} />

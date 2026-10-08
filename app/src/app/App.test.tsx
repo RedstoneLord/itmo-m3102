@@ -26,3 +26,11 @@ it('навигация: меню → предметы → предмет, «На
   expect(await screen.findByText(/Всё важное для группы/, {}, { timeout: 10_000 })).toBeTruthy();
   // Ленивые страницы в первый раз компилируются — под нагрузкой всего набора это дольше 5 с
 }, 45_000);
+
+it('старый адрес /calendar открывает месяц расписания', async () => {
+  window.location.hash = '#/calendar';
+  render(<App />);
+  expect(await heading('Расписание')).toBeTruthy();
+  expect(window.location.hash).toBe('#/schedule?view=month');
+  expect(screen.getByRole('radio', { name: 'Месяц', checked: true })).toBeTruthy();
+}, 45_000);

@@ -1,6 +1,6 @@
-import { FileText, NotebookText } from 'lucide-react';
+import { CalendarRange, FileText, NotebookText } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { SECTIONS, type Section } from '../../app/navigation';
+import { SCHEDULE_MONTH_PATH, SECTIONS, type Section } from '../../app/navigation';
 import { M3102_STUDENTS, resolveSubjectFolder } from '../../data/m3102';
 import { rawUrl } from '../../services/githubContent';
 import { useGroupStore } from '../group/groupStore';
@@ -150,7 +150,7 @@ const PAGES: Section[] = [
   { label: 'Полезные ссылки', path: '/links', icon: SECTIONS.materials.icon },
   SECTIONS.students,
   SECTIONS.memes,
-  SECTIONS.calendar,
+  { label: 'Календарь', path: SCHEDULE_MONTH_PATH, icon: CalendarRange },
   SECTIONS.tasks,
   SECTIONS.subjects,
   SECTIONS.notes,

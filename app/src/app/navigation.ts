@@ -3,7 +3,6 @@ import {
   BookOpen,
   ClipboardList,
   CalendarDays,
-  CalendarRange,
   Clock,
   Ellipsis,
   FolderOpen,
@@ -27,11 +26,15 @@ export interface Section {
   icon: LucideIcon;
 }
 
-/** Единый список разделов. Меню на компьютере и телефоне строятся из него. */
+/** Календарь — режим «Месяц» расписания: старый адрес /calendar перенаправляет сюда. */
+export const SCHEDULE_MONTH_PATH = '/schedule?view=month';
+
+/**
+ * Единый список разделов. Меню на компьютере и телефоне строятся из него.
+ */
 export const SECTIONS = {
   today: { label: 'Главная', path: '/today', icon: House },
   schedule: { label: 'Расписание', path: '/schedule', icon: CalendarDays },
-  calendar: { label: 'Календарь', path: '/calendar', icon: CalendarRange },
   tasks: { label: 'Учебный план', path: '/tasks', icon: SquareCheck },
   homework: { label: 'Домашнее задание', path: '/homework', icon: ClipboardList },
   deadlines: { label: 'Дедлайны', path: '/deadlines', icon: Clock },
@@ -54,7 +57,6 @@ export const SECTIONS = {
 export const SIDEBAR_PRIMARY: Section[] = [
   SECTIONS.today,
   SECTIONS.schedule,
-  SECTIONS.calendar,
   SECTIONS.materials,
   SECTIONS.homework,
   SECTIONS.deadlines,
@@ -72,7 +74,6 @@ export const MOBILE_TABS: Section[] = [SECTIONS.today, SECTIONS.schedule, SECTIO
 
 /** Всё, что не поместилось в нижнюю панель, — на странице «Ещё». */
 export const MORE_PAGE_SECTIONS: Section[] = [
-  SECTIONS.calendar,
   SECTIONS.homework,
   SECTIONS.deadlines,
   SECTIONS.tasks,

@@ -57,6 +57,17 @@ test('неделя расписания — сеткой по часам', async
   expect((await card.locator('xpath=../..').boundingBox())?.height).toBeGreaterThan(90);
 });
 
+test('календарь — месяц расписания: старый адрес открывает месяц, нажатие на число — день', async ({ page }) => {
+  await page.goto('./#/calendar');
+  await expect(page).toHaveURL(/#\/schedule\?view=month$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Расписание' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Месяц' })).toBeChecked();
+  await expect(page.getByText('Октябрь 2026')).toBeVisible();
+  await page.getByRole('button', { name: '15', exact: true }).click();
+  await expect(page).toHaveURL(/view=day/);
+  await expect(page.getByRole('radio', { name: 'День' })).toBeChecked();
+});
+
 test('PDF: страницы под тему сайта, тёмные по кнопке, «Продолжить» с прошлого места', async ({ page }) => {
   // По умолчанию страницы PDF следуют теме сайта: в тёмной — сразу тёмные
   await page.emulateMedia({ colorScheme: 'dark' });
@@ -125,7 +136,7 @@ test('телефон: свайп листает дни, страницы не ш
   });
   await expect(page.getByRole('tab', { selected: true })).toContainText('2');
 
-  for (const path of ['./', './#/schedule', './#/materials', './#/subjects', './#/calendar', `./${noteUrl(NOTE_MD)}`]) {
+  for (const path of ['./', './#/schedule', './#/materials', './#/subjects', './#/calendar', './#/schedule?view=month', `./${noteUrl(NOTE_MD)}`]) {
     await page.goto(path);
     await page.waitForTimeout(300);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), path).toBeLessThanOrEqual(0);
