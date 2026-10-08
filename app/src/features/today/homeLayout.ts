@@ -41,7 +41,7 @@ export const START_PAGES = [
   { value: '/today', label: 'Главная' },
   { value: '/schedule', label: 'Расписание' },
   { value: '/deadlines', label: 'Дедлайны' },
-  { value: '/homework', label: 'Домашнее задание' },
+  { value: '/deadlines?tab=homework', label: 'Домашнее задание' },
   { value: '/materials', label: 'Материалы' },
   { value: '/schedule?view=month', label: 'Календарь (месяц)' },
   { value: '/review', label: 'Повторение' },

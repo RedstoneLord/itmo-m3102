@@ -101,12 +101,13 @@ export const useSettingsStore = create<SettingsStore>()(
       storage: localStore,
       version: 5,
       // v3: вариант «Случайно» убрали (лагал) — заменяем на «15 мин»; v4: pdfDark по умолчанию null (как тема), старое false было значением по умолчанию;
-      // v5: «Календарь» стал режимом расписания — сохранённая стартовая страница /calendar ведёт на месяц
+      // v5: «Календарь» стал режимом расписания, а ДЗ — вкладкой «Дедлайнов»: сохранённые стартовые страницы /calendar и /homework ведут туда
       migrate: (stored) => {
         const state = stored as Omit<Partial<LocalSettings>, 'dynamicTheme'> & { dynamicTheme?: string };
         if (state.dynamicTheme === 'random') state.dynamicTheme = '15';
         if ((state as { pdfDark?: boolean | null }).pdfDark === false) (state as { pdfDark?: boolean | null }).pdfDark = null;
         if (state.startPage === '/calendar') state.startPage = '/schedule?view=month';
+        if (state.startPage === '/homework') state.startPage = '/deadlines?tab=homework';
         return state as LocalSettings;
       },
     },

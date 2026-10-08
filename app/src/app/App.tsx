@@ -34,7 +34,6 @@ const RelaxPage = page(() => import('../features/relax/RelaxPage'), 'RelaxPage',
 const MemesPage = page(() => import('../features/group/MemesPage'), 'MemesPage');
 const RepoFilePage = page(() => import('../features/group/RepoFilePage'), 'RepoFilePage');
 const StudentsPage = page(() => import('../features/group/StudentsPage'), 'StudentsPage');
-const HomeworkPage = page(() => import('../features/homework/HomeworkPage'), 'HomeworkPage');
 const LectureNoteViewPage = page(() => import('../features/materials/LectureNoteViewPage'), 'LectureNoteViewPage');
 const MaterialsPage = page(() => import('../features/materials/MaterialsPage'), 'MaterialsPage');
 const MorePage = page(() => import('../features/more/MorePage'), 'MorePage');
@@ -107,7 +106,8 @@ export function App() {
             <Route path="materials" element={<MaterialsPage />} />
             <Route path="materials/notes/*" element={<LectureNoteViewPage />} />
             <Route path="notes" element={<NotesPage />} />
-            <Route path="homework" element={<HomeworkPage />} />
+            {/* ДЗ — вкладка страницы «Дедлайны»; старый адрес открывает её */}
+            <Route path="homework" element={<Navigate to={SECTIONS.homework.path} replace />} />
             <Route path="files/*" element={<RepoFilePage />} />
             <Route path="links" element={<LinksPage />} />
             <Route path="students" element={<StudentsPage />} />

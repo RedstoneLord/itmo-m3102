@@ -34,3 +34,11 @@ it('старый адрес /calendar открывает месяц распис
   expect(window.location.hash).toBe('#/schedule?view=month');
   expect(screen.getByRole('radio', { name: 'Месяц', checked: true })).toBeTruthy();
 }, 45_000);
+
+it('старый адрес /homework открывает вкладку «Домашние задания» страницы «Дедлайны»', async () => {
+  window.location.hash = '#/homework';
+  render(<App />);
+  expect(await heading('Домашнее задание')).toBeTruthy();
+  expect(window.location.hash).toBe('#/deadlines?tab=homework');
+  expect(screen.getByRole('tab', { name: /Домашние задания/, selected: true })).toBeTruthy();
+}, 45_000);

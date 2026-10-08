@@ -1,5 +1,6 @@
 import { Pencil, Trash2 } from 'lucide-react';
 import { Link } from 'react-router';
+import { SECTIONS } from '../../app/navigation';
 import { LazyMarkdown as Markdown } from '../../components/markdown/LazyMarkdown';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { IconButton } from '../../components/ui/IconButton';
@@ -61,7 +62,7 @@ export function HomeworkCard({ item, today, compact = false, onEdit, onDelete }:
           {/* На странице «Домашнее задание» предмет уже в заголовке группы — не повторяем */}
           {compact && (
             // Карточка на главной и в окне пары целиком нажимается: ссылка растянута на всю карточку (Homework.module.css)
-            <Link to="/homework" className={styles.cardLink}>
+            <Link to={SECTIONS.homework.path} className={styles.cardLink}>
               <strong>{item.subject}</strong>
             </Link>
           )}

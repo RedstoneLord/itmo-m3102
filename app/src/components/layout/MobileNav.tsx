@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router';
-import { MOBILE_TABS, SECTIONS } from '../../app/navigation';
+import { findSection, MOBILE_TABS, SECTIONS } from '../../app/navigation';
 import { cn } from '../../lib/cn';
 import { SPRING_SNAPPY } from '../../lib/motion';
 import styles from './MobileNav.module.css';
@@ -9,16 +9,15 @@ const TABS = [...MOBILE_TABS, SECTIONS.more];
 
 /**
  * Нижняя панель вкладок на телефоне.
- * Если открыт раздел, которого нет среди вкладок (дедлайны, предметы…), подсвечивается «Ещё» — но с иконкой
+ * Вкладка подсвечивается и на вложенных адресах (конспект, файлы группы — «Материалы»; вкладка ДЗ — «Дедлайны»).
+ * Если открыт раздел, которого нет среди вкладок (главная, предметы…), подсвечивается «Ещё» — но с иконкой
  * и названием этого раздела: внизу видно, где ты, а не просто «Ещё». Нажатие по-прежнему открывает «Ещё».
  */
 export function MobileNav() {
   const { pathname } = useLocation();
-  const activeTab = MOBILE_TABS.find((tab) => pathname.startsWith(tab.path)) ?? SECTIONS.more;
-  const current =
-    activeTab === SECTIONS.more && pathname !== SECTIONS.more.path
-      ? Object.values(SECTIONS).find((section) => section.path !== '/' && pathname.startsWith(section.path))
-      : undefined;
+  const section = findSection(pathname);
+  const activeTab = MOBILE_TABS.find((tab) => tab === section) ?? SECTIONS.more;
+  const current = activeTab === SECTIONS.more && section !== SECTIONS.more ? section : undefined;
 
   return (
     <nav className={styles.bar} aria-label="Основное меню">

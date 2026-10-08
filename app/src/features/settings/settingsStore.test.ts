@@ -13,3 +13,9 @@ it('остальные стартовые страницы не меняются
   await useSettingsStore.persist.rehydrate();
   expect(useSettingsStore.getState().startPage).toBe('/deadlines');
 });
+
+it('сохранённая стартовая страница /homework открывает вкладку ДЗ', async () => {
+  localStorage.setItem('m3102:settings', JSON.stringify({ state: { startPage: '/homework' }, version: 4 }));
+  await useSettingsStore.persist.rehydrate();
+  expect(useSettingsStore.getState().startPage).toBe('/deadlines?tab=homework');
+});

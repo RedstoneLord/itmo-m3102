@@ -1,5 +1,5 @@
 import { ExternalLink, RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Badge } from '../../components/ui/Badge';
 import { Button, buttonClass } from '../../components/ui/Button';
@@ -11,12 +11,14 @@ import { useConfettiWhenCleared } from '../../lib/celebrate';
 import { cn } from '../../lib/cn';
 import { GROUP_REPO, repoEditUrl } from '../../services/github';
 import { filePath, useGroupStore, type GroupDeadline } from '../group/groupStore';
+import { HomeworkPage } from '../homework/HomeworkPage';
 import { resolveSubjectFolder } from '../../data/m3102';
 import { deadlineSubjectId } from '../subjects/subjectStats';
 import { useSubjectsStore } from '../subjects/subjectsStore';
 import { deadlineInfo, orderDeadlines } from './deadlineInfo';
 import { useEditMode } from '../settings/EditModeContext';
 import { useProfileStore } from '../group/profileStore';
+import { DeadlinesTabs, useDeadlinesTab } from './DeadlinesTabs';
 import { useQueueStore, type QueueEntry } from './queueStore';
 import styles from './DeadlinesPage.module.css';
 
@@ -32,8 +34,15 @@ export function joinQueueUrl(deadlineId: string, name: string): string {
 const formatFull = (iso: string) =>
   new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-/** Дедлайны группы М3102: сроки из репозитория, общая очередь сдачи и личные отметки выполнения. */
+/** Дедлайны и домашние задания группы М3102 — две вкладки одной страницы (?tab=homework). */
 export function DeadlinesPage() {
+  const tab = useDeadlinesTab();
+  const tabs = <DeadlinesTabs tab={tab} />;
+  return tab === 'homework' ? <HomeworkPage tabs={tabs} /> : <DeadlinesList tabs={tabs} />;
+}
+
+/** Дедлайны группы М3102: сроки из репозитория, общая очередь сдачи и личные отметки выполнения. */
+function DeadlinesList({ tabs }: { tabs: ReactNode }) {
   const { isEditMode } = useEditMode();
   const deadlines = useGroupStore((state) => state.deadlines);
   const doneMap = useGroupStore((state) => state.deadlinesDone);
@@ -73,6 +82,7 @@ export function DeadlinesPage() {
           </>
         }
       />
+      {tabs}
 
       {deadlines.length === 0 ? (
         <EmptyState title="Дедлайнов пока нет" description="Они появятся после синхронизации с репозиторием группы." />

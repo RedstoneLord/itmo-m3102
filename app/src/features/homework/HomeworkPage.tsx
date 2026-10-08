@@ -1,6 +1,6 @@
 import { Copy, Download, ExternalLink, Plus, Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button, buttonClass } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { ConfirmDeleteModal } from '../../components/ui/ConfirmDeleteModal';
@@ -33,8 +33,8 @@ const LEAVE = { opacity: 0, x: 24, transition: { duration: 0.2 } };
 
 const dueOrder = (item: HomeworkItem) => item.due || '9999-12-31';
 
-/** Домашнее задание группы — общее для всех (data/homework.json), отметки «сделано» — личные. */
-export function HomeworkPage() {
+/** Домашнее задание группы — общее для всех (data/homework.json), отметки «сделано» — личные. Вкладка страницы «Дедлайны». */
+export function HomeworkPage({ tabs }: { tabs?: ReactNode }) {
   const { today } = useClock();
   const items = useHomeworkStore((state) => state.items);
   const done = useHomeworkStore((state) => state.done);
@@ -82,6 +82,7 @@ export function HomeworkPage() {
           )
         }
       />
+      {tabs}
 
       <div className={styles.toolbar}>
         <SegmentedControl label="Фильтр заданий" options={FILTERS} value={filter} onChange={setFilter} />

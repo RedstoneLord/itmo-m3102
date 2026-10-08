@@ -136,9 +136,43 @@ test('телефон: свайп листает дни, страницы не ш
   });
   await expect(page.getByRole('tab', { selected: true })).toContainText('2');
 
-  for (const path of ['./', './#/schedule', './#/materials', './#/subjects', './#/calendar', './#/schedule?view=month', `./${noteUrl(NOTE_MD)}`]) {
+  for (const path of [
+    './',
+    './#/schedule',
+    './#/materials',
+    './#/subjects',
+    './#/calendar',
+    './#/schedule?view=month',
+    './#/homework',
+    `./${noteUrl(NOTE_MD)}`,
+  ]) {
     await page.goto(path);
     await page.waitForTimeout(300);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), path).toBeLessThanOrEqual(0);
   }
+});
+
+test('телефон: панель — Материалы, Расписание, Дедлайны, Ещё; Главная — логотип и первая строка «Ещё»; ДЗ — вкладка дедлайнов @phone', async ({
+  page,
+}) => {
+  await page.goto('./#/deadlines');
+  const bar = page.getByRole('navigation', { name: 'Основное меню' });
+  await expect(bar.getByRole('link')).toHaveText(['Материалы', 'Расписание', 'Дедлайны', 'Ещё']);
+  await expect(bar.getByRole('link', { name: 'Дедлайны' })).toHaveAttribute('aria-current', 'page');
+
+  // Старый адрес ДЗ открывает вкладку «Домашние задания»; в панели по-прежнему «Дедлайны»
+  await page.goto('./#/homework');
+  await expect(page).toHaveURL(/#\/deadlines\?tab=homework$/);
+  await expect(page.getByRole('tab', { name: /Домашние задания/, selected: true })).toBeVisible();
+  await expect(bar.getByRole('link', { name: 'Дедлайны' })).toHaveAttribute('aria-current', 'page');
+
+  // Вложенный адрес подсвечивает «Материалы»
+  await openSynced(page, `./${noteUrl(NOTE_MD)}`);
+  await expect(bar.getByRole('link', { name: 'Материалы' })).toHaveAttribute('aria-current', 'page');
+
+  // Главная — логотип в шапке и первая строка «Ещё»
+  await page.locator('header').getByRole('link', { name: 'М3102 — главная' }).click();
+  await expect(page).toHaveURL(/#\/today$/);
+  await bar.getByRole('link', { name: /^Ещё/ }).click();
+  await expect(page.locator('main ul a').first()).toHaveText('Главная');
 });

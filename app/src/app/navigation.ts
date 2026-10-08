@@ -31,12 +31,13 @@ export const SCHEDULE_MONTH_PATH = '/schedule?view=month';
 
 /**
  * Единый список разделов. Меню на компьютере и телефоне строятся из него.
+ * homework — вкладка страницы «Дедлайны», в меню своего пункта нет: адрес с параметром нужен ссылкам и поиску.
  */
 export const SECTIONS = {
   today: { label: 'Главная', path: '/today', icon: House },
   schedule: { label: 'Расписание', path: '/schedule', icon: CalendarDays },
   tasks: { label: 'Учебный план', path: '/tasks', icon: SquareCheck },
-  homework: { label: 'Домашнее задание', path: '/homework', icon: ClipboardList },
+  homework: { label: 'Домашнее задание', path: '/deadlines?tab=homework', icon: ClipboardList },
   deadlines: { label: 'Дедлайны', path: '/deadlines', icon: Clock },
   subjects: { label: 'Предметы', path: '/subjects', icon: BookOpen },
   review: { label: 'Повторение', path: '/review', icon: Repeat2 },
@@ -58,7 +59,6 @@ export const SIDEBAR_PRIMARY: Section[] = [
   SECTIONS.today,
   SECTIONS.schedule,
   SECTIONS.materials,
-  SECTIONS.homework,
   SECTIONS.deadlines,
   SECTIONS.tasks,
   SECTIONS.subjects,
@@ -69,13 +69,12 @@ export const SIDEBAR_PRIMARY: Section[] = [
 /** Боковое меню: «Другое», после разделителя. */
 export const SIDEBAR_SECONDARY: Section[] = [SECTIONS.students, SECTIONS.diagrams, SECTIONS.memes, SECTIONS.game, SECTIONS.relax];
 
-/** Нижняя панель на телефоне (плюс кнопка «Ещё»). */
-export const MOBILE_TABS: Section[] = [SECTIONS.today, SECTIONS.schedule, SECTIONS.materials];
+/** Нижняя панель на телефоне (плюс кнопка «Ещё»). Главная — логотип в шапке и первая строка «Ещё». */
+export const MOBILE_TABS: Section[] = [SECTIONS.materials, SECTIONS.schedule, SECTIONS.deadlines];
 
 /** Всё, что не поместилось в нижнюю панель, — на странице «Ещё». */
 export const MORE_PAGE_SECTIONS: Section[] = [
-  SECTIONS.homework,
-  SECTIONS.deadlines,
+  SECTIONS.today,
   SECTIONS.tasks,
   SECTIONS.subjects,
   SECTIONS.review,
