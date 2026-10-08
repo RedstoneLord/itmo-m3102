@@ -152,12 +152,10 @@ test('телефон: свайп листает дни, страницы не ш
   }
 });
 
-test('телефон: панель — Материалы, Расписание, Дедлайны, Ещё; Главная — логотип и первая строка «Ещё»; ДЗ — вкладка дедлайнов @phone', async ({
-  page,
-}) => {
+test('телефон: панель — Главная, Расписание, Материалы, Дедлайны, Ещё; ДЗ — вкладка дедлайнов @phone', async ({ page }) => {
   await page.goto('./#/deadlines');
   const bar = page.getByRole('navigation', { name: 'Основное меню' });
-  await expect(bar.getByRole('link')).toHaveText(['Материалы', 'Расписание', 'Дедлайны', 'Ещё']);
+  await expect(bar.getByRole('link')).toHaveText(['Главная', 'Расписание', 'Материалы', 'Дедлайны', 'Ещё']);
   await expect(bar.getByRole('link', { name: 'Дедлайны' })).toHaveAttribute('aria-current', 'page');
 
   // Старый адрес ДЗ открывает вкладку «Домашние задания»; в панели по-прежнему «Дедлайны»
@@ -170,9 +168,11 @@ test('телефон: панель — Материалы, Расписание,
   await openSynced(page, `./${noteUrl(NOTE_MD)}`);
   await expect(bar.getByRole('link', { name: 'Материалы' })).toHaveAttribute('aria-current', 'page');
 
-  // Главная — логотип в шапке и первая строка «Ещё»
+  // «Главная» — вкладка; логотип в шапке ведёт туда же
   await page.locator('header').getByRole('link', { name: 'М3102 — главная' }).click();
   await expect(page).toHaveURL(/#\/today$/);
+  await expect(bar.getByRole('link', { name: 'Главная' })).toHaveAttribute('aria-current', 'page');
+  // «Ещё» — остальные разделы; Главной там уже нет
   await bar.getByRole('link', { name: /^Ещё/ }).click();
-  await expect(page.locator('main ul a').first()).toHaveText('Главная');
+  await expect(page.locator('main ul a').first()).toHaveText('Учебный план');
 });

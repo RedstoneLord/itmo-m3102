@@ -3,12 +3,11 @@ import { findSection, MOBILE_TABS, MORE_PAGE_SECTIONS, SCHEDULE_MONTH_PATH, SECT
 
 const labels = (sections: { label: string }[]) => sections.map((section) => section.label);
 
-it('нижняя панель телефона: Материалы, Расписание, Дедлайны (плюс «Ещё»)', () => {
-  expect(labels(MOBILE_TABS)).toEqual(['Материалы', 'Расписание', 'Дедлайны']);
+it('нижняя панель телефона: Главная, Расписание, Материалы, Дедлайны (плюс «Ещё»)', () => {
+  expect(labels(MOBILE_TABS)).toEqual(['Главная', 'Расписание', 'Материалы', 'Дедлайны']);
 });
 
-it('«Главная» — первая строка «Ещё»; того, что уже в панели, там нет', () => {
-  expect(MORE_PAGE_SECTIONS[0]).toBe(SECTIONS.today);
+it('в «Ещё» нет того, что уже есть в панели', () => {
   for (const tab of MOBILE_TABS) expect(MORE_PAGE_SECTIONS).not.toContain(tab);
 });
 

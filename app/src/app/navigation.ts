@@ -69,12 +69,11 @@ export const SIDEBAR_PRIMARY: Section[] = [
 /** Боковое меню: «Другое», после разделителя. */
 export const SIDEBAR_SECONDARY: Section[] = [SECTIONS.students, SECTIONS.diagrams, SECTIONS.memes, SECTIONS.game, SECTIONS.relax];
 
-/** Нижняя панель на телефоне (плюс кнопка «Ещё»). Главная — логотип в шапке и первая строка «Ещё». */
-export const MOBILE_TABS: Section[] = [SECTIONS.materials, SECTIONS.schedule, SECTIONS.deadlines];
+/** Нижняя панель на телефоне (плюс кнопка «Ещё»). */
+export const MOBILE_TABS: Section[] = [SECTIONS.today, SECTIONS.schedule, SECTIONS.materials, SECTIONS.deadlines];
 
 /** Всё, что не поместилось в нижнюю панель, — на странице «Ещё». */
 export const MORE_PAGE_SECTIONS: Section[] = [
-  SECTIONS.today,
   SECTIONS.tasks,
   SECTIONS.subjects,
   SECTIONS.review,

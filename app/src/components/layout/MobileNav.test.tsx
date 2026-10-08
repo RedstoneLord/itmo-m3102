@@ -18,6 +18,7 @@ function activeTab(path: string): string | null {
 }
 
 it('вложенные адреса подсвечивают свою вкладку', () => {
+  expect(activeTab('/today')).toBe('Главная');
   expect(activeTab('/materials/notes/gh:Конспекты/ДМ/Лекция_1/Графы.md')).toBe('Материалы');
   expect(activeTab('/files/Материалы/ДМ')).toBe('Материалы');
   expect(activeTab('/links')).toBe('Материалы');
@@ -27,16 +28,15 @@ it('вложенные адреса подсвечивают свою вклад
 });
 
 it('разделы вне панели подсвечивают «Ещё» с названием этого раздела', () => {
-  expect(activeTab('/today')).toBe('Ещё — сейчас: Главная');
   expect(activeTab('/subjects/dm')).toBe('Ещё — сейчас: Предметы');
   expect(activeTab('/more')).toBe('Ещё');
 });
 
-it('в панели четыре вкладки в нужном порядке', () => {
+it('в панели пять кнопок в нужном порядке', () => {
   render(
     <MemoryRouter initialEntries={['/deadlines']}>
       <MobileNav />
     </MemoryRouter>,
   );
-  expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Материалы', 'Расписание', 'Дедлайны', 'Ещё']);
+  expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Главная', 'Расписание', 'Материалы', 'Дедлайны', 'Ещё']);
 });
