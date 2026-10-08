@@ -40,4 +40,38 @@ describe('синхронизация с GitHub', () => {
     expect(useLectureNotesStore.getState().lectureNotes.find((note) => note.id === `gh:${NOTE}`)?.archived).toBe(false);
     vi.unstubAllGlobals();
   });
+
+  it('один недоступный конспект не ломает синхронизацию, а сбой дерева не ставит метку «синхронизировано»', async () => {
+    const OTHER = 'Конспекты/ДМ/Лекция_1/Множества.md';
+    const text = ['# Множества', '', 'Текст'].join('\n');
+    const sha = await blobSha(bytes(text));
+    let treeStatus = 200;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = decodeURI(String(input));
+        if (url.includes('api.github.com')) {
+          return treeStatus === 200
+            ? Response.json({ tree: [NOTE, OTHER].map((path) => ({ path, type: 'blob', sha })) })
+            : new Response('{}', { status: treeStatus });
+        }
+        if (url.endsWith('deadlines.json')) return Response.json([]);
+        if (url.endsWith('.json')) return Response.json({ items: [] });
+        return url.endsWith('Графы.md') ? new Response('Not Found', { status: 404 }) : new Response(text);
+      }),
+    );
+    localStorage.removeItem('m3102:last-sync');
+    useLectureNotesStore.setState({ lectureNotes: [] });
+
+    await syncGithubContent();
+    const ids = useLectureNotesStore.getState().lectureNotes.map((note) => note.id);
+    expect(ids).toEqual([`gh:${OTHER}`]);
+    expect(localStorage.getItem('m3102:last-sync')).not.toBeNull();
+
+    localStorage.removeItem('m3102:last-sync');
+    treeStatus = 500;
+    await expect(syncGithubContent()).rejects.toThrow('500');
+    expect(localStorage.getItem('m3102:last-sync')).toBeNull();
+    vi.unstubAllGlobals();
+  });
 });

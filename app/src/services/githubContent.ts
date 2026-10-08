@@ -230,7 +230,7 @@ async function buildGroupNotes(tree: TreeFile[], previous: LectureNote[], now: s
     .map((file) => ({ file, path: file.path, parts: file.path.split('/') }))
     .filter(({ parts }) => parts[0] === 'Конспекты' && parts.length === 4 && parts[2]!.toLowerCase() !== 'img' && resolveSubjectFolder(parts[1]!));
 
-  return Promise.all(
+  const built = await Promise.all(
     files.map(async ({ file, path, parts }) => {
       const [, subjectFolder, lessonFolder, name] = parts as [string, string, string, string];
       const ext = extension(name);
@@ -243,7 +243,10 @@ async function buildGroupNotes(tree: TreeFile[], previous: LectureNote[], now: s
         if (old?.sourceVersion === fileVersion(file)) return { ...old, archived: false };
         // Название — по имени файла, как на сайте группы; первый заголовок убираем, только если он его повторяет
         // Файл-тест (mode: quiz) — один блок ```quiz, обычный конспект — без служебной шапки
-        const fetched = await fetchFile('group', file);
+        // Один недоступный файл не должен ломать всю синхронизацию (дедлайны, ДЗ, расписание): оставляем прошлую версию
+        // или пропускаем конспект — в следующую синхронизацию он скачается снова
+        const fetched = await fetchFile('group', file).catch(() => null);
+        if (!fetched) return old ? { ...old, archived: false } : null;
         sourceVersion = fetched.version;
         const text = stripFrontMatter(quizPageToMarkdown(fetched.text));
         const split = splitTitle(text);
@@ -265,6 +268,7 @@ async function buildGroupNotes(tree: TreeFile[], previous: LectureNote[], now: s
       );
     }),
   );
+  return built.filter((note): note is LectureNote => note !== null);
 }
 
 /** Описания курсов — из встроенных файлов `src/data/courseInfo` (без сети): без списка конспектов и навигации */
@@ -322,7 +326,11 @@ const AUTO_SYNC_INTERVAL = 10 * 60 * 1000;
 
 /** При открытии приложения — не чаще раза в 10 минут, чтобы перезагрузки не съедали лимит GitHub API */
 export async function autoSyncGithubContent(): Promise<void> {
-  if (Date.now() - Number(localStorage.getItem(LAST_SYNC_KEY) ?? 0) < AUTO_SYNC_INTERVAL) return;
+  try {
+    if (Date.now() - Number(localStorage.getItem(LAST_SYNC_KEY) ?? 0) < AUTO_SYNC_INTERVAL) return;
+  } catch {
+    // Хранилище запрещено — метки нет, синхронизируем при каждом открытии
+  }
   await syncGithubContent();
 }
 
@@ -408,9 +416,16 @@ export async function syncGithubContent(): Promise<SyncSummary> {
     summary.subjectInfo = courses.value.length;
   }
 
-  // Хоть один репозиторий обновился — следующая автосинхронизация через 10 минут: иначе недоступный второй
-  // заставлял бы синхронизироваться заново при каждом открытии сайта и тратить лимит GitHub API
-  if (group.status === 'fulfilled' || courses.status === 'fulfilled') localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
+  // Получилось — следующая автосинхронизация через 10 минут, чтобы перезагрузки не тратили лимит GitHub API. Описания курсов
+  // встроены и «получаются» всегда, поэтому по ним метку не ставим: после сбоя GitHub (500, обрыв, таймаут) при следующем
+  // открытии сайта синхронизация повторится, а не будет молчать 10 минут
+  if (group.status === 'fulfilled') {
+    try {
+      localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
+    } catch {
+      // Хранилище запрещено или переполнено — данные синхронизации и так показаны, просто без метки
+    }
+  }
   const failed = [group, courses].find((result) => result.status === 'rejected');
   if (failed) throw failed.reason instanceof Error ? failed.reason : new Error('Не удалось синхронизироваться с GitHub.');
   return summary;
