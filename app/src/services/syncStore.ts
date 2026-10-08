@@ -32,8 +32,12 @@ export const useSyncStore = create<SyncStore>()((set, get) => {
       set((state) => ({ status: 'done', summary: summary ?? state.summary }));
       // Новые и изменённые файлы группы — сразу на устройство, если человек включил работу без интернета
       // Модуль — отдельным куском (в нём загрузка читалки PDF и mermaid), грузится, только если что-то уже скачано
-      if (summary && localStorage.getItem(storageKey('offline'))?.includes('"saved":{"'))
-        void import('./offline').then((module) => module.updateOfflineIfEnabled());
+      try {
+        if (summary && localStorage.getItem(storageKey('offline'))?.includes('"saved":{"'))
+          void import('./offline').then((module) => module.updateOfflineIfEnabled());
+      } catch {
+        // Хранилище запрещено — «Работу без интернета» не включали, обновлять нечего
+      }
     } catch (error) {
       // fetch без сети бросает TypeError «Failed to fetch» — человеку это ничего не говорит
       const message =

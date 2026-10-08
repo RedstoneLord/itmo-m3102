@@ -68,8 +68,15 @@ export function idleStorage<S>(): PersistStorage<S> {
     }
     pending.clear();
   };
-  // Вне браузера (юнит-тесты в Node) хранить негде
-  const available = typeof localStorage !== 'undefined';
+  // Вне браузера (юнит-тесты в Node) хранить негде. Браузер с запретом данных сайта бросает SecurityError уже на обращении к
+  // localStorage (в том числе в typeof) — без try это падало при загрузке модуля, и сайт был пустой белой страницей
+  const available = (() => {
+    try {
+      return typeof localStorage !== 'undefined';
+    } catch {
+      return false;
+    }
+  })();
   if (available) {
     addEventListener('pagehide', flush);
     document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && flush());

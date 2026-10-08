@@ -17,3 +17,21 @@ it('нет места — выбрасываем кеш конспектов и 
   expect(JSON.parse(localStorage.getItem('m3102:tasks')!)).toEqual({ state: { done: 1 }, version: 0 });
   vi.restoreAllMocks();
 });
+
+it('браузер запретил данные сайта (localStorage бросает SecurityError) — idleStorage не падает при создании', async () => {
+  const original = Object.getOwnPropertyDescriptor(window, 'localStorage')!;
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    get() {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    },
+  });
+  try {
+    const { idleStorage } = await import('./storage');
+    const storage = idleStorage<{ a: number }>();
+    expect(storage.getItem('m3102:x')).toBeNull();
+    expect(() => storage.setItem('m3102:x', { state: { a: 1 }, version: 0 })).not.toThrow();
+  } finally {
+    Object.defineProperty(window, 'localStorage', original);
+  }
+});
