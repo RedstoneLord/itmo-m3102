@@ -14,7 +14,7 @@ const hasClassicCopy = () =>
   ));
 
 /**
- * «Переключить стиль» в ряду кнопок шапки — главная кнопка (залита акцентом), чтобы её было видно сразу, но без
+ * «Классическая версия» в ряду кнопок шапки — главная кнопка (залита акцентом), чтобы её было видно сразу, но без
  * отдельной плашки: общий сайт с двумя оформлениями. Сам переход с волной делает public/switch/site-switch.js по
  * data-site-switch; во втором оформлении такая же кнопка — в его шапке и в его фиолетовом акценте (там же).
  */
@@ -33,11 +33,11 @@ export function SiteSwitch() {
       href={CLASSIC_URL}
       data-site-switch
       className={`${buttonClass('primary', 'sm')} ${styles.switch}`}
-      title="Переключить стиль оформления"
-      aria-label="Переключить стиль"
+      title="Открыть классическую версию сайта"
+      aria-label="Классическая версия"
     >
       <ArrowLeftRight size={14} strokeWidth={2} aria-hidden />
-      <span className={styles.text}>Переключить стиль</span>
+      <span className={styles.text}>Классическая версия</span>
     </a>
   );
 }

@@ -271,9 +271,9 @@
     link.href = /\/classic(\/|$)/.test(location.pathname) ? '../' : './app/';
     link.className = 'gh-link m3102-switch-btn';
     link.setAttribute('data-site-switch', '');
-    link.title = 'Переключить стиль оформления';
-    link.setAttribute('aria-label', 'Переключить стиль');
-    link.innerHTML = ICON + '<span>Переключить стиль</span>';
+    link.title = 'Открыть новую версию сайта';
+    link.setAttribute('aria-label', 'Новая версия');
+    link.innerHTML = ICON + '<span>Новая версия</span>';
     var actions = document.querySelector('header .header-actions');
     if (actions) actions.insertBefore(link, actions.querySelector('.gh-link'));
     else {
