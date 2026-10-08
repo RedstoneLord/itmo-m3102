@@ -86,3 +86,17 @@
   font-size: var(--text-sm);
   color: var(--color-text);
 }
+
+/* Палец: цель нажатия не меньше 24×24 (WCAG 2.2, 2.5.8) — «сделано» на телефоне было 16px. Крупнее сам квадрат, а не невидимая зона вокруг */
+@media (pointer: coarse) {
+  .input,
+  .box {
+    width: 24px;
+    height: 24px;
+  }
+
+  .box svg {
+    width: 16px;
+    height: 16px;
+  }
+}
