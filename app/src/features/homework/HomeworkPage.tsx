@@ -53,6 +53,7 @@ export function HomeworkPage() {
 
   // Просроченные — срок прошёл, а «сделано» не отмечено; в «Актуальных» их нет
   const filterOf = (item: HomeworkItem): Filter => (done[item.id] ? 'done' : item.due !== '' && item.due < today ? 'overdue' : 'active');
+  const overdueCount = items.filter((item) => filterOf(item) === 'overdue').length;
   const visible = items
     .filter((item) => filter === 'all' || filterOf(item) === filter)
     .sort((a, b) => dueOrder(a).localeCompare(dueOrder(b)) || a.subject.localeCompare(b.subject, 'ru'));
@@ -129,7 +130,20 @@ export function HomeworkPage() {
       {ordered.length === 0 && (
         // Появляется, когда последняя карточка уже уехала
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.2 } }}>
-          <EmptyState title="Всё под контролем" description="Заданий в этом списке пока нет." />
+          {/* «Всё под контролем» при просроченном задании в соседней вкладке — ложное спокойствие */}
+          {filter === 'active' && overdueCount > 0 ? (
+            <EmptyState
+              title="Актуальных нет, но есть просроченные"
+              description={`Просрочено: ${overdueCount}.`}
+              action={
+                <Button variant="secondary" onClick={() => setFilter('overdue')}>
+                  Показать просроченные
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState title="Всё под контролем" description="Заданий в этом списке пока нет." />
+          )}
         </motion.div>
       )}
 
