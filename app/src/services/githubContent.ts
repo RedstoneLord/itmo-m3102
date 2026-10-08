@@ -180,7 +180,45 @@ async function fetchFile(repo: keyof typeof REPOS, file: TreeFile): Promise<{ te
   return { text: new TextDecoder().decode(bytes), version: verified ? fileVersion(file) : undefined };
 }
 
+/**
+ * Готовое дерево файлов репозитория: data/tree.json — тот же ответ, что отдаёт `GET /git/trees/master?recursive=1`
+ * (`{ truncated?, tree: [{ path, type, sha, size? }] }`). Его кладёт в репозиторий CI группы. Читается с raw (без лимита API).
+ */
+export const TREE_JSON_PATH = 'data/tree.json';
+
+/** Файлы, без которых синхронизация не работает: если их нет в дереве, это не дерево всего репозитория, а его кусок */
+const TREE_REQUIRED_PATHS = ['data/homework.json', 'Дедлайны/deadlines.json'];
+
+/** Файлы из ответа дерева; другой формат или обрезанный список — null: частичное дерево за полное принимать нельзя */
+export function parseTree(raw: unknown): TreeFile[] | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const { truncated, tree } = raw as { truncated?: unknown; tree?: unknown };
+  if (truncated === true || !Array.isArray(tree)) return null;
+  const files: TreeFile[] = [];
+  for (const entry of tree as Record<string, unknown>[]) {
+    if (!entry || typeof entry.path !== 'string' || typeof entry.type !== 'string' || typeof entry.sha !== 'string') return null;
+    if (entry.type === 'blob') files.push({ path: entry.path, size: typeof entry.size === 'number' ? entry.size : 0, sha: entry.sha });
+  }
+  return files;
+}
+
+/** data/tree.json, если он есть и годится; нет файла, сеть, чужой формат — null, и дерево берётся из API как раньше */
+async function fetchPrebuiltTree(repo: keyof typeof REPOS): Promise<TreeFile[] | null> {
+  try {
+    // Короче общего тайм-аута: не вышло быстро — идём в API, а не ждём
+    const response = await fetch(rawUrl(repo, TREE_JSON_PATH), { cache: 'no-store', signal: AbortSignal.timeout(8_000) });
+    if (!response.ok) return null;
+    const files = parseTree(await response.json());
+    const paths = new Set(files?.map((file) => file.path));
+    return files && TREE_REQUIRED_PATHS.every((path) => paths.has(path)) ? files : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchTree(repo: keyof typeof REPOS): Promise<TreeFile[]> {
+  const prebuilt = await fetchPrebuiltTree(repo);
+  if (prebuilt) return prebuilt;
   const { name, branch } = REPOS[repo];
   const response = await githubFetch(`https://api.github.com/repos/${name}/git/trees/${branch}?recursive=1`, { signal: timeout() });
   if (!response.ok) throw new Error(`${name}: ${githubError(response.status, false, response)}`);
