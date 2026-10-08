@@ -11,7 +11,10 @@ const RELOADED_KEY = 'm3102:chunk-reload';
  * «Failed to fetch dynamically imported module». Лечится перезагрузкой — делаем её сами, один раз.
  */
 function isStaleChunk(error: unknown): boolean {
-  return error instanceof Error && /dynamically imported module|Importing a module script failed|error loading dynamically/i.test(error.message);
+  return (
+    error instanceof Error &&
+    /dynamically imported module|Importing a module script failed|error loading dynamically|Unable to preload/i.test(error.message)
+  );
 }
 
 /** Не чаще раза в 30 с: если после перезагрузки снова ошибка — значит, дело не в старой сборке, показываем сообщение */
@@ -42,7 +45,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, { error: Error 
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    if (isStaleChunk(error) && reloadOnce()) return;
+    // Без сети перезагрузка не поможет: кусок страницы просто не сохранён на устройстве
+    if (isStaleChunk(error) && navigator.onLine && reloadOnce()) return;
     console.error(error, info.componentStack);
   }
 
@@ -57,15 +61,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, { error: Error 
     const { error, copied } = this.state;
     if (!error) return this.props.children;
     const stale = isStaleChunk(error);
+    // Читалка PDF и схемы докачиваются при первом открытии — без сети их кода может не быть
+    const offline = stale && !navigator.onLine;
     return (
       <div className={styles.wrap} role="alert">
         <EmptyState
           icon={TriangleAlert}
-          title={stale ? 'Сайт обновился' : 'Эта страница сломалась'}
+          title={offline ? 'Нет интернета' : stale ? 'Сайт обновился' : 'Эта страница сломалась'}
           description={
-            stale
-              ? 'Пока вкладка была открыта, вышла новая версия. Обновите страницу.'
-              : 'Остальной сайт работает — меню слева. Обновите страницу; если повторяется, скопируйте ошибку и пришлите в чат группы.'
+            offline
+              ? 'Эта часть сайта ещё не сохранена на устройстве. Подключитесь к сети и откройте её снова — дальше она заработает и без интернета.'
+              : stale
+                ? 'Пока вкладка была открыта, вышла новая версия. Обновите страницу.'
+                : 'Остальной сайт работает — меню слева. Обновите страницу; если повторяется, скопируйте ошибку и пришлите в чат группы.'
           }
           action={
             <div className={styles.actions}>
