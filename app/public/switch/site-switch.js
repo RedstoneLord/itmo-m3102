@@ -251,17 +251,13 @@
     '.gh-link.m3102-switch-btn:hover{color:#fff;border-color:transparent;filter:brightness(1.08);box-shadow:0 10px 20px -8px var(--accent,#5b5fef);}' +
     '.m3102-switch-btn svg{width:18px;height:18px;flex:none;}' +
     '.m3102-switch-btn span{white-space:nowrap;}' +
-    // До 1240 px (так — одной строкой со значком — шапка помещается с 1240) места мало: подпись остаётся, но в две строки и без значка («Новая / версия») — кнопка без слов непонятна
-    '@media (max-width:1239px){.m3102-switch-btn{width:auto;padding:0 9px;}.m3102-switch-btn svg{display:none;}' +
-    '.m3102-switch-btn span{display:block;width:min-content;font-size:.7rem;line-height:1.1;text-align:center;white-space:normal;}}' +
-    // Запасной вариант (разметка шапки изменилась): плавающая кнопка в углу — только значок
+    '@media (max-width:1100px){.m3102-switch-btn{width:40px;padding:0;}.m3102-switch-btn span{display:none;}}' +
+    '@media (max-width:640px){.m3102-switch-btn{width:38px;}}' +
     '.m3102-switch-btn.m3102-floating{position:fixed;top:10px;right:10px;z-index:50;width:40px;padding:0;}' +
-    '.m3102-switch-btn.m3102-floating svg{display:block;}.m3102-switch-btn.m3102-floating span{display:none;}' +
     // Между телефонной раскладкой (до 760 px) и ноутбучной шапка классического сайта не помещается (горизонтальный телефон,
     // узкое окно): правая часть с поиском и кнопками уезжает за край. Уплотняем вкладки и поиск, чтобы кнопки остались на экране
-    '@media(min-width:761px) and (max-width:1160px){.tab [data-icon]{display:none}.tab{padding:10px 6px}.tabs{gap:0}}' +
+    '@media(min-width:761px) and (max-width:1100px){.tab [data-icon]{display:none}.tab{padding:10px 6px}.tabs{gap:0}}' +
     '@media(min-width:761px) and (max-width:860px){.ss-box{width:100px}.ss-box kbd{display:none}.brand-logo{height:20px}header{gap:6px}}' +
-    '@media(min-width:761px) and (max-width:800px){.ss-box{width:64px}}' +
     '@media print{.m3102-switch-btn{display:none !important;}}';
 
   function mount() {
