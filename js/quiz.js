@@ -1,6 +1,7 @@
 // Интерактивные тесты для конспектов: блок ```quiz внутри .md-файла.
 // Типы вопросов: один ответ, несколько ответов, ввод текста. Синтаксис — в quiz-example.md.
 
+import { quizReward as Rewards } from './rewards.js';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 
@@ -169,7 +170,7 @@ const OK_MSG=['Верно!','Отлично!','В точку!','Так держ�
 
 function mount(el,data,opts={}){
   const full=!!opts.full;
-  const Q=data.questions;
+  const Q=data.questions;const quizId=Rewards.quizId(Q);let qStart=0,fresh=[];
   let order=Q.map((_,i)=>i),pos=0,res={},streak=0,best=0,sel=new Set(),locked=false,retry=false;
   el.innerHTML='<div class="quiz-head"><div class="quiz-title"><span aria-hidden="true">🧠</span> '+esc(data.title||'Проверь себя')+
     '</div><div class="quiz-meta"><span class="quiz-streak" hidden></span><span class="quiz-count"></span></div></div>'+
@@ -214,7 +215,7 @@ function mount(el,data,opts={}){
 
   function showQuestion(){
     const q=Q[order[pos]],isText=q.type==='text',single=q.type==='single';
-    locked=false;sel=new Set();
+    locked=false;sel=new Set();qStart=Date.now();
     count.textContent=(retry?'Повтор ошибок · ':'')+(pos+1)+' / '+order.length;
     progress(pos/order.length*100);showStreak(false);
     body.innerHTML='<div class="quiz-card"><div class="quiz-kind">'+(isText?'Введите ответ':single?'Выберите один ответ':'Выберите все верные ответы')+
@@ -249,7 +250,7 @@ function mount(el,data,opts={}){
     let ok;
     if(isText)ok=matchText(q,card.querySelector('.quiz-input').value);
     else{const want=q.options.map((o,i)=>o.ok?i:-1).filter(i=>i>=0);ok=sel.size===want.length&&want.every(i=>sel.has(i));}
-    locked=true;res[order[pos]]=ok;streak=ok?streak+1:0;best=Math.max(best,streak);
+    locked=true;res[order[pos]]=ok;streak=ok?streak+1:0;best=Math.max(best,streak);{const f=Rewards.attempt(quizId,Q[order[pos]],ok,Date.now()-qStart);if(f)fresh.push(f);}
     card.classList.add('is-locked',ok?'fx-ok':'fx-bad');
     setTimeout(()=>card.classList.remove('fx-ok','fx-bad'),900);
     let anchor=card.querySelector('.quiz-input');
@@ -290,14 +291,14 @@ function mount(el,data,opts={}){
     const T=pct===1?['Безупречно!','🏆','--q-ok']:pct>=.8?['Отличный результат!','🎉','--q-ok']:
       pct>=.5?['Неплохо, но есть что повторить','👍','--q-warn']:['Стоит перечитать конспект','📚','--q-bad'];
     const C=2*Math.PI*52;
-    progress(100);count.textContent=total+' / '+total;streakEl.hidden=true;
+    const reward=Rewards.settle(fresh);fresh=[];progress(100);count.textContent=total+' / '+total;streakEl.hidden=true;
     body.innerHTML='<div class="quiz-result" style="--rc:var('+T[2]+')"><div class="quiz-ring"><svg viewBox="0 0 120 120" aria-hidden="true">'+
       '<circle class="quiz-ring-bg" cx="60" cy="60" r="52"/><circle class="quiz-ring-fg" cx="60" cy="60" r="52" stroke-dasharray="'+C.toFixed(1)+
       '" stroke-dashoffset="'+C.toFixed(1)+'"/></svg><div class="quiz-ring-num">'+good+'/'+total+'</div></div>'+
       '<div class="quiz-result-title">'+T[1]+' '+T[0]+'</div><div class="quiz-result-sub">Верно: '+Math.round(pct*100)+'%'+(best>=2?' · лучшая серия: '+best+' 🔥':'')+'</div>'+
       '<div class="quiz-actions center">'+(wrong.length?'<button type="button" class="btn2 btn-primary" data-act="retry">Повторить ошибки ('+wrong.length+')</button>':'')+
       '<button type="button" class="btn2'+(wrong.length?'':' btn-primary')+'" data-act="again">Пройти заново</button></div></div>';
-    const ring=body.querySelector('.quiz-ring-fg');
+    if(reward&&reward.html)body.querySelector('.quiz-result-sub').insertAdjacentHTML('afterend',reward.html);const ring=body.querySelector('.quiz-ring-fg');
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ring.style.strokeDashoffset=(C*(1-pct)).toFixed(1);}));
     body.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
       retry=b.dataset.act==='retry';

@@ -15,7 +15,7 @@
     и пометка «показана сохранённая версия».
   При изменении списка SHELL или после крупных правок можно поднять номер в CACHE.
 */
-const CACHE = 'm3102-shell-v12';
+const CACHE = 'm3102-shell-v13';
 const CONTENT = 'm3102-content-v1'; // не начинается с m3102-shell-, поэтому activate его не удаляет; то же имя в js/offline.js
 const SHELL = [
   './', './index.html', './site.css', './manifest.webmanifest',
@@ -34,7 +34,7 @@ const SHELL = [
   './js/backdrop.js', './css/glass.css',
   './js/settings.js', './css/settings.css', './css/appearance.css', './js/appearance.js',
   './fonts/URWGothic-Book.woff2', './fonts/URWGothic-Demi.woff2',
-  './js/slots.js', './js/slots-math.js', './js/slots-art.js', './js/slots-audio.js', './css/slots.css'
+  './js/slots.js', './js/slots-math.js', './js/slots-art.js', './js/slots-audio.js', './css/slots.css', './js/rewards.js'
 ];
 const CDN = 'cdnjs.cloudflare.com';
 const RAW = 'raw.githubusercontent.com';

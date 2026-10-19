@@ -386,6 +386,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     import { installOffline, mountOfflinePanel } from './js/offline.js';
     import { ic, hydrateIcons, installGlyphIcons, LOADER } from './js/icons.js';
     import { installBackdrop } from './js/backdrop.js';
+    import { trackReading } from './js/rewards.js';
     import { renderSlotsPage, installSlots } from './js/slots.js';
     import { signShared, slotsChipText } from './js/slots-math.js';
     import { installSettings, renderSettingsPage } from './js/settings.js';
@@ -3381,7 +3382,7 @@ function renderPdfView(path){
           const body=document.getElementById('note-body');
           body.innerHTML=renderNotes(stripFrontMatter(text),path);
           runNoteExtras(body);
-          side.setBody(body);
+          side.setBody(body);trackReading(path,body);
         })
         .catch(err=>{
       if(seq!==routeSeq)return;
