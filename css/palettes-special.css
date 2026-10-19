@@ -1,0 +1,176 @@
+/* Особые палитры из «Колючего куша»: золото, неон, аврора.
+   Кроме цветов (css/settings.css) у каждой есть свой «характер»:
+   золото  — металл: фольга на заголовках, блик по карточкам, медленный луч на фоне;
+   неон    — свечение рамок и заголовков, бегущая сетка на фоне;
+   аврора  — перетекающие ленты света, живая полоска на карточках, текучий градиент.
+   Подключается ПОСЛЕДНИМ (после css/appearance.css). Всё движение отключается при prefers-reduced-motion. */
+
+/* ===== общая основа: у карточек появляется «слой эффекта» (::before) ===== */
+:root[data-palette="gold"] :is(.dash-panel,.card,.link-card),
+:root[data-palette="aurora"] :is(.dash-panel,.card,.link-card),
+:root[data-palette="neon"] :is(.dash-panel,.card,.link-card){position:relative}
+:root[data-palette="gold"] :is(.dash-panel,.card,.link-card,.sched-card)::before,
+:root[data-palette="aurora"] :is(.dash-panel,.card,.link-card,.sched-card)::before{content:"";position:absolute;pointer-events:none}
+
+/* ======================================================================
+   ЗОЛОТО
+   ====================================================================== */
+:root[data-palette="gold"]{
+  --gold-hi:#fff1b0;--gold-mid:#f0c95a;--gold-lo:#a8740c;--gold-ink:#2b1d00;
+  --foil:linear-gradient(100deg,var(--gold-lo) 0%,var(--gold-mid) 22%,var(--gold-hi) 38%,var(--gold-mid) 52%,var(--gold-lo) 70%,var(--gold-mid) 100%);
+}
+/* заголовки страниц — золотая фольга, по которой раз в несколько секунд проходит блик */
+:root[data-palette="gold"] .intro h1{
+  background:var(--foil);background-size:260% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;
+  animation:gold-sheen 8s ease-in-out infinite;
+}
+@keyframes gold-sheen{0%,35%{background-position:100% 0}65%,100%{background-position:0 0}}
+:root[data-palette="gold"] .hero-period{color:var(--gold-hi);text-shadow:0 0 14px rgba(255,214,90,.7)}
+
+/* карточки: тонкая золотая верхняя грань и блик при наведении */
+:root[data-palette="gold"] :is(.dash-panel,.card,.link-card){border-top-color:color-mix(in srgb,var(--gold-mid) 70%,var(--gl-border))}
+:root[data-palette="gold"] :is(.dash-panel,.card,.link-card,.sched-card)::before{
+  inset:0;border-radius:inherit;
+  background:linear-gradient(110deg,transparent 36%,rgba(255,232,150,.20) 47%,rgba(255,255,255,.34) 50%,rgba(255,232,150,.20) 53%,transparent 64%) 170% 0/260% 100% no-repeat;
+  transition:background-position 1.2s ease;
+}
+:root[data-palette="gold"] :is(.dash-panel,.card,.link-card,.sched-card):hover::before{background-position:-70% 0}
+
+/* полоска у заголовков панелей — металл */
+:root[data-palette="gold"] .panel-head h2::before{background:linear-gradient(180deg,var(--gold-hi),var(--gold-lo));box-shadow:0 0 8px rgba(240,201,90,.55)}
+
+/* кнопки и выбранный день — литое золото (текст тёмный, иначе не читается) */
+:root[data-palette="gold"] .btn-primary,
+:root[data-palette="gold"] .hw-filters button[aria-pressed="true"],
+:root[data-palette="gold"] .mat-switch a.is-active{
+  background:var(--foil);background-size:220% 100%;color:var(--gold-ink);border-color:var(--gold-lo);
+  transition:background-position .6s ease,transform .25s;
+}
+:root[data-palette="gold"] .btn-primary:hover{background:var(--foil);background-size:220% 100%;background-position:100% 0;border-color:var(--gold-lo)}
+:root[data-palette="gold"] .week-indicator{background:var(--foil);background-size:220% 100%}
+:root[data-palette="gold"] .week-pill[aria-selected="true"],
+:root[data-palette="gold"] .week-pill[aria-selected="true"] strong,
+:root[data-palette="gold"] .week-pill[aria-selected="true"] .week-dots{color:var(--gold-ink)}
+
+/* фон: медленный луч света по диагонали, как блик на металле */
+:root[data-palette="gold"] .bgfx::before{
+  content:"";position:absolute;inset:-25%;
+  background:linear-gradient(115deg,transparent 41%,color-mix(in srgb,var(--gold-hi) 16%,transparent) 50%,transparent 59%);
+  animation:gold-sweep 16s ease-in-out infinite alternate;
+}
+@keyframes gold-sweep{from{transform:translateX(-32%)}to{transform:translateX(32%)}}
+
+/* герой главной: блик пробегает по баннеру */
+:root[data-palette="gold"] .home-hero::after{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,226,130,.20) 50%,transparent 60%) -120% 0/60% 100% no-repeat;
+  animation:gold-hero 9s ease-in-out infinite;
+}
+@keyframes gold-hero{0%,55%{background-position:-120% 0}100%{background-position:260% 0}}
+
+/* ======================================================================
+   НЕОН
+   ====================================================================== */
+:root[data-palette="neon"]{--neon-a:var(--accent);--neon-b:var(--accent2)}
+:root[data-palette="neon"] .intro h1{
+  color:var(--text);
+  text-shadow:0 0 .28em color-mix(in srgb,var(--neon-a) 80%,transparent),0 0 .9em color-mix(in srgb,var(--neon-b) 45%,transparent);
+}
+:root[data-palette="neon"] .hero-period{color:var(--neon-b);text-shadow:0 0 14px var(--neon-b)}
+
+/* рамки светятся двумя цветами: пурпурный и голубой */
+:root[data-palette="neon"] :is(.dash-panel,.card,.link-card,.sched-card,.hw-item,.meme-card,.quiz,.dl-card){
+  border-color:color-mix(in srgb,var(--neon-a) 55%,var(--gl-border));
+  border-top-color:color-mix(in srgb,var(--neon-b) 70%,var(--gl-border));
+  box-shadow:var(--gl-glow),0 0 16px color-mix(in srgb,var(--neon-a) 28%,transparent),0 0 34px color-mix(in srgb,var(--neon-b) 14%,transparent);
+}
+:root[data-palette="neon"] :is(.dash-panel,.card,.link-card,.sched-card,.hw-item,.meme-card,.dl-card):hover{
+  border-color:var(--neon-b);
+  box-shadow:var(--gl-glow),0 0 22px color-mix(in srgb,var(--neon-b) 55%,transparent),0 0 52px color-mix(in srgb,var(--neon-a) 30%,transparent);
+}
+/* вложенные строки не должны светиться второй раз */
+:root[data-palette="neon"] :is(.sched-homework-slot .hw-item,.dash-panel .hw-item,.dash-panel .deadline-row){box-shadow:none}
+
+:root[data-palette="neon"] .panel-head h2::before{background:linear-gradient(180deg,var(--neon-b),var(--neon-a));box-shadow:0 0 10px var(--neon-a),0 0 4px var(--neon-b);animation:neon-pulse 3.2s ease-in-out infinite}
+@keyframes neon-pulse{0%,100%{opacity:1}50%{opacity:.55}}
+:root[data-palette="neon"] .tab.active{text-shadow:0 0 10px var(--neon-a);box-shadow:inset 0 -2px var(--neon-a),0 8px 14px -10px var(--neon-a)}
+:root[data-palette="neon"] .week-indicator{background:linear-gradient(135deg,var(--neon-a),var(--neon-b));box-shadow:0 0 18px var(--neon-a),0 0 34px color-mix(in srgb,var(--neon-b) 45%,transparent)}
+:root[data-palette="neon"] .btn-primary{box-shadow:0 0 14px color-mix(in srgb,var(--neon-a) 60%,transparent)}
+
+/* фон: неоновая сетка, медленно «едет» к зрителю */
+:root[data-palette="neon"] .bgfx::before{
+  content:"";position:absolute;inset:0;
+  background:
+    linear-gradient(color-mix(in srgb,var(--neon-b) 22%,transparent) 1px,transparent 1px) 0 0/56px 56px,
+    linear-gradient(90deg,color-mix(in srgb,var(--neon-a) 18%,transparent) 1px,transparent 1px) 0 0/56px 56px;
+  -webkit-mask:linear-gradient(to top,#000 0%,rgba(0,0,0,.35) 45%,transparent 80%);mask:linear-gradient(to top,#000 0%,rgba(0,0,0,.35) 45%,transparent 80%);
+  animation:neon-grid 14s linear infinite;
+}
+@keyframes neon-grid{to{background-position:0 56px,56px 0}}
+
+/* ======================================================================
+   АВРОРА
+   ====================================================================== */
+:root[data-palette="aurora"]{--au-a:#2fb39a;--au-b:#8a74f2;--au-c:#e07ad0}
+:root[data-palette="aurora"] .intro h1{
+  background:linear-gradient(95deg,var(--au-a),var(--au-b),var(--au-c),var(--au-a));background-size:260% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;
+  animation:aurora-flow 12s linear infinite;
+}
+@keyframes aurora-flow{to{background-position:260% 0}}
+:root[data-palette="aurora"] .hero-period{color:var(--au-a)}
+
+/* у каждой карточки сверху — тонкая живая полоска северного сияния */
+:root[data-palette="aurora"] :is(.dash-panel,.card,.link-card,.sched-card)::before{
+  left:16px;right:16px;top:-1px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,var(--au-a),var(--au-b),var(--au-c),var(--au-a)) 0 0/220% 100%;
+  opacity:.85;animation:aurora-flow 9s linear infinite;
+}
+:root[data-palette="aurora"] .panel-head h2::before{background:linear-gradient(180deg,var(--au-a),var(--au-b))}
+:root[data-palette="aurora"] .week-indicator,
+:root[data-palette="aurora"] .btn-primary{background:linear-gradient(95deg,var(--au-a),var(--au-b),var(--au-c)) 0 0/220% 100%;border-color:transparent;animation:aurora-flow 14s linear infinite}
+
+/* фон: широкие размытые ленты света плывут и перетекают друг в друга */
+:root[data-palette="aurora"] .bgfx::before{
+  content:"";position:absolute;inset:-30%;
+  background:
+    radial-gradient(40% 28% at 25% 30%,color-mix(in srgb,var(--au-a) 55%,transparent),transparent 70%),
+    radial-gradient(38% 26% at 70% 22%,color-mix(in srgb,var(--au-b) 50%,transparent),transparent 70%),
+    radial-gradient(34% 22% at 52% 55%,color-mix(in srgb,var(--au-c) 38%,transparent),transparent 70%);
+  filter:blur(46px);opacity:.55;
+  animation:aurora-drift 26s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift{
+  0%{transform:translate3d(-6%,0,0) rotate(-3deg) scale(1)}
+  50%{transform:translate3d(4%,5%,0) rotate(2deg) scale(1.08)}
+  100%{transform:translate3d(8%,-4%,0) rotate(5deg) scale(1.02)}
+}
+/* герой: свет сияния над тёмным баннером */
+:root[data-palette="aurora"] .home-hero::after{
+  content:"";position:absolute;inset:-20% -10%;z-index:0;pointer-events:none;mix-blend-mode:screen;opacity:.5;
+  background:
+    radial-gradient(40% 50% at 30% 20%,color-mix(in srgb,var(--au-a) 70%,transparent),transparent 70%),
+    radial-gradient(36% 46% at 72% 30%,color-mix(in srgb,var(--au-b) 65%,transparent),transparent 70%);
+  filter:blur(30px);animation:aurora-drift 18s ease-in-out infinite alternate;
+}
+
+/* ===== читаемость и покой ===== */
+@media(prefers-color-scheme:light){
+  :root[data-palette="aurora"]:not([data-theme="dark"]) .bgfx::before{opacity:.35}
+}
+:root[data-palette="aurora"][data-theme="light"] .bgfx::before{opacity:.35}
+@media(max-width:760px){
+  :root[data-palette="aurora"] .bgfx::before{filter:blur(32px)}
+  :root[data-palette="neon"] .bgfx::before{background-size:40px 40px,40px 40px}
+}
+@media(prefers-reduced-motion:reduce){
+  :root[data-palette] .intro h1,
+  :root[data-palette] .bgfx::before,
+  :root[data-palette] .home-hero::after,
+  :root[data-palette] .panel-head h2::before,
+  :root[data-palette] .week-indicator,
+  :root[data-palette] .btn-primary,
+  :root[data-palette] :is(.dash-panel,.card,.link-card,.sched-card)::before{animation:none!important}
+}
+@media print{:root[data-palette] .bgfx::before,:root[data-palette] .home-hero::after{display:none}}
