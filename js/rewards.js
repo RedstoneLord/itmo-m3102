@@ -18,9 +18,9 @@
 import { cyrb53, signShared, checkShared, dayKey } from './slots-math.js';
 
 export const CFG = {
-  readMinWords: 250, readWordsPerBerry: 120, readMin: 3, readMax: 25, readCapDay: 60,
-  readWPS: 7, readTotalWPS: 6, readDoneShare: 0.9, band: [0.1, 0.9], idleMs: 60000,
-  quizPer: 2, quizPerfect: 3, quizPass: 0.7, quizMinFresh: 3, quizMinMs: 4000, quizCapDay: 60,
+  readMinWords: 250, readWordsPerBerry: 120, readMin: 3, readMax: 25, readCapDay: 1000,
+  readWPS: 7, readTotalWPS: 6, readDoneShare: 0.9, band: [0.1, 0.9], idleMs: 20000,
+  quizPer: 2, quizPerfect: 3, quizPass: 0.7, quizMinFresh: 3, quizMinMs: 4000, quizCapDay: 1000,
 };
 const KEY = 'm3102-rewards-v1', HHK = 'hh_save_v1', SALT = 'm3102-rewards-v1';
 
