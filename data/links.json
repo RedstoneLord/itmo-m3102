@@ -57,6 +57,20 @@
       "url": "https://docs.google.com/spreadsheets/d/1RPnkkIYz1yWKvegiurVcmc-UIvRXBZZ7OqjRtw_gI9E/",
       "group": "Таблицы с баллами",
       "subject": "Основы программирования"
+    },
+        {
+      "title": "Оценки по дискретной математике",
+      "description": "Таблица с оценками по дискретной математике",
+      "url": "https://docs.google.com/spreadsheets/d/1gzH2yBrODow3tmHrKxrl772WGJGV6vkRI2c99XTfKag/edit?usp=drive_web&ouid=109842382694600807442",
+      "group": "Таблицы с баллами",
+      "subject": "Дискретная математика"
+    },
+    {
+      "title": "Оценки по АиСД",
+      "description": "Таблица с оценками по алгоритмам и структурам данных",
+      "url": "https://docs.google.com/spreadsheets/d/1hzJyFu29DUrB5FA7gqZY8xj-JyFU1SKV2E8JdSXmV2c/edit?gid=1912560175#gid=1912560175",
+      "group": "Таблицы с баллами",
+      "subject": "Алгоритмы и структуры данных"
     }
   ]
 }
