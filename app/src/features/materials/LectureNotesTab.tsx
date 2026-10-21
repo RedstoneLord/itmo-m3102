@@ -1,6 +1,6 @@
 import { ArrowDownUp, ArrowLeft, Folder, NotebookText, Plus, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/Button';
 import { Swap, useDirection } from '../../components/ui/Swap';
 import { Dropdown, type DropdownOption } from '../../components/ui/Dropdown';
@@ -124,8 +124,12 @@ export function LectureNotesTab() {
   );
 }
 
-/** Папки занятий предмета по порядку (Лекция 1, Практика 1, Лекция 2…) с числом конспектов в каждой */
+/**
+ * Папки занятий предмета по порядку (Лекция 1, Практика 1, Лекция 2…) с числом конспектов в каждой.
+ * В папке один конспект — нажатие открывает его сразу: список из одной строки только добавляет лишнее нажатие.
+ */
 export function FolderList({ notes, onSelect }: { notes: LectureNote[]; onSelect: (folder: string) => void }) {
+  const navigate = useNavigate();
   const folders = [...new Set(notes.map((note) => note.lectureNumber))];
   return (
     <List className={styles.bigList}>
@@ -140,7 +144,11 @@ export function FolderList({ notes, onSelect }: { notes: LectureNote[]; onSelect
               </span>
             }
             title={
-              <button type="button" className={styles.subjectButton} onClick={() => onSelect(folder)}>
+              <button
+                type="button"
+                className={styles.subjectButton}
+                onClick={() => (inside.length === 1 && inside[0] ? navigate(`/materials/notes/${inside[0].id}`) : onSelect(folder))}
+              >
                 {folder || 'Без папки'}
               </button>
             }

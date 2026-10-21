@@ -42,10 +42,10 @@
   margin-top: var(--space-4);
 }
 
+/* Один акцент на весь сайт: цвет по предмету не нужен (предмет — словом), значок — по типу ссылки */
 .card {
-  --tone: var(--color-accent);
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: var(--space-3);
   padding: var(--space-4);
   border: 1px solid var(--color-border);
@@ -53,54 +53,25 @@
   background: var(--color-bg-elevated);
   color: var(--color-text);
   text-decoration: none;
-  transition:
-    border-color var(--duration-fast) var(--ease),
-    box-shadow var(--duration-fast) var(--ease);
+  transition: border-color var(--duration-fast) var(--ease);
 }
 
 @media (hover: hover) {
   .card:hover {
-    border-color: color-mix(in srgb, var(--tone) 45%, var(--color-border));
-    box-shadow: 0 6px 20px -12px color-mix(in srgb, var(--tone) 60%, transparent);
+    border-color: var(--color-border-hover);
   }
-}
-
-.card[data-tone='0'] {
-  --tone: #4d87bf;
-}
-
-.card[data-tone='1'] {
-  --tone: #42a592;
-}
-
-.card[data-tone='2'] {
-  --tone: #dd7956;
-}
-
-.card[data-tone='3'] {
-  --tone: #9069cf;
-}
-
-.card[data-tone='4'] {
-  --tone: #db9451;
-}
-
-.card[data-tone='5'] {
-  --tone: #b36da3;
 }
 
 .badge {
   display: grid;
   flex-shrink: 0;
+  align-self: flex-start;
   place-items: center;
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--tone) 14%, transparent);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-semibold);
-  color: var(--tone);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
 }
 
 .body {
@@ -111,37 +82,57 @@
   min-width: 0;
 }
 
+/* Название и описание — не больше двух строк, чтобы карточки в ряду не разъезжались по высоте */
+.body strong,
+.body small {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
 .body strong {
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
+  line-height: 1.35;
 }
 
 .body small {
   font-size: var(--text-sm);
+  line-height: 1.4;
   color: var(--color-text-secondary);
 }
 
+/* Предмет и сайт — одной строкой внизу карточки, у всех на одной линии */
 .meta {
   display: flex;
-  flex-wrap: wrap;
   gap: var(--space-2);
-  margin-top: var(--space-1);
+  margin-top: auto;
+  padding-top: var(--space-2);
   font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
 
+/* Не помещается — сначала сокращается адрес сайта, название предмета важнее */
 .subject {
-  color: var(--tone);
+  flex: 0 0 auto;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
 }
 
-.arrow {
-  color: var(--color-text-muted);
-  transition: transform var(--duration-fast) var(--ease);
+.host {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-@media (hover: hover) {
-  .card:hover .arrow {
-    transform: translate(2px, -2px);
-    color: var(--tone);
-  }
+.subject + .host::before {
+  content: '·';
+  margin-right: var(--space-2);
 }

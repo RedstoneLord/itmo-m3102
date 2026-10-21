@@ -1,31 +1,40 @@
 import { motion } from 'framer-motion';
-import { ExternalLink, Search } from 'lucide-react';
-import { useState } from 'react';
+import { BookOpen, ClipboardList, ExternalLink, FolderOpen, Globe, Link2, Search, Table2, type LucideIcon } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { buttonClass } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { GithubMark } from '../../components/ui/GithubMark';
 import { Input } from '../../components/ui/Input';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { TelegramMark } from '../../components/ui/TelegramMark';
 import { SPRING_SMOOTH, usePrefersReducedMotion } from '../../lib/motion';
 import { repoEditUrl } from '../../services/github';
 import { useEditMode } from '../settings/EditModeContext';
 import { useGroupStore, type GroupLink } from './groupStore';
 import styles from './LinksPage.module.css';
 
-const KINDS: [RegExp, string, string][] = [
-  [/forms\.gle|docs\.google\.com\/forms/, 'Форма', 'FORM'],
-  [/disk\.yandex|yadi\.sk/, 'Диск', 'DISK'],
-  [/drive\.google/, 'Диск', 'DISK'],
-  [/yonote/, 'Yonote', 'YO'],
-  [/t\.me/, 'Telegram', 'TG'],
-  [/github\.io/, 'Сайт', 'WEB'],
-  [/github\.com/, 'GitHub', 'GIT'],
+const lucide =
+  (Icon: LucideIcon) =>
+  ({ size }: { size: number }) => <Icon size={size} strokeWidth={1.75} aria-hidden />;
+
+type KindIcon = (props: { size: number }) => ReactNode;
+
+const KINDS: [RegExp, string, KindIcon][] = [
+  [/forms\.gle|docs\.google\.com\/forms/, 'Форма', lucide(ClipboardList)],
+  [/docs\.google\.com\/spreadsheets/, 'Таблица', lucide(Table2)],
+  [/disk\.yandex|yadi\.sk|drive\.google/, 'Диск', lucide(FolderOpen)],
+  [/yonote/, 'Yonote', lucide(BookOpen)],
+  [/t\.me/, 'Telegram', ({ size }) => <TelegramMark size={size} />],
+  [/github\.io/, 'Сайт', lucide(Globe)],
+  [/github\.com/, 'GitHub', ({ size }) => <GithubMark size={size} />],
 ];
 
-/** Тип ссылки — явный kind из links.json или по адресу, как на сайте группы */
-export function linkKind(link: Pick<GroupLink, 'kind' | 'url'>): { label: string; badge: string } {
-  if (link.kind) return { label: link.kind, badge: link.kind.slice(0, 4).toUpperCase() };
-  const hit = KINDS.find(([pattern]) => pattern.test(link.url));
-  return hit ? { label: hit[1], badge: hit[2] } : { label: 'Ссылка', badge: '↗' };
+/** Тип ссылки — явный kind из links.json или по адресу, как на сайте группы; значок — по типу */
+export function linkKind(link: { url: string; kind?: string }): { label: string; Icon: KindIcon } {
+  const byUrl = KINDS.find(([pattern]) => pattern.test(link.url));
+  const byLabel = link.kind ? KINDS.find(([, label]) => label.toLowerCase() === link.kind?.toLowerCase()) : undefined;
+  const hit = byLabel ?? byUrl;
+  return { label: link.kind || hit?.[1] || 'Ссылка', Icon: hit?.[2] ?? lucide(Link2) };
 }
 
 const host = (url: string) => {
@@ -35,9 +44,6 @@ const host = (url: string) => {
     return '';
   }
 };
-
-/** Цвет карточки — стабильный по предмету (одинаковый предмет = одинаковый цвет) */
-const tone = (text: string) => [...text].reduce((value, char) => (value * 31 + char.charCodeAt(0)) >>> 0, 7) % 6;
 
 /** Полезные ссылки группы (data/links.json): формы сдачи, чужие конспекты и курсы. */
 export function LinksPage({ embedded = false }: { embedded?: boolean }) {
@@ -101,14 +107,13 @@ export function LinkCards({ links }: { links: GroupLink[] }) {
   return (
     <div className={styles.grid}>
       {links.map((link, index) => {
-        const kind = linkKind(link);
+        const { Icon } = linkKind(link);
         const delay = Math.min(index, 12) * 0.035;
         return (
           <motion.a
             key={link.url + link.title}
             className={styles.card}
             data-spot
-            data-tone={tone(link.subject || link.group)}
             href={link.url}
             target="_blank"
             rel="noopener noreferrer"
@@ -118,21 +123,17 @@ export function LinkCards({ links }: { links: GroupLink[] }) {
               y: 0,
               transition: { ...SPRING_SMOOTH, delay },
             }}
-            whileHover={reduceMotion ? undefined : { y: -2 }}
           >
             <span className={styles.badge} aria-hidden>
-              {kind.badge}
+              <Icon size={18} />
             </span>
             <span className={styles.body}>
               <strong>{link.title}</strong>
               {link.description && <small>{link.description}</small>}
               <span className={styles.meta}>
                 {link.subject && <span className={styles.subject}>{link.subject}</span>}
-                <span>{host(link.url)}</span>
+                <span className={styles.host}>{host(link.url)}</span>
               </span>
-            </span>
-            <span className={styles.arrow} aria-hidden>
-              ↗
             </span>
           </motion.a>
         );
