@@ -131,6 +131,17 @@
   z-index: 1;
 }
 
+/* Названия на телефоне — до двух строк: справа стоят срок и счётчик, и «Дискретная математи…» читалось обрезанным */
+@media (max-width: 600px) {
+  .title {
+    display: -webkit-box;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+}
+
 /* wrapOnPhone: на узком экране бейджи и дата — второй строкой ровно под заголовком (сетка), меню — справа */
 @media (max-width: 600px) {
   .wrapPhone {

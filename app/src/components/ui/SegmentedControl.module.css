@@ -35,6 +35,13 @@
   transition: color var(--duration-fast) var(--ease);
 }
 
+/* Узкий экран: чуть уже кнопки, чтобы четыре варианта («Актуальные … Все») помещались без прокрутки */
+@media (max-width: 420px) {
+  .item {
+    padding: 0 var(--space-2);
+  }
+}
+
 @media (hover: hover) {
   .item:hover {
     color: var(--color-text);

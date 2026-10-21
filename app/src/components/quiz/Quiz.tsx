@@ -10,6 +10,7 @@ import { Swap } from '../ui/Swap';
 import { burst, rain } from './confetti';
 import { toISODate } from '../../lib/dates';
 import { useQuizStore } from '../../features/quizzes/quizStore';
+import { useQuizRewards } from '../../features/rewards/useQuizRewards';
 import { isQuizPage, matchesAnswer, parseQuiz, type QuizData, type QuizQuestion } from './parseQuiz';
 import styles from './Quiz.module.css';
 
@@ -19,7 +20,17 @@ const pick = (items: string[]) => items[Math.floor(Math.random() * items.length)
 const RING = 2 * Math.PI * 52;
 
 /** Блок ```quiz в конспекте или целый файл-тест (mode: quiz) — формат сайта группы, см. parseQuiz.ts */
-export function Quiz({ source, quizKey }: { source: string; /** Ключ для результатов и повторения ошибок (quizStore) */ quizKey?: string }) {
+export function Quiz({
+  source,
+  quizKey,
+  rewards = false,
+}: {
+  source: string;
+  /** Ключ для результатов и повторения ошибок (quizStore) */
+  quizKey?: string;
+  /** Тест из конспекта группы: награда ягодами за первые верные ответы (js/rewards.js группы) */
+  rewards?: boolean;
+}) {
   const { recordAnswer, recordResult } = useQuizStore();
   const parsed = useMemo(() => {
     try {
@@ -29,13 +40,23 @@ export function Quiz({ source, quizKey }: { source: string; /** Ключ для 
     }
   }, [source]);
 
+  const reward = useQuizRewards('data' in parsed ? parsed.data : undefined, rewards);
+
   if ('error' in parsed) return <div className={styles.error}>Ошибка в тесте — {parsed.error}</div>;
   return (
     <QuizRunner
       data={parsed.data}
       full={isQuizPage(source)}
-      onAnswer={quizKey ? (index, ok) => recordAnswer(quizKey, index, ok, toISODate(new Date())) : undefined}
+      onAnswer={
+        quizKey || reward
+          ? (index, ok, ms) => {
+              if (quizKey) recordAnswer(quizKey, index, ok, toISODate(new Date()));
+              reward?.onAnswer(index, ok, ms);
+            }
+          : undefined
+      }
       onFinish={quizKey ? (correct, total) => recordResult(quizKey, correct, total) : undefined}
+      settle={reward?.settle}
     />
   );
 }
@@ -52,14 +73,16 @@ interface Given {
 interface QuizRunnerProps {
   data: QuizData;
   full: boolean;
-  /** Ответ на вопрос с номером index в data.questions */
-  onAnswer?: (index: number, ok: boolean) => void;
+  /** Ответ на вопрос с номером index в data.questions; ms — сколько вопрос был на экране */
+  onAnswer?: (index: number, ok: boolean, ms: number) => void;
+  /** Конец прохождения (в том числе повтора ошибок): строка про награду для экрана итога или null */
+  settle?: () => string | null;
   /** Пройден весь тест (не «повтор ошибок») */
   onFinish?: (correct: number, total: number) => void;
 }
 
 /** Прохождение готового набора вопросов — его же используют повторение и тест перед контрольной */
-export function QuizRunner({ data, full, onAnswer, onFinish }: QuizRunnerProps) {
+export function QuizRunner({ data, full, onAnswer, onFinish, settle }: QuizRunnerProps) {
   const all = data.questions.map((_, index) => index);
   const [phase, setPhase] = useState<Phase>(full ? 'intro' : 'question');
   const [order, setOrder] = useState(all);
@@ -70,6 +93,12 @@ export function QuizRunner({ data, full, onAnswer, onFinish }: QuizRunnerProps) 
   const [retry, setRetry] = useState(false);
   const [round, setRound] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const [rewardNote, setRewardNote] = useState<string | null>(null);
+  // Когда вопрос появился на экране: награда не считает ответы быстрее нескольких секунд
+  const shownAt = useRef(0);
+  useEffect(() => {
+    shownAt.current = Date.now();
+  }, [phase, pos, round]);
 
   const total = order.length;
   const progress = phase === 'result' ? 100 : phase === 'intro' ? 0 : (pos / total) * 100;
@@ -89,6 +118,7 @@ export function QuizRunner({ data, full, onAnswer, onFinish }: QuizRunnerProps) 
     setStreak(0);
     setBest(0);
     setRound((value) => value + 1);
+    setRewardNote(null);
     setPhase('question');
     keepInView();
   }
@@ -96,7 +126,7 @@ export function QuizRunner({ data, full, onAnswer, onFinish }: QuizRunnerProps) 
   function answered(given: Given, anchor: DOMRect | undefined) {
     const { ok } = given;
     setAnswers((value) => ({ ...value, [order[pos]!]: given }));
-    onAnswer?.(order[pos]!, ok);
+    onAnswer?.(order[pos]!, ok, Date.now() - shownAt.current);
     const nextStreak = ok ? streak + 1 : 0;
     setStreak(nextStreak);
     setBest((value) => Math.max(value, nextStreak));
@@ -108,6 +138,7 @@ export function QuizRunner({ data, full, onAnswer, onFinish }: QuizRunnerProps) 
 
   function next() {
     if (pos + 1 >= total) {
+      setRewardNote(settle?.() ?? null);
       setPhase('result');
       if (!retry) onFinish?.(order.filter((index) => answers[index]?.ok).length, total);
     } else setPos(pos + 1);
@@ -153,7 +184,7 @@ export function QuizRunner({ data, full, onAnswer, onFinish }: QuizRunnerProps) 
           />
         )}
         {phase === 'result' && (
-          <Result results={order.map((index) => Boolean(answers[index]?.ok))} best={best} onRestart={restart}>
+          <Result results={order.map((index) => Boolean(answers[index]?.ok))} best={best} rewardNote={rewardNote} onRestart={restart}>
             <Review data={data} order={order} answers={answers} />
           </Result>
         )}
@@ -504,11 +535,14 @@ function ReviewItem({ number, question, given, revealAll }: { number: number; qu
 function Result({
   results,
   best,
+  rewardNote,
   onRestart,
   children,
 }: {
   results: boolean[];
   best: number;
+  /** Про награду ягодами за тест из конспекта группы */
+  rewardNote: string | null;
   onRestart: (onlyWrong: boolean) => void;
   /** Разбор ответов — открывается кнопкой «Мои ответы» */
   children: ReactNode;
@@ -575,6 +609,7 @@ function Result({
       <p className={styles.resultSub}>
         Верно: <AnimatedNumber value={Math.round(share * 100)} from={0} />%{best >= 2 && ` · лучшая серия: ${best} подряд`}
       </p>
+      {rewardNote && <p className={styles.rewardNote}>{rewardNote}</p>}
       <div className={styles.actions}>
         {wrong > 0 && (
           <Button variant="primary" onClick={() => onRestart(true)}>

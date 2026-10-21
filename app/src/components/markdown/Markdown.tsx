@@ -68,7 +68,7 @@ export const Markdown = memo(function Markdown({ content, sourceRef, baseUrl, cl
   }, [withWikiLinks]);
 
   return (
-    <div ref={root} className={cn(styles.markdown, className)}>
+    <div ref={root} className={cn(styles.markdown, className)} data-markdown>
       <ReactMarkdown
         remarkPlugins={REMARK_PLUGINS}
         rehypePlugins={REHYPE_PLUGINS}
@@ -86,7 +86,8 @@ export const Markdown = memo(function Markdown({ content, sourceRef, baseUrl, cl
               .map((child) => (child.type === 'text' ? child.value : ''))
               .join('')
               .trimEnd();
-            if (lang === 'quiz') return <Quiz source={source} quizKey={sourceRef ? noteQuizKey(sourceRef, source) : undefined} />;
+            if (lang === 'quiz')
+              return <Quiz source={source} quizKey={sourceRef ? noteQuizKey(sourceRef, source) : undefined} rewards={Boolean(sourceRef)} />;
             return lang === 'mermaid' ? (
               <MermaidBlock source={source} />
             ) : (

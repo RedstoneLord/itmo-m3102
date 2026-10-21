@@ -469,6 +469,14 @@
   color: var(--color-text-muted);
 }
 
+/* Награда ягодами за тест (или почему её нет) — тихой строкой под итогом */
+.rewardNote {
+  max-width: 34rem;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
 .error {
   margin: var(--space-4) 0;
   padding: var(--space-3) var(--space-4);

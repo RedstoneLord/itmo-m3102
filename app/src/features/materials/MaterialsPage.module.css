@@ -102,6 +102,14 @@
   border-radius: inherit;
 }
 
+@media (max-width: 600px) {
+  .subjectButton {
+    white-space: normal;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (hover: hover) {
   .subjectButton:hover {
     text-decoration: underline;

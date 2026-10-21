@@ -19,7 +19,7 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: var(--color-bg-subtle);
+  background: var(--color-bg-hover);
   object-fit: cover;
 }
 

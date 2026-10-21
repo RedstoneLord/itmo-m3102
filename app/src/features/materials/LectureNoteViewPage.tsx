@@ -22,6 +22,7 @@ import { LectureNoteDialog } from './LectureNoteDialog';
 import { useLectureNoteDialog } from './useLectureNoteDialog';
 import { useLectureNotesStore } from './lectureNotesStore';
 import { NotePager, NoteSidebar, noteTitle, ReadingProgress, useSiblingNotes, useToc } from './NoteReader';
+import { useReadingRewards } from '../rewards/useReadingRewards';
 import styles from './LectureNoteViewPage.module.css';
 
 /**
@@ -112,6 +113,13 @@ function NoteView({ note }: { note: LectureNote }) {
   const bookmarked = useMarksStore((state) => Boolean(state.bookmarks[note.id]));
   const toggleBookmark = useMarksStore((state) => state.toggleBookmark);
   useMarkHighlights(contentRef, note.id);
+  // Конспект группы (.md) — награда ягодами за вдумчивое чтение; путь в репозитории общий с классической версией
+  useReadingRewards(
+    contentRef,
+    note.sourceRef,
+    note.source === 'github' && note.contentType === 'markdown' && Boolean(content),
+    note.id + note.updatedAt,
+  );
 
   const title = noteTitle(note);
   useDocumentTitle(title, note.id);

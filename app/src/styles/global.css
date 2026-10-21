@@ -317,3 +317,23 @@ html {
     scale: 0.985;
   }
 }
+
+/*
+ * Награды ягодами (js/rewards.js группы): плашку чтения и всплывающую надпись рисует сам модуль стилями классической версии.
+ * Даём им её переменные на наших токенах; плашку — вправо: слева внизу стоит радио.
+ */
+.rw-pill,
+.rw-toast {
+  --border: var(--color-border);
+  --card: var(--color-bg-elevated);
+  --text: var(--color-text);
+  --accent: var(--color-accent);
+  --accent2: var(--color-accent-2);
+  --rp: 1;
+  --rs: 1;
+}
+
+:root .rw-pill {
+  left: auto;
+  right: var(--space-3);
+}
