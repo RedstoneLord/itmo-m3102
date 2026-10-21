@@ -320,7 +320,7 @@ html {
 
 /*
  * Награды ягодами (js/rewards.js группы): плашку чтения и всплывающую надпись рисует сам модуль стилями классической версии.
- * Даём им её переменные на наших токенах; плашку — вправо: слева внизу стоит радио.
+ * Даём им её переменные на наших токенах; плашку двигаем туда, где нет радио (см. ниже).
  */
 .rw-pill,
 .rw-toast {
@@ -336,4 +336,60 @@ html {
 :root .rw-pill {
   left: auto;
   right: var(--space-3);
+  animation: rw-calm 0.5s var(--ease) 6s forwards;
+}
+
+/* На компьютере радио стоит справа внизу, поэтому плашка — слева, у края текста (правее меню); на телефоне радио слева, плашка справа */
+@media (min-width: 768px) {
+  :root .rw-pill {
+    left: calc(var(--sidebar-width) + var(--space-5));
+    right: auto;
+    bottom: var(--space-5);
+  }
+
+  :root[data-sidebar='collapsed'] .rw-pill {
+    left: var(--space-5);
+  }
+}
+
+/*
+ * Первые секунды плашка видна целиком — понятно, что это и за что награда; потом остаётся тонкая полоска прогресса:
+ * читать она не мешает, а просто бежит в углу. Подпись при этом не пропадает из разметки (её пишет модуль каждую секунду).
+ */
+:root .rw-pill > span {
+  display: block;
+  max-width: 20rem;
+  max-height: 1.6em;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: rw-fade 0.5s var(--ease) 6s forwards;
+}
+
+:root .rw-pill > i {
+  min-width: 72px;
+  animation: rw-line 0.5s var(--ease) 6s forwards;
+}
+
+@keyframes rw-calm {
+  to {
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    opacity: 0.6;
+  }
+}
+
+@keyframes rw-fade {
+  to {
+    max-width: 0;
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes rw-line {
+  to {
+    margin-top: 0;
+  }
 }
