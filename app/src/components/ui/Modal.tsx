@@ -12,7 +12,7 @@ interface ModalProps {
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'full';
   /** Без заголовка и отступов, ближе к верху экрана — для окон со своей раскладкой (поиск) */
   bare?: boolean;
 }

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { BookOpen, ClipboardList, ExternalLink, FolderOpen, Globe, Link2, Search, Table2, type LucideIcon } from 'lucide-react';
+import { BookOpen, ChevronDown, ClipboardList, ExternalLink, FolderOpen, Globe, Link2, Search, Table2, type LucideIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { buttonClass } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -7,9 +7,13 @@ import { GithubMark } from '../../components/ui/GithubMark';
 import { Input } from '../../components/ui/Input';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { TelegramMark } from '../../components/ui/TelegramMark';
+import { resolveSubjectFolder } from '../../data/m3102';
+import { cn } from '../../lib/cn';
 import { SPRING_SMOOTH, usePrefersReducedMotion } from '../../lib/motion';
+import { pluralize } from '../../lib/pluralize';
 import { repoEditUrl } from '../../services/github';
 import { useEditMode } from '../settings/EditModeContext';
+import { useSubjectsStore } from '../subjects/subjectsStore';
 import { useGroupStore, type GroupLink } from './groupStore';
 import styles from './LinksPage.module.css';
 
@@ -45,9 +49,13 @@ const host = (url: string) => {
   }
 };
 
-/** Полезные ссылки группы (data/links.json): формы сдачи, чужие конспекты и курсы. */
+const LINK_FORMS: [string, string, string] = ['ссылка', 'ссылки', 'ссылок'];
+
+/** Полезные ссылки группы (data/links.json): формы сдачи, чужие конспекты и курсы — папками по предметам. */
 export function LinksPage({ embedded = false }: { embedded?: boolean }) {
   const links = useGroupStore((state) => state.links);
+  const subjects = useSubjectsStore((state) => state.subjects);
+  const [closed, setClosed] = useState<ReadonlySet<string>>(new Set());
   const { isEditMode } = useEditMode();
   const [query, setQuery] = useState('');
 
@@ -55,8 +63,20 @@ export function LinksPage({ embedded = false }: { embedded?: boolean }) {
   const visible = links.filter((link) =>
     `${link.title} ${link.description} ${link.subject} ${linkKind(link).label} ${host(link.url)}`.toLowerCase().includes(q),
   );
-  const groups = new Map<string, GroupLink[]>();
-  for (const link of visible) groups.set(link.group, [...(groups.get(link.group) ?? []), link]);
+  // Папки — по предметам в их порядке; ссылка без предмета (или с неизвестным) — в «Общее» в конце
+  const folders = new Map<string, GroupLink[]>();
+  for (const link of visible) {
+    const id = resolveSubjectFolder(link.subject);
+    const key = subjects.some((subject) => subject.id === id) ? id! : '';
+    folders.set(key, [...(folders.get(key) ?? []), link]);
+  }
+  const ordered = [...subjects.map((subject) => [subject.id, subject.name] as const), ['', 'Общее'] as const].filter(([id]) => folders.has(id));
+  const toggle = (id: string) =>
+    setClosed((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
 
   const addButton = isEditMode && (
     <a className={buttonClass('primary', 'md')} href={repoEditUrl('data/links.json')} target="_blank" rel="noopener noreferrer">
@@ -84,30 +104,36 @@ export function LinksPage({ embedded = false }: { embedded?: boolean }) {
 
       {links.length === 0 ? (
         <EmptyState title="Ссылок пока нет" description="Они появятся после синхронизации с GitHub." />
-      ) : groups.size === 0 ? (
+      ) : ordered.length === 0 ? (
         <EmptyState icon={Search} title="Ничего не найдено" description="Попробуйте другое слово." />
       ) : (
-        [...groups].map(([group, items]) => (
-          <section key={group} className={styles.group}>
-            <div className={styles.groupHead}>
-              <h2>{group}</h2>
-              <span>{items.length}</span>
-            </div>
-            <LinkCards links={items} />
-          </section>
-        ))
+        ordered.map(([id, name]) => {
+          const items = folders.get(id)!;
+          // Идёт поиск — показываем найденное, сворачивание не мешает
+          const open = q !== '' || !closed.has(id);
+          return (
+            <section key={id} className={styles.group}>
+              <button type="button" className={styles.folderToggle} aria-expanded={open} onClick={() => toggle(id)}>
+                <ChevronDown size={14} strokeWidth={2} className={cn(styles.chevron, !open && styles.chevronClosed)} aria-hidden />
+                <h2>{name}</h2>
+                <span>{pluralize(items.length, LINK_FORMS)}</span>
+              </button>
+              {open && <LinkCards links={items} />}
+            </section>
+          );
+        })
       )}
     </>
   );
 }
 
-/** Карточки ссылок — на странице «Ссылки» и у предмета */
+/** Карточки ссылок — на странице «Ссылки» и у предмета: тип и сайт внизу (предмет — это папка, в которой карточка лежит) */
 export function LinkCards({ links }: { links: GroupLink[] }) {
   const reduceMotion = usePrefersReducedMotion();
   return (
     <div className={styles.grid}>
       {links.map((link, index) => {
-        const { Icon } = linkKind(link);
+        const { Icon, label } = linkKind(link);
         const delay = Math.min(index, 12) * 0.035;
         return (
           <motion.a
@@ -131,7 +157,7 @@ export function LinkCards({ links }: { links: GroupLink[] }) {
               <strong>{link.title}</strong>
               {link.description && <small>{link.description}</small>}
               <span className={styles.meta}>
-                {link.subject && <span className={styles.subject}>{link.subject}</span>}
+                <span className={styles.kind}>{label}</span>
                 <span className={styles.host}>{host(link.url)}</span>
               </span>
             </span>

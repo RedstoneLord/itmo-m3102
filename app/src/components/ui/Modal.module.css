@@ -66,6 +66,26 @@
   max-width: 560px;
 }
 
+/* Просмотр схемы: почти весь экран, содержимое занимает окно целиком и прокручивается само */
+.full {
+  max-width: min(1600px, 100%);
+  height: calc(100dvh - var(--space-8));
+  max-height: none;
+}
+
+.full .panel {
+  height: 100%;
+  max-height: none;
+}
+
+.full .body,
+.full .header + .body {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 .panel {
   position: relative;
   display: flex;

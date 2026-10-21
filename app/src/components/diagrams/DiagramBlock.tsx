@@ -1,24 +1,27 @@
 import { motion } from 'framer-motion';
-import { Copy, Download, PencilLine } from 'lucide-react';
+import { Copy, Download, Maximize2, PencilLine } from 'lucide-react';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import ReactMarkdown from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
 import { usePrefersReducedMotion } from '../../lib/motion';
+import { IconButton } from '../ui/IconButton';
 import { CanvasView, parseCanvas } from './Canvas';
 import { GraphView, parseGraph } from './Graph';
 import { parsePlot, PlotView } from './Plot';
 import { splitLines, type DiagramHeader } from './parse';
 import { ArrayPlayer } from './ArrayPlayer';
+import { DiagramViewer } from './DiagramViewer';
 import { ArrayView, ChartView, frameOf, parseArray, parseChart, parseTree, TreeView } from './TreeArrayChart';
-import { copySvg, downloadPng, downloadSvg, fileName } from './exportDiagram';
+import { copySvg, downloadPng, downloadSvg, fileName, svgMarkup } from './exportDiagram';
 import styles from './Diagrams.module.css';
 
 import type { DiagramLanguage } from './languages';
 export { DIAGRAM_LANGUAGES, isDiagramLanguage, type DiagramLanguage } from './languages';
 
-type Rendered = { header: DiagramHeader; view: ReactNode } | { error: string };
+/** player — массив с кодом по шагам: у него свой проигрыватель, «Увеличить» не нужно */
+type Rendered = { header: DiagramHeader; view: ReactNode; player?: boolean } | { error: string };
 
 function render(lang: DiagramLanguage, source: string): Rendered {
   try {
@@ -38,6 +41,7 @@ function render(lang: DiagramLanguage, source: string): Rendered {
         // Код по шагам: живой проигрыватель; рядом скрытый кадр — для «SVG/PNG» и печати
         return {
           header,
+          player: true,
           view: (
             <>
               <ArrayPlayer model={model} />
@@ -85,6 +89,7 @@ export function DiagramBlock({ lang, source, editable = true }: DiagramBlockProp
   const rendered = useMemo(() => render(lang, source), [lang, source]);
   const reduceMotion = usePrefersReducedMotion();
   const figureRef = useRef<HTMLElement>(null);
+  const [zoom, setZoom] = useState({ open: false, markup: '' });
 
   if ('error' in rendered) {
     return (
@@ -96,6 +101,12 @@ export function DiagramBlock({ lang, source, editable = true }: DiagramBlockProp
       </figure>
     );
   }
+
+  // Схема со вписанными цветами текущей темы — просмотр не зависит от стилей страницы
+  const openZoom = () => {
+    const svg = figureRef.current?.querySelector<SVGSVGElement>(`.${styles.canvas} svg`);
+    if (svg) setZoom({ open: true, markup: svgMarkup(svg) });
+  };
 
   return (
     <motion.figure
@@ -113,13 +124,29 @@ export function DiagramBlock({ lang, source, editable = true }: DiagramBlockProp
           <InlineMath text={rendered.header.title} />
         </div>
       )}
+      {!rendered.player && <IconButton icon={Maximize2} label="Увеличить" size="sm" className={styles.zoomButton} onClick={openZoom} data-pdf-hide />}
       <div className={styles.canvas}>{rendered.view}</div>
       {rendered.header.caption && (
         <figcaption className={styles.caption}>
           <InlineMath text={rendered.header.caption} />
         </figcaption>
       )}
-      <DiagramTools figureRef={figureRef} name={fileName(rendered.header.title, lang)} lang={lang} source={source} editable={editable} />
+      <DiagramTools
+        figureRef={figureRef}
+        name={fileName(rendered.header.title, lang)}
+        lang={lang}
+        source={source}
+        editable={editable}
+        onZoom={rendered.player ? undefined : openZoom}
+      />
+      {!rendered.player && (
+        <DiagramViewer
+          open={zoom.open}
+          onClose={() => setZoom((current) => ({ ...current, open: false }))}
+          title={rendered.header.title?.replace(/\$/g, '') || 'Схема'}
+          markup={zoom.markup}
+        />
+      )}
     </motion.figure>
   );
 }
@@ -130,10 +157,12 @@ interface DiagramToolsProps {
   lang: DiagramLanguage;
   source: string;
   editable: boolean;
+  /** Открыть схему крупно (нет у массива с проигрывателем) */
+  onZoom?: () => void;
 }
 
 /** Под диаграммой, как на сайте группы: копировать SVG, скачать SVG/PNG, открыть в конструкторе */
-export function DiagramTools({ figureRef, name, lang, source, editable }: DiagramToolsProps) {
+export function DiagramTools({ figureRef, name, lang, source, editable, onZoom }: DiagramToolsProps) {
   const [copied, setCopied] = useState(false);
   // Кадр массива с кодом лежит отдельно: в проигрывателе свои svg — иконки кнопок
   const svg = () =>
@@ -144,6 +173,12 @@ export function DiagramTools({ figureRef, name, lang, source, editable }: Diagra
 
   return (
     <div className={styles.tools} data-pdf-hide>
+      {onZoom && (
+        <button type="button" onClick={onZoom}>
+          <Maximize2 size={13} strokeWidth={2} aria-hidden />
+          Увеличить
+        </button>
+      )}
       <button
         type="button"
         onClick={() => {

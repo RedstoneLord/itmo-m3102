@@ -13,22 +13,55 @@
   margin-bottom: var(--space-8);
 }
 
-.groupHead {
+/* Папка предмета: заголовок сворачивает и раскрывает её карточки */
+.folderToggle {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-3);
+  min-height: 32px;
+  margin: 0 0 var(--space-3) calc(-1 * var(--space-2));
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.groupHead h2 {
+.folderToggle h2 {
   margin: 0;
   font-size: var(--text-md);
   font-weight: var(--weight-semibold);
 }
 
-.groupHead span {
+.folderToggle span {
+  flex: none;
   font-size: var(--text-sm);
+  white-space: nowrap;
   color: var(--color-text-muted);
+}
+
+@media (hover: hover) {
+  .folderToggle:hover {
+    background: var(--color-bg-hover);
+  }
+}
+
+.folderToggle:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.chevron {
+  flex: none;
+  color: var(--color-text-muted);
+  transition: transform var(--duration-fast) var(--ease);
+}
+
+.chevronClosed {
+  transform: rotate(-90deg);
 }
 
 .grid {
@@ -104,7 +137,7 @@
   color: var(--color-text-secondary);
 }
 
-/* Предмет и сайт — одной строкой внизу карточки, у всех на одной линии */
+/* Тип и сайт — одной строкой внизу карточки, у всех на одной линии */
 .meta {
   display: flex;
   gap: var(--space-2);
@@ -114,25 +147,19 @@
   color: var(--color-text-muted);
 }
 
-/* Не помещается — сначала сокращается адрес сайта, название предмета важнее */
-.subject {
-  flex: 0 0 auto;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.kind {
+  flex: none;
   color: var(--color-text-secondary);
 }
 
 .host {
-  flex: 0 100 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.subject + .host::before {
+.kind + .host::before {
   content: '·';
   margin-right: var(--space-2);
 }
