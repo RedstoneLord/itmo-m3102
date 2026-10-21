@@ -382,8 +382,8 @@
 
 .ring {
   position: relative;
-  width: 132px;
-  height: 132px;
+  width: 144px;
+  height: 144px;
   margin-bottom: var(--space-3);
 }
 
@@ -396,11 +396,12 @@
 .ringBg,
 .ringFg {
   fill: none;
-  stroke-width: 10;
+  stroke-width: 9;
 }
 
+/* Дорожка кольца — тот же цвет, но бледный: на тёмном фоне серая «пустая» часть выглядела дырой */
 .ringBg {
-  stroke: var(--color-bg-subtle);
+  stroke: color-mix(in srgb, var(--ring) 16%, transparent);
 }
 
 .ringFg {
@@ -413,9 +414,48 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: var(--text-lg);
+  font-family: var(--font-display);
+  font-size: 1.875rem; /* крупное число в кольце — разовый размер, в шкале токенов такого нет */
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Число и «/3» — одна строка по базовой линии, а кольцо центрирует её целиком */
+.ringValue {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+/* «/3» — мельче и тише, на одной линии с числом: раньше число и знаменатель встраивались в сетку и разъезжались по вертикали */
+.ringTotal {
+  margin-left: 2px;
+  font-size: var(--text-md);
+  font-weight: var(--weight-regular);
+  color: var(--color-text-muted);
+}
+
+.dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1-5);
+  max-width: 280px;
+  margin-bottom: var(--space-3);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dotOk {
+  background: var(--color-success);
+}
+
+.dotBad {
+  background: var(--color-danger);
 }
 
 .resultTitle {

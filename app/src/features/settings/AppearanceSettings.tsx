@@ -1,4 +1,5 @@
 import { ArrowRight, Ban, Check } from 'lucide-react';
+import classicPalettes from 'virtual:classic-palettes';
 import { Link } from 'react-router';
 import { SECTIONS } from '../../app/navigation';
 import { buttonClass } from '../../components/ui/Button';
@@ -6,7 +7,7 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { AccentPicker } from './AccentPicker';
 import { Button } from '../../components/ui/Button';
 import { slotsAlbum } from '../../lib/slotsAlbum';
-import { ACCENTS, SHUFFLE_EVENT, SLOT_PALETTES } from './appearance';
+import { ACCENTS, SHUFFLE_EVENT } from './appearance';
 import { useSettingsStore, type DynamicTheme, type RadiusPreference } from './settingsStore';
 import styles from './settings.module.css';
 import { SettingsRow } from './SettingsRow';
@@ -36,12 +37,16 @@ export function AppearanceSettings() {
   const setTheme = useSettingsStore((state) => state.setTheme);
   const { accent, accent2, dynamicTheme, aurora, glow, liveBg, radius, setAppearance } = useSettingsStore();
   const album = slotsAlbum();
-  const slotPalettes = SLOT_PALETTES.filter((item) => album[`pal:${item.id}`]);
+  // Палитры классической версии: пять — всегда, остальные открывают капсулы «Колючего куша»
+  const groupPalettes = classicPalettes.palettes.filter((item) => item.base || album[`pal:${item.id}`]);
   const lockedNote = dynamicTheme === 'off' ? undefined : 'Сейчас цвета ведёт «Динамическая тема» — выключите её ниже, чтобы выбрать свои.';
 
   return (
     <>
-      <SettingsRow label="Тема" description="«Системная» повторяет оформление вашего устройства.">
+      <SettingsRow
+        label="Тема"
+        description="«Системная» повторяет оформление вашего устройства. Тема общая с классической версией: поменяли тут — поменяется и там."
+      >
         <SegmentedControl label="Тема" options={THEME_OPTIONS} value={theme} onChange={setTheme} />
       </SettingsRow>
 
@@ -118,14 +123,14 @@ export function AppearanceSettings() {
         </div>
       </SettingsRow>
 
-      {slotPalettes.length > 0 && (
+      {groupPalettes.length > 0 && (
         <SettingsRow
-          label="Палитры из «Колючего куша»"
-          description="Выпали из капсул: сразу пара цветов — акцент и второй акцент."
+          label="Палитры сайта группы"
+          description="Те же пары цветов, что в классической версии, и выбор общий: поменяли тут — поменяется и там, и наоборот. Золото, неон и аврору открывают капсулы «Колючего куша». Свои цвета остаются только в приложении."
           lockedNote={lockedNote}
         >
-          <div className={styles.swatches} role="radiogroup" aria-label="Палитры из капсул">
-            {slotPalettes.map((item) => {
+          <div className={styles.swatches} role="radiogroup" aria-label="Палитры сайта группы">
+            {groupPalettes.map((item) => {
               const on = accent === item.a && accent2 === item.b;
               return (
                 <button
@@ -191,7 +196,7 @@ export function AppearanceSettings() {
         />
       </SettingsRow>
 
-      <SettingsRow label="Скругления" description="Углы карточек, кнопок и полей.">
+      <SettingsRow label="Скругления" description="Углы карточек, кнопок и полей. Общие с классической версией.">
         <SegmentedControl label="Скругления" options={RADIUS_OPTIONS} value={radius} onChange={(value) => setAppearance({ radius: value })} />
       </SettingsRow>
 

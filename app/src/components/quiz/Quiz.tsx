@@ -559,8 +559,17 @@ function Result({
           />
         </svg>
         <span className={styles.ringNumber}>
-          <AnimatedNumber value={good} from={0} />/{total}
+          <span className={styles.ringValue}>
+            <AnimatedNumber value={good} from={0} />
+            <span className={styles.ringTotal}>/{total}</span>
+          </span>
         </span>
+      </div>
+      {/* Каждая точка — один вопрос по порядку: сразу видно, где ошибка */}
+      <div className={styles.dots} role="img" aria-label={`Ответы по порядку: ${results.map((ok) => (ok ? 'верно' : 'неверно')).join(', ')}`}>
+        {results.map((ok, index) => (
+          <span key={index} className={cn(styles.dot, ok ? styles.dotOk : styles.dotBad)} />
+        ))}
       </div>
       <p className={styles.resultTitle}>{title}</p>
       <p className={styles.resultSub}>
