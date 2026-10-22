@@ -85,11 +85,6 @@
   color: var(--color-text-muted);
 }
 
-/* Загрузка */
-.loadingArea {
-  margin-top: var(--space-3);
-}
-
 /* Бренд */
 .logo {
   display: inline-block;

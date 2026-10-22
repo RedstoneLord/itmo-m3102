@@ -122,12 +122,6 @@
   }
 }
 
-.loading {
-  padding: var(--space-8);
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-}
-
 .reason {
   max-width: 60ch;
   margin: 0;

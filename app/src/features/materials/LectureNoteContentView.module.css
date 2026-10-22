@@ -4,13 +4,6 @@
   color: var(--color-text-muted);
 }
 
-.loading {
-  padding: var(--space-8);
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  text-align: center;
-}
-
 .linkCard {
   display: flex;
   align-items: center;

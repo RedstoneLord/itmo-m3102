@@ -117,11 +117,9 @@
   /*
    * Именованные кривые для конкретных задач (не голый ease/ease-in-out):
    * -out — уверенное появление с едва заметным overshoot в конце;
-   * -in — быстрый, но не резкий уход;
    * -spring — лёгкий пружинный акцент, только для маленьких переключателей (Tabs/SegmentedControl).
    */
   --ease-luxury-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-luxury-in: cubic-bezier(0.7, 0, 0.84, 0);
   --ease-luxury-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /*
