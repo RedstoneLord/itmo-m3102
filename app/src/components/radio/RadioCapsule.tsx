@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { SPRING_SNAPPY } from '../../lib/motion';
 import { storageKey } from '../../lib/storage';
+import { useDismiss } from '../../lib/useDismiss';
 import { STATIONS } from './stations';
 import styles from './RadioCapsule.module.css';
 
@@ -51,18 +52,7 @@ export function RadioCapsule() {
     if (audioRef.current) audioRef.current.muted = muted;
   }, [muted]);
 
-  // Закрыть панель кликом мимо или Escape
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (event: PointerEvent) => !rootRef.current?.contains(event.target as Node) && setOpen(false);
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false);
-    addEventListener('pointerdown', onDown);
-    addEventListener('keydown', onKey);
-    return () => {
-      removeEventListener('pointerdown', onDown);
-      removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+  useDismiss(rootRef, open, setOpen);
 
   function audio(): HTMLAudioElement {
     if (!audioRef.current) {

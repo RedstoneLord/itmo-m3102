@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Pipette } from 'lucide-react';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import { Button } from '../../components/ui/Button';
+import { useDismiss } from '../../lib/useDismiss';
 import { SPRING_SNAPPY } from '../../lib/motion';
 import { accentColor, CUSTOM_LIGHTNESS, customAccent, parseCustomAccent } from './appearance';
 import styles from './settings.module.css';
@@ -24,17 +25,7 @@ export function AccentPicker({ accent, onChange }: AccentPickerProps) {
   const [chroma, setChroma] = useState(custom?.chroma ?? 0.19);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (event: PointerEvent) => !rootRef.current?.contains(event.target as Node) && setOpen(false);
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false);
-    addEventListener('pointerdown', onDown);
-    addEventListener('keydown', onKey);
-    return () => {
-      removeEventListener('pointerdown', onDown);
-      removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+  useDismiss(rootRef, open, setOpen);
 
   function apply(nextHue: number, nextChroma: number) {
     setHue(nextHue);
