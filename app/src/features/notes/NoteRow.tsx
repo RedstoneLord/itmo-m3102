@@ -7,7 +7,7 @@ import { formatDayLabel } from '../../lib/dates';
 import type { ISODate, Note } from '../../types/models';
 import { useOptionalSubjectName } from '../subjects/subjectsStore';
 import { useNotesStore } from './notesStore';
-import styles from './NoteRow.module.css';
+import styles from '../materials/MaterialRow.module.css';
 
 interface NoteRowProps {
   note: Note;
