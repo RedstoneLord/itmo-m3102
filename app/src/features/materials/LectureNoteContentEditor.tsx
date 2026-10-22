@@ -1,11 +1,10 @@
-import { HardDrive, Link2, Type, Upload } from 'lucide-react';
+import { Link2, Type, Upload } from 'lucide-react';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { Input } from '../../components/ui/Input';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { Textarea } from '../../components/ui/Textarea';
-import { googleDriveService } from '../../services/googleDrive';
 import type { LectureNoteContentType } from '../../types/models';
 import styles from './LectureNoteContentEditor.module.css';
 
@@ -44,7 +43,7 @@ function describePdfContent(content: string): string {
   return content;
 }
 
-/** Наполнение конспекта: markdown-текст, загрузка PDF (локально или из Google Drive) или ссылка. */
+/** Наполнение конспекта: markdown-текст, загрузка PDF или ссылка. */
 export function LectureNoteContentEditor({ contentType, content, onContentTypeChange, onContentChange }: LectureNoteContentEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pdfError, setPdfError] = useState('');
@@ -61,17 +60,6 @@ export function LectureNoteContentEditor({ contentType, content, onContentTypeCh
 
     setPdfError('');
     onContentChange(await readAsDataUrl(file));
-  }
-
-  async function handlePickFromDrive() {
-    setPdfError('');
-    try {
-      const result = await googleDriveService.pickFile();
-      if (!result) return; // пользователь отменил выбор
-      onContentChange(result.file.url);
-    } catch {
-      setPdfError('Google Drive пока не подключён — загрузите файл вручную или вставьте ссылку ниже.');
-    }
   }
 
   return (
@@ -93,9 +81,6 @@ export function LectureNoteContentEditor({ contentType, content, onContentTypeCh
           <div className={styles.pdfActions}>
             <Button type="button" size="sm" icon={Upload} onClick={() => fileInputRef.current?.click()}>
               Загрузить PDF
-            </Button>
-            <Button type="button" variant="secondary" size="sm" icon={HardDrive} onClick={handlePickFromDrive}>
-              Выбрать из Google Drive
             </Button>
             <input ref={fileInputRef} type="file" accept="application/pdf" className={styles.hiddenInput} onChange={handleFileSelected} />
           </div>

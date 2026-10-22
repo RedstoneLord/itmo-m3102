@@ -12,9 +12,6 @@ export const MATERIAL_TYPES: Record<MaterialType, { label: string; icon: LucideI
   other: { label: 'Другое', icon: File },
 };
 
-/** Типы, которые в Google Picker/Drive открылись бы через выбор файла Google Drive */
-export const GOOGLE_MATERIAL_TYPES: MaterialType[] = ['google_drive', 'google_docs'];
-
 export const MATERIAL_CATEGORIES: Record<MaterialCategory, string> = {
   literature: 'Литература',
   assignments: 'Задания',

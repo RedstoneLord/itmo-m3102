@@ -1,17 +1,13 @@
-import { HardDrive } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import { Button } from '../../components/ui/Button';
 import { Dropdown, type DropdownOption } from '../../components/ui/Dropdown';
 import { Field } from '../../components/ui/Field';
 import { Form, FormRow } from '../../components/ui/Form';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { checkUrl } from '../../lib/url';
-import { googleDriveService } from '../../services/googleDrive';
 import type { ID, MaterialCategory, MaterialType } from '../../types/models';
 import { useSubjectsStore } from '../subjects/subjectsStore';
-import { GOOGLE_MATERIAL_TYPES, MATERIAL_CATEGORIES, MATERIAL_TYPES } from './labels';
-import styles from './MaterialForm.module.css';
+import { MATERIAL_CATEGORIES, MATERIAL_TYPES } from './labels';
 
 const TYPE_OPTIONS: DropdownOption[] = Object.entries(MATERIAL_TYPES).map(([value, { label }]) => ({ value, label }));
 const CATEGORY_OPTIONS: DropdownOption[] = Object.entries(MATERIAL_CATEGORIES).map(([value, label]) => ({
@@ -41,26 +37,11 @@ export function MaterialForm({ id, initialValues, onSubmit, disabled }: Material
   const subjects = useSubjectsStore((state) => state.subjects);
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<{ name?: string; url?: string }>({});
-  const [driveNotice, setDriveNotice] = useState('');
 
   const subjectOptions: DropdownOption[] = subjects.map((subject) => ({ value: subject.id, label: subject.name }));
-  const isGoogleType = GOOGLE_MATERIAL_TYPES.includes(values.type);
 
   function update<K extends keyof MaterialFormValues>(key: K, value: MaterialFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
-  }
-
-  async function handlePickFromDrive() {
-    setDriveNotice('');
-    try {
-      const result = await googleDriveService.pickFile();
-      if (!result) return; // пользователь отменил выбор
-      update('url', result.file.url);
-      if (!values.name.trim()) update('name', result.file.name);
-    } catch {
-      // Сегодня сервис — заглушка без настоящего Google Drive: сообщаем и оставляем ручной ввод ссылки
-      setDriveNotice('Google Drive пока не подключён — вставьте ссылку вручную.');
-    }
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -98,15 +79,7 @@ export function MaterialForm({ id, initialValues, onSubmit, disabled }: Material
 
       <FormRow>
         <Field label="Тип" htmlFor="material-type">
-          <Dropdown
-            id="material-type"
-            value={values.type}
-            options={TYPE_OPTIONS}
-            onChange={(value) => {
-              update('type', value as MaterialType);
-              setDriveNotice('');
-            }}
-          />
+          <Dropdown id="material-type" value={values.type} options={TYPE_OPTIONS} onChange={(value) => update('type', value as MaterialType)} />
         </Field>
         <Field label="Категория" htmlFor="material-category">
           <Dropdown
@@ -118,25 +91,18 @@ export function MaterialForm({ id, initialValues, onSubmit, disabled }: Material
         </Field>
       </FormRow>
 
-      <Field label="URL" htmlFor="material-url" error={errors.url} hint={driveNotice || undefined}>
-        <div className={styles.urlRow}>
-          <Input
-            id="material-url"
-            type="url"
-            value={values.url}
-            placeholder="https://"
-            invalid={Boolean(errors.url)}
-            onChange={(event) => {
-              update('url', event.target.value);
-              setErrors((current) => ({ ...current, url: undefined }));
-            }}
-          />
-          {isGoogleType && (
-            <Button type="button" size="sm" icon={HardDrive} onClick={handlePickFromDrive}>
-              Выбрать из Drive
-            </Button>
-          )}
-        </div>
+      <Field label="URL" htmlFor="material-url" error={errors.url}>
+        <Input
+          id="material-url"
+          type="url"
+          value={values.url}
+          placeholder="https://"
+          invalid={Boolean(errors.url)}
+          onChange={(event) => {
+            update('url', event.target.value);
+            setErrors((current) => ({ ...current, url: undefined }));
+          }}
+        />
       </Field>
 
       <Field label="Описание" htmlFor="material-description" optional>
