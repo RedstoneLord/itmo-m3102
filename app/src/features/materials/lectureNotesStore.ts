@@ -17,8 +17,6 @@ interface LectureNotesStore {
   addLectureNote: (draft: LectureNoteDraft) => void;
   updateLectureNote: (id: ID, draft: LectureNoteDraft) => void;
   deleteLectureNote: (id: ID) => void;
-  /** Отмечает конспект как открытый — для блока «Продолжить чтение» */
-  touchLectureNote: (id: ID) => void;
 }
 
 /** Конспекты лекций. Из репозитория группы приходят синхронизацией (source: 'github'). */
@@ -36,16 +34,11 @@ export const useLectureNotesStore = create<LectureNotesStore>()(
                   source: note.source,
                   sourceRef: note.sourceRef,
                   archived: note.archived,
-                  lastOpenedAt: note.lastOpenedAt,
                 })
               : note,
           ),
         })),
       deleteLectureNote: (id) => set((state) => ({ lectureNotes: state.lectureNotes.filter((note) => note.id !== id) })),
-      touchLectureNote: (id) =>
-        set((state) => ({
-          lectureNotes: state.lectureNotes.map((note) => (note.id === id ? { ...note, lastOpenedAt: new Date().toISOString() } : note)),
-        })),
     }),
     {
       name: storageKey('lecture-notes'),

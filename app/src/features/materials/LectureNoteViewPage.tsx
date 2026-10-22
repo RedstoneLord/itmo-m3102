@@ -36,7 +36,6 @@ export function LectureNoteViewPage() {
   const splat = useParams()['*'] ?? '';
   const noteId = safeDecodeURIComponent(splat);
   const note = useLectureNotesStore((state) => state.lectureNotes.find((item) => item.id === noteId));
-  const touchLectureNote = useLectureNotesStore((state) => state.touchLectureNote);
 
   // Пока читают — без фона-сияния (aurora.css), он отвлекает от текста
   useEffect(() => {
@@ -45,11 +44,6 @@ export function LectureNoteViewPage() {
       delete document.documentElement.dataset.reading;
     };
   }, []);
-
-  useEffect(() => {
-    // Наверх при открытии и возврат к месту по «Назад» — useScrollMemory в AppShell
-    if (noteId) touchLectureNote(noteId);
-  }, [noteId, touchLectureNote]);
 
   if (!note) return <MissingNote noteId={noteId} />;
   // key: у каждого конспекта своё состояние — новый открывается со скелета, а не с текста предыдущего

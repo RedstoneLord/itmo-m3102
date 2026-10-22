@@ -189,8 +189,6 @@ export interface LectureNote extends BaseEntity {
   title: string;
   contentType: LectureNoteContentType;
   content: string;
-  /** Когда конспект последний раз открывали — для блока «Продолжить чтение» */
-  lastOpenedAt?: ISODateTime;
   source: ContentSource;
   /** Путь к файлу в репозитории — только у source: 'github' */
   sourceRef?: string;

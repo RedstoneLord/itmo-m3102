@@ -257,7 +257,6 @@ function toNote(path: string, fields: NoteFields, previous: LectureNote[], now: 
     id,
     createdAt: old?.createdAt ?? now,
     updatedAt: unchanged ? old.updatedAt : now,
-    lastOpenedAt: old?.lastOpenedAt,
     source: 'github',
     sourceRef: path,
     archived: false,
