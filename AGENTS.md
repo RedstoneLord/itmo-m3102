@@ -635,7 +635,7 @@ Prettier → юнит-тесты → сборка → календарь `m3102.
   `storage.persist()`. Аудио, docx, djvu — нет.
 - Иконки — из логотипа группы `scripts/icon/source.jpg`: `node scripts/icon/make-icons.mjs` пишет `favicon.png`
   (только ёжик), `icon-192/512.png`, `apple-touch-icon.png`, `icon-maskable-512.png` (безопасная зона 80%).
-  **Сменил файлы с постоянными именами (иконки, водяной знак) — подними `CACHE` в `sw.js`** (сейчас `m3102-v5`),
+  **Сменил файлы с постоянными именами (иконки, водяной знак) — подними номер `CACHE` в `sw.js`** (имя вида `m3102-vN`, текущий — в самом файле),
   иначе у открывавших сайт останутся старые.
 - Водяной знак PDF — серый логотип из `src/assets/logo-mask.webp`: `public/pdf-watermark.png` (480px) и
   `public/pdf-watermark.svg` (тот же PNG внутри, размер 24 мм — для `@page`). Меняешь логотип — пересоздай оба.
