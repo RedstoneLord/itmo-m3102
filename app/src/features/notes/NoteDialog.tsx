@@ -6,7 +6,7 @@ import { Modal } from '../../components/ui/Modal';
 import type { ID, Note } from '../../types/models';
 import { NoteForm, type NoteFormValues } from './NoteForm';
 import { useNotesStore } from './notesStore';
-import styles from './NoteDialog.module.css';
+import modalStyles from '../../components/ui/Modal.module.css';
 
 /** Что открыто в окне: новая заметка (можно заранее задать предмет) или редактирование существующей */
 export type NoteDialogTarget = { mode: 'create'; defaultSubjectId?: ID } | { mode: 'edit'; note: Note };
@@ -56,7 +56,7 @@ export function NoteDialog({ target, onClose }: NoteDialogProps) {
         footer={
           <>
             {isEditing && (
-              <Button variant="danger" icon={Trash} className={styles.delete} onClick={() => setConfirmingDelete(true)}>
+              <Button variant="danger" icon={Trash} className={modalStyles.delete} onClick={() => setConfirmingDelete(true)}>
                 Удалить
               </Button>
             )}

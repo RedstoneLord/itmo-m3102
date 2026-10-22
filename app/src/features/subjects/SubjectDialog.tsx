@@ -6,7 +6,7 @@ import { Modal } from '../../components/ui/Modal';
 import type { Subject } from '../../types/models';
 import { SubjectForm } from './SubjectForm';
 import { useSubjectsStore, type SubjectDraft } from './subjectsStore';
-import styles from './SubjectDialog.module.css';
+import modalStyles from '../../components/ui/Modal.module.css';
 
 /** Что открыто в окне: новый предмет или редактирование существующего */
 export type SubjectDialogTarget = { mode: 'create' } | { mode: 'edit'; subject: Subject };
@@ -54,7 +54,7 @@ export function SubjectDialog({ target, onClose, onDeleted }: SubjectDialogProps
         footer={
           <>
             {isEditing && (
-              <Button variant="danger" icon={Trash} className={styles.delete} onClick={() => setConfirmingDelete(true)}>
+              <Button variant="danger" icon={Trash} className={modalStyles.delete} onClick={() => setConfirmingDelete(true)}>
                 Удалить
               </Button>
             )}

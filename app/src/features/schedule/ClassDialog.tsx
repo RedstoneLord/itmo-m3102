@@ -10,7 +10,7 @@ import { useSubjectName } from '../subjects/subjectsStore';
 import type { AdditionalClass, ClassDetails, ClassSession, ISODate, WeekRepeat } from '../../types/models';
 import { ClassForm, type ClassFormValues, type RepeatOption } from './ClassForm';
 import { useScheduleStore } from './scheduleStore';
-import styles from './ClassDialog.module.css';
+import modalStyles from '../../components/ui/Modal.module.css';
 
 /** Что открыто в окне: новое занятие, еженедельное занятие или разовое */
 export type ClassDialogTarget =
@@ -98,7 +98,7 @@ export function ClassDialog({ target, onClose }: ClassDialogProps) {
           isEditMode ? (
             <>
               {isEditing && (
-                <Button variant="danger" icon={Trash} className={styles.delete} onClick={() => setConfirmingDelete(true)}>
+                <Button variant="danger" icon={Trash} className={modalStyles.delete} onClick={() => setConfirmingDelete(true)}>
                   Удалить
                 </Button>
               )}

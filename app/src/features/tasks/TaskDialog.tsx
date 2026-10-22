@@ -7,7 +7,7 @@ import type { ID, ISODate, Task } from '../../types/models';
 import { TaskForm, type TaskFormValues } from './TaskForm';
 import type { TaskDraft } from './tasksStore';
 import { useTasksStore } from './tasksStore';
-import styles from './TaskDialog.module.css';
+import modalStyles from '../../components/ui/Modal.module.css';
 
 /** Что открыто в окне: новая задача (можно заранее задать предмет и/или срок) или редактирование существующей */
 export type TaskDialogTarget = { mode: 'create'; defaultSubjectId?: ID; defaultDeadline?: ISODate } | { mode: 'edit'; task: Task };
@@ -61,7 +61,7 @@ export function TaskDialog({ target, onClose }: TaskDialogProps) {
         footer={
           <>
             {isEditing && (
-              <Button variant="danger" icon={Trash} className={styles.delete} onClick={() => setConfirmingDelete(true)}>
+              <Button variant="danger" icon={Trash} className={modalStyles.delete} onClick={() => setConfirmingDelete(true)}>
                 Удалить
               </Button>
             )}

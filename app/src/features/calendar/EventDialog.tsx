@@ -7,7 +7,7 @@ import { useEditMode } from '../settings/EditModeContext';
 import type { Event, ISODate } from '../../types/models';
 import { EventForm, type EventFormValues } from './EventForm';
 import { useEventsStore } from './eventsStore';
-import styles from './EventDialog.module.css';
+import modalStyles from '../../components/ui/Modal.module.css';
 
 /** Что открыто в окне: новое событие (можно заранее задать дату) или редактирование существующего */
 export type EventDialogTarget = { mode: 'create'; defaultDate?: ISODate } | { mode: 'edit'; event: Event };
@@ -60,7 +60,7 @@ export function EventDialog({ target, onClose }: EventDialogProps) {
           isEditMode ? (
             <>
               {isEditing && (
-                <Button variant="danger" icon={Trash} className={styles.delete} onClick={() => setConfirmingDelete(true)}>
+                <Button variant="danger" icon={Trash} className={modalStyles.delete} onClick={() => setConfirmingDelete(true)}>
                   Удалить
                 </Button>
               )}

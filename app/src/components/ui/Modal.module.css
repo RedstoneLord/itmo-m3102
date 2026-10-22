@@ -134,6 +134,11 @@
   border-top: 1px solid var(--color-border);
 }
 
+/* Кнопка удаления в подвале окна редактирования прижата к левому краю */
+.delete {
+  margin-right: auto;
+}
+
 .close {
   position: absolute;
   top: var(--space-3);

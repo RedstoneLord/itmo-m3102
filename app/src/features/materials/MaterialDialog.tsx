@@ -7,7 +7,7 @@ import { useEditMode } from '../settings/EditModeContext';
 import type { ID, Material, MaterialType } from '../../types/models';
 import { MaterialForm, type MaterialFormValues } from './MaterialForm';
 import { useMaterialsStore } from './materialsStore';
-import styles from './MaterialDialog.module.css';
+import modalStyles from '../../components/ui/Modal.module.css';
 
 /** Что открыто в окне: новый материал (можно заранее задать предмет и/или тип) или редактирование существующего */
 export type MaterialDialogTarget = { mode: 'create'; defaultSubjectId?: ID; defaultType?: MaterialType } | { mode: 'edit'; material: Material };
@@ -64,7 +64,7 @@ export function MaterialDialog({ target, onClose }: MaterialDialogProps) {
           isEditMode ? (
             <>
               {isEditing && (
-                <Button variant="danger" icon={Trash} className={styles.delete} onClick={() => setConfirmingDelete(true)}>
+                <Button variant="danger" icon={Trash} className={modalStyles.delete} onClick={() => setConfirmingDelete(true)}>
                   Удалить
                 </Button>
               )}

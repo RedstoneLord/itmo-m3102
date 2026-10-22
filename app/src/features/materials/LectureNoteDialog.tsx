@@ -7,7 +7,7 @@ import { useEditMode } from '../settings/EditModeContext';
 import type { ID, LectureNote } from '../../types/models';
 import { LectureNoteForm, type LectureNoteFormValues } from './LectureNoteForm';
 import { useLectureNotesStore } from './lectureNotesStore';
-import styles from './LectureNoteDialog.module.css';
+import modalStyles from '../../components/ui/Modal.module.css';
 
 /** Что открыто в окне: новый конспект (можно заранее задать предмет) или редактирование существующего */
 export type LectureNoteDialogTarget = { mode: 'create'; defaultSubjectId?: ID } | { mode: 'edit'; note: LectureNote };
@@ -61,7 +61,7 @@ export function LectureNoteDialog({ target, onClose }: LectureNoteDialogProps) {
           isEditMode ? (
             <>
               {isEditing && (
-                <Button variant="danger" icon={Trash} className={styles.delete} onClick={() => setConfirmingDelete(true)}>
+                <Button variant="danger" icon={Trash} className={modalStyles.delete} onClick={() => setConfirmingDelete(true)}>
                   Удалить
                 </Button>
               )}
