@@ -35,15 +35,6 @@ export function isAllDay(entry: CalendarEntry): boolean {
   return entry.startTime === undefined;
 }
 
-/** Занятие всегда со временем; событие — только если оно указано при создании (иначе оно «весь день») */
-export type TimedCalendarEntry =
-  Extract<CalendarEntry, { kind: 'class' }> | (Extract<CalendarEntry, { kind: 'event' }> & { startTime: string; endTime: string });
-
-/** Есть ли у записи конкретное время — тогда ей место на сетке времени, а не в строке «весь день» */
-export function isTimedEntry(entry: CalendarEntry): entry is TimedCalendarEntry {
-  return entry.startTime !== undefined;
-}
-
 /** Записи на дату, отсортированные так, что «весь день» идёт перед записями с конкретным временем */
 export function getCalendarEntriesForDate(date: ISODate, data: CalendarData): CalendarEntry[] {
   const classEntries: CalendarEntry[] = getOccurrencesForDate(date, data.schedule)

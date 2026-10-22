@@ -13,9 +13,5 @@ export const SPRING_SNAPPY: Transition = { type: 'spring', stiffness: 520, dampi
 export const SPRING_SMOOTH: Transition = { type: 'spring', stiffness: 340, damping: 32, mass: 0.9 };
 export const SPRING_PLAYFUL: Transition = { type: 'spring', stiffness: 420, damping: 20, mass: 0.8 };
 
-/** Для случаев без пружины (page transition, list exit) — тайминг-кривые, не CSS-переменные */
-export const EASE_OUT = [0.16, 1, 0.3, 1] as const;
-export const EASE_IN = [0.7, 0, 0.84, 0] as const;
-
 /** Обёртка над useReducedMotion Framer Motion — единая точка для чтения настройки ОС. */
 export const usePrefersReducedMotion = useFramerReducedMotion;
