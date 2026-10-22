@@ -58,17 +58,16 @@ function grant(L, kind, want) {
 function injectStyles() {
   if (document.getElementById('rw-style')) return;
   const s = document.createElement('style'); s.id = 'rw-style';
-  s.textContent = '.rw-pill{position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:940;max-width:min(300px,calc(100vw - 96px));padding:8px 12px;border:1px solid var(--border);border-radius:calc(11px * var(--rs,1));background:var(--card);color:var(--text);font-size:.76rem;box-shadow:0 10px 30px rgba(20,20,35,.18);pointer-events:none}'
-    + '.rw-pill i{display:block;height:4px;margin-top:6px;border-radius:calc(999px * var(--rp,1));background:var(--border);overflow:hidden}'
-    + '.rw-pill i b{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}'
-    + '.rw-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 90px);z-index:1500;max-width:calc(100vw - 24px);padding:10px 16px;border:1px solid var(--accent);border-radius:calc(999px * var(--rp,1));background:var(--card);color:var(--text);font-size:.84rem;font-weight:650;box-shadow:0 10px 30px rgba(0,0,0,.25)}'
-    + '@media(max-width:760px){.rw-pill{bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}}@media print{.rw-pill,.rw-toast{display:none}}';
+s.textContent = '.rw-pill{position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:940;padding:3px 9px;border-radius:calc(999px * var(--rp,1));background:var(--card);border:1px solid var(--border);color:var(--muted);font-size:.7rem;pointer-events:none;white-space:nowrap}'
+  + '.rw-pill i{display:none}'
+  + '.rw-toast{display:none}'
+  + '@media(max-width:760px){.rw-pill{bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}}@media print{.rw-pill,.rw-toast{display:none}}';
   document.head.appendChild(s);
 }
 function toast(text) {
-  injectStyles();
-  const el = document.createElement('div'); el.className = 'rw-toast'; el.setAttribute('role', 'status'); el.textContent = text;
-  document.body.appendChild(el); setTimeout(() => el.remove(), 5500);
+//  injectStyles();
+//  const el = document.createElement('div'); el.className = 'rw-toast'; el.setAttribute('role', 'status'); el.textContent = text;
+//  document.body.appendChild(el); setTimeout(() => el.remove(), 5500);
 }
 
 /* ---------- чтение ---------- */
@@ -108,7 +107,7 @@ export function trackReading(path, body) {
   const savePart = () => { const L = load(); L.part[path] = { n: items.length, d: items.map(it => Math.round(it.d)), t: Math.round(active) }; save(L); };
   function paint(msg) {
     const p = progress();
-    label.textContent = msg || ('📖 Вдумчивое чтение: ' + Math.round(p * 100) + '% · награда +' + reward + ' 🍓');
+    label.textContent = msg || (Math.round(p * 100) + '%');
     fill.style.width = Math.round(p * 100) + '%';
   }
   function end(claimed) {
