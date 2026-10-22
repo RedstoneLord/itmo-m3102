@@ -21,10 +21,16 @@ export interface QueueEntry {
   url: string;
 }
 
-async function loadQueues(): Promise<Record<string, QueueEntry[]>> {
+/** Страница ответа GitHub — 100 записей; больше 5 страниц не берём: каждая тратит лимит запросов (60 в час) */
+const PAGE_SIZE = 100;
+const MAX_PAGES = 5;
+
+type Issue = { title?: string; html_url: string; pull_request?: unknown; user?: { login?: string } };
+
+async function loadIssuesPage(page: number): Promise<Issue[]> {
   const { owner, repo } = GROUP_REPO;
   const response = await githubFetch(
-    `https://api.github.com/repos/${owner}/${repo}/issues?labels=${QUEUE_LABEL}&state=open&sort=created&direction=asc&per_page=100`,
+    `https://api.github.com/repos/${owner}/${repo}/issues?labels=${QUEUE_LABEL}&state=open&sort=created&direction=asc&per_page=${PAGE_SIZE}&page=${page}`,
   );
   if (!response.ok) {
     // Коротко — это мелкая приписка под списком, а не плашка: сохранённая очередь показывается как есть
@@ -33,7 +39,18 @@ async function loadQueues(): Promise<Record<string, QueueEntry[]>> {
     if (response.status === 403 || response.status === 429) throw new Error('лимит запросов к GitHub, попробуйте позже');
     throw new Error(githubError(response.status, false, response));
   }
-  const issues = (await response.json()) as { title?: string; html_url: string; pull_request?: unknown; user?: { login?: string } }[];
+  return (await response.json()) as Issue[];
+}
+
+async function loadQueues(): Promise<Record<string, QueueEntry[]>> {
+  // Записи идут от старых к новым: без следующих страниц пропали бы именно последние в очереди. Сбой на любой странице
+  // отменяет всё обновление — половину очереди за целую не показываем
+  const issues: Issue[] = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const batch = await loadIssuesPage(page);
+    issues.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+  }
   const queues: Record<string, QueueEntry[]> = {};
   for (const issue of issues) {
     const match = !issue.pull_request && /^\[([^\]]+)\]\s*(.*)$/.exec(issue.title ?? '');
