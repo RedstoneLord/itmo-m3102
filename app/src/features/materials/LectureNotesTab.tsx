@@ -15,7 +15,7 @@ import { useEditMode } from '../settings/EditModeContext';
 import { useSubjectsStore } from '../subjects/subjectsStore';
 import { LectureNoteDialog } from './LectureNoteDialog';
 import { LectureNoteRow } from './LectureNoteRow';
-import { compareLessons } from './NoteReader';
+import { compareLessons } from './noteOrder';
 import { useLectureNoteDialog } from './useLectureNoteDialog';
 import { useLectureNotesStore } from './lectureNotesStore';
 import styles from './MaterialsPage.module.css';

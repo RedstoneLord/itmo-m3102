@@ -1,4 +1,4 @@
-import { compareLessons, noteTitle } from '../materials/NoteReader';
+import { compareLessons, noteTitle } from '../materials/noteOrder';
 import type { LectureNote, Material, Note, SubjectInfo } from '../../types/models';
 
 export interface DigestInput {

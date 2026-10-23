@@ -21,7 +21,8 @@ import { MarkButton, useMarkHighlights } from './NoteMarks';
 import { LectureNoteDialog } from './LectureNoteDialog';
 import { useLectureNoteDialog } from './useLectureNoteDialog';
 import { useLectureNotesStore } from './lectureNotesStore';
-import { NotePager, NoteSidebar, noteTitle, ReadingProgress, useSiblingNotes, useToc } from './NoteReader';
+import { NotePager, NoteSidebar, ReadingProgress, useSiblingNotes, useToc } from './NoteReader';
+import { noteTitle } from './noteOrder';
 import { useReadingRewards } from '../rewards/useReadingRewards';
 import styles from './LectureNoteViewPage.module.css';
 

@@ -10,7 +10,7 @@ import { Section } from '../../components/ui/Section';
 import { Tabs, type TabItem } from '../../components/ui/Tabs';
 import type { ISODate, LectureNote, Material } from '../../types/models';
 import { FolderList } from '../materials/LectureNotesTab';
-import { compareLessons } from '../materials/NoteReader';
+import { compareLessons } from '../materials/noteOrder';
 import { MaterialRow } from '../materials/MaterialRow';
 import { useEditMode } from '../settings/EditModeContext';
 import styles from './SubjectMaterialsTab.module.css';

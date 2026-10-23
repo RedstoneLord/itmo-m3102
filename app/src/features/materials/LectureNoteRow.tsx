@@ -12,7 +12,7 @@ import { useOptionalSubjectName } from '../subjects/subjectsStore';
 import { LECTURE_NOTE_CONTENT_ICONS } from './labels';
 import { useLectureNotesStore } from './lectureNotesStore';
 import styles from './LectureNoteRow.module.css';
-import { noteTitle } from './NoteReader';
+import { noteTitle } from './noteOrder';
 
 interface LectureNoteRowProps {
   note: LectureNote;

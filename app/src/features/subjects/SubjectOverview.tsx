@@ -9,7 +9,7 @@ import { LinkCards } from '../group/LinksPage';
 import type { GroupLink } from '../group/groupStore';
 import { MaterialRow } from '../materials/MaterialRow';
 import { LectureNoteRow } from '../materials/LectureNoteRow';
-import { compareLessons } from '../materials/NoteReader';
+import { compareLessons } from '../materials/noteOrder';
 import { parseLessonLabel } from '../schedule/lessons';
 import { DeadlinesPanel, HomeworkPanel } from '../today/HomePanels';
 import type { ISODate, LectureNote, Material, Task } from '../../types/models';
