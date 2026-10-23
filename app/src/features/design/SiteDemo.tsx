@@ -53,9 +53,27 @@ export function SiteDemo() {
     <Section title="Элементы сайта группы">
       <Demo label="Следующая пара · главная; таблетка слева — цвет типа пары">
         <div className={styles.blocks}>
-          <NextClassBlock status={{ kind: 'now', occurrence: DAY[1]!, minutesLeft: 42 }} occurrences={DAY} time="12:18" />
-          <NextClassBlock status={{ kind: 'next', occurrence: DAY[2]!, minutesUntil: 25 }} occurrences={DAY} time="13:05" />
-          <NextClassBlock status={{ kind: 'finished', next: { occurrence: DAY[0]!, dayLabel: 'завтра' } }} occurrences={DAY} time="16:00" />
+          <NextClassBlock
+            status={{ kind: 'now', occurrence: DAY[1]!, minutesLeft: 42 }}
+            occurrences={DAY}
+            date="2026-10-01"
+            today="2026-10-01"
+            time="12:18"
+          />
+          <NextClassBlock
+            status={{ kind: 'next', occurrence: DAY[2]!, minutesUntil: 25 }}
+            occurrences={DAY}
+            date="2026-10-01"
+            today="2026-10-01"
+            time="13:05"
+          />
+          <NextClassBlock
+            status={{ kind: 'finished', next: { occurrence: DAY[0]!, dayLabel: 'завтра' } }}
+            occurrences={DAY}
+            date="2026-10-02"
+            today="2026-10-01"
+            time="16:00"
+          />
         </div>
       </Demo>
       <Demo label="Типы пар · полоска-таблетка у карточек расписания, календаря и главной">

@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { SECTIONS } from '../../app/navigation';
 import { AnimatedNumber } from '../../components/ui/AnimatedNumber';
+import { Badge } from '../../components/ui/Badge';
 import { Button, buttonClass } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { IconButton } from '../../components/ui/IconButton';
@@ -39,6 +40,7 @@ const dayMonth = (iso: string) => new Date(iso).toLocaleDateString('ru-RU', { da
 /** Строка дедлайна: клик по ней ведёт на страницу дедлайнов, а галочка отмечает выполненным — отдельно. */
 function DeadlineRow({ item, done }: { item: GroupDeadline; done: boolean }) {
   const toggle = useGroupStore((state) => state.toggleDeadlineDone);
+  const info = deadlineInfo(item.deadline);
   return (
     <div className={cn(styles.linkRow, done && styles.done)}>
       <Checkbox
@@ -55,7 +57,8 @@ function DeadlineRow({ item, done }: { item: GroupDeadline; done: boolean }) {
         </span>
         <span className={styles.when}>
           <strong>{dayMonth(item.deadline)}</strong>
-          {!done && <small>{deadlineInfo(item.deadline).label}</small>}
+          {/* Горящий и просроченный срок — цветным бейджем, остальные — тихим текстом */}
+          {!done && (info.state !== 'ok' ? <Badge tone={info.tone}>{info.label}</Badge> : <small>{info.label}</small>)}
         </span>
       </Link>
     </div>

@@ -44,13 +44,16 @@ export function TodayPage() {
   const week = getStudyWeek(today, scheduleData.semesterStart, scheduleData.weekOneStart);
   const todayOccurrences = getOccurrencesForDate(today, scheduleData);
   const classStatus = getClassStatus(scheduleData, today, time);
+  // Полоска дня в «Сейчас» — того дня, чья пара показана: когда сегодня всё закончилось, это день следующей пары
+  const railDate = classStatus.kind === 'finished' && classStatus.next ? classStatus.next.occurrence.date : today;
+  const railOccurrences = railDate === today ? todayOccurrences : getOccurrencesForDate(railDate, scheduleData);
 
   const visible = arrangeBlocks(homeOrder).filter((id) => !homeHidden.includes(id));
 
   const renderBlock = (id: HomeBlockId) => {
     switch (id) {
       case 'next':
-        return <NextClassBlock status={classStatus} occurrences={todayOccurrences} time={time} />;
+        return <NextClassBlock status={classStatus} occurrences={railOccurrences} date={railDate} today={today} time={time} />;
       case 'review':
         return <ReviewBanner today={today} />;
       case 'schedule':

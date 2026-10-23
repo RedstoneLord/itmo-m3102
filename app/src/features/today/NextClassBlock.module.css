@@ -7,11 +7,15 @@
   min-height: 260px;
   padding: var(--space-6) var(--space-8) var(--space-5);
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 26%, var(--color-border));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 26%, var(--surface-border));
   border-radius: var(--radius-xl);
   background:
-    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--color-accent) 17%, transparent), transparent 62%),
-    radial-gradient(90% 80% at 0% 100%, color-mix(in srgb, var(--color-accent-2) 11%, transparent), transparent 62%), var(--color-bg-elevated);
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--color-accent) var(--hero-wash-a, 17%), transparent), transparent 62%),
+    radial-gradient(90% 80% at 0% 100%, color-mix(in srgb, var(--color-accent-2) var(--hero-wash-b, 11%), transparent), transparent 62%),
+    var(--surface-panel);
+  -webkit-backdrop-filter: var(--surface-filter-panel);
+  backdrop-filter: var(--surface-filter-panel);
+  box-shadow: var(--surface-shadow);
 }
 
 .now {
@@ -131,6 +135,14 @@
   letter-spacing: -0.02em;
 }
 
+/* «Конспект» и «Материалы» — прямо у пары, к которой готовишься */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
 .details {
   display: flex;
   flex-wrap: wrap;
@@ -169,6 +181,13 @@
 /* Весь день: отрезок на пару, цвет — тип пары */
 .rail {
   margin-top: auto;
+}
+
+.railDay {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }
 
 .track {
@@ -240,4 +259,56 @@
   .info {
     flex: none;
   }
+}
+
+/* ---------- Liquid Glass ---------- */
+/* Блик-«проход» по стеклу: один раз при открытии страницы, больше не повторяется (одно движение, а не фон из эффектов) */
+.sheen {
+  display: none;
+}
+
+:global(:root[data-style='glass']) .sheen {
+  position: absolute;
+  inset: -20% -30%;
+  display: block;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    color-mix(in srgb, white var(--glass-sheen, 38%), transparent) 48.5%,
+    color-mix(in srgb, white calc(var(--glass-sheen, 38%) / 4), transparent) 53%,
+    transparent 60%
+  );
+  transform: translateX(-75%);
+  animation: sheen-sweep 2s var(--ease-luxury-out) 0.5s both;
+  pointer-events: none;
+}
+
+@keyframes sheen-sweep {
+  to {
+    transform: translateX(75%);
+    opacity: 0;
+  }
+}
+
+:global(:root[data-style='glass']) .block {
+  /* свет акцента в стекле заметнее, а кромка — радужная, как у линзы */
+  --hero-wash-a: var(--glass-hero-wash-a, 30%);
+  --hero-wash-b: var(--glass-hero-wash-b, 20%);
+  --glass-rim: var(--glass-rim-hero);
+}
+
+:global(:root[data-style='glass']) .big {
+  text-shadow:
+    0 1px 0 color-mix(in srgb, white var(--glass-gloss, 38%), transparent),
+    0 12px 44px color-mix(in srgb, var(--color-accent) 28%, transparent);
+}
+
+:global(:root[data-style='glass']) .segment {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white var(--glass-gloss, 38%), transparent), rgb(255 255 255 / 0) 60%),
+    var(--type-color, var(--color-accent));
+  box-shadow:
+    0 0 0 1px var(--glass-segment-gap),
+    inset 0 1px 0 color-mix(in srgb, white var(--glass-gloss, 38%), transparent),
+    0 6px 12px -6px var(--type-color, var(--color-accent));
 }
