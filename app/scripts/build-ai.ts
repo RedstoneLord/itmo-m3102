@@ -18,7 +18,8 @@ function walk(root: string, dir: string): string[] {
 /** Собирает выгрузки из корня репозитория `root` в папку `out`; возвращает, сколько файлов записано */
 export async function writeAiFiles(root: string, out: string): Promise<number> {
   const paths = DIRS.filter((dir) => existsSync(join(root, dir))).flatMap((dir) => walk(root, dir));
-  const files = await buildAiFiles({ paths, read: (path) => readFileSync(join(root, path), 'utf8') });
+  // Файлы в чекауте на Windows с CRLF — в выгрузке лишние «\r» не нужны
+  const files = await buildAiFiles({ paths, read: (path) => readFileSync(join(root, path), 'utf8').replace(/\r\n/g, '\n') });
   mkdirSync(out, { recursive: true });
   for (const [name, text] of Object.entries(files)) writeFileSync(join(out, name), text);
   return Object.keys(files).length;
