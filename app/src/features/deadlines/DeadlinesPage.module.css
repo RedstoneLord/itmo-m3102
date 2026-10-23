@@ -6,10 +6,8 @@
 }
 
 .overviewLabel {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   color: var(--color-text-muted);
 }
 
@@ -48,12 +46,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.index {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
 }
 
 /* Связи дедлайна: предмет · конспекты · лабораторные — тихие ссылки через точку */
@@ -96,10 +88,8 @@
   display: flex;
   justify-content: space-between;
   margin-top: var(--space-2);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   color: var(--color-text-muted);
 }
 

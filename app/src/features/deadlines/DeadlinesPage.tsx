@@ -70,11 +70,10 @@ function DeadlinesList({ tabs }: { tabs: ReactNode }) {
   const active = ordered.filter((item) => !doneMap[item.id]);
   const finished = ordered.filter((item) => doneMap[item.id]);
 
-  const renderCard = (item: GroupDeadline, index: number) => (
+  const renderCard = (item: GroupDeadline) => (
     <DeadlineCard
       key={item.id}
       item={item}
-      index={index}
       done={Boolean(doneMap[item.id])}
       queue={queues[item.id] ?? []}
       queueKnown={queueKnown}
@@ -173,7 +172,6 @@ function DeadlineLinks({ name }: { name: string }) {
 
 interface DeadlineCardProps {
   item: GroupDeadline;
-  index: number;
   done: boolean;
   queue: QueueEntry[];
   /** Очередь хоть раз загружалась (показываем сохранённую, даже если обновить сейчас не вышло) */
@@ -181,7 +179,7 @@ interface DeadlineCardProps {
   onJoined: () => void;
 }
 
-function DeadlineCard({ item, index, done, queue, queueKnown, onJoined }: DeadlineCardProps) {
+function DeadlineCard({ item, done, queue, queueKnown, onJoined }: DeadlineCardProps) {
   const toggleDone = useGroupStore((state) => state.toggleDeadlineDone);
   const openProfile = useProfileStore((state) => state.open);
   const [name, setName] = useState('');
@@ -197,7 +195,6 @@ function DeadlineCard({ item, index, done, queue, queueKnown, onJoined }: Deadli
   return (
     <article className={cn(styles.card, done && styles.done)} data-spot>
       <div className={styles.cardTop}>
-        <span className={styles.index}>{String(index + 1).padStart(2, '0')}</span>
         <Badge tone={badge.tone}>{badge.label}</Badge>
       </div>
       <h3 className={styles.title}>{item.name}</h3>
