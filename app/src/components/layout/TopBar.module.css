@@ -73,7 +73,19 @@
     border-color var(--duration-base) var(--ease);
 }
 
+:global(:root[data-style='glass'][data-scrolled]) .bar {
+  border-bottom-color: var(--glass-bar-line);
+  background: var(--glass-bar);
+  -webkit-backdrop-filter: var(--surface-filter);
+  backdrop-filter: var(--surface-filter);
+}
+
 :global(:root[data-aurora='on'][data-scrolled]) .bar {
   border-bottom-color: color-mix(in srgb, var(--color-border) 70%, transparent);
   background: color-mix(in srgb, var(--color-bg) 86%, transparent);
+}
+
+/* Liquid Glass: хлебная крошка лежит прямо на ярком фоне — вторичным цветом, а не приглушённым */
+:global(:root[data-style='glass']) .section {
+  color: var(--color-text-secondary);
 }

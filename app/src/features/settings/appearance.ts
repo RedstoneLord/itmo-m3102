@@ -4,6 +4,8 @@ import { useSettingsStore, type DynamicTheme } from './settingsStore';
 
 /** Готовые акценты: насыщенные, но не «кислотные» — читаются и на светлом, и на тёмном фоне */
 export const ACCENTS = [
+  { id: 'lavender', name: 'Лаванда', color: '#7c62c4' },
+  { id: 'dusty', name: 'Пыльная роза', color: '#a5617c' },
   { id: 'indigo', name: 'Индиго', color: '#5b6cf9' },
   { id: 'violet', name: 'Фиалка', color: '#8b5cf6' },
   { id: 'sky', name: 'Небо', color: '#0ea5e9' },
@@ -121,16 +123,27 @@ function useDynamicPair(mode: DynamicTheme): AccentPair | null {
 
 /**
  * Оформление на <html>: --accent-base и --accent-base-2 (из них в tokens.css считаются все оттенки и градиент),
- * data-aurora / data-glow / data-radius — по ним включаются слои из styles/aurora.css.
+ * data-style / data-aurora / data-glow / data-radius — по ним включаются слои из styles/aurora.css и glass.css.
  */
 export function useApplyAppearance() {
   // Только нужные поля (useShallow): хук живёт в AppShell — родителе страницы, и подписка на весь стор
   // перерисовывала бы страницу при любой настройке (например, при сворачивании меню — лаги на конспекте)
-  const { accent, accent2, dynamicTheme, aurora, glow, liveBg, radius, density } = useSettingsStore(
-    useShallow(({ accent, accent2, dynamicTheme, aurora, glow, liveBg, radius, density }) => ({
+  const {
+    accent,
+    accent2,
+    dynamicTheme,
+    style,
+    aurora: auroraSetting,
+    glow: glowSetting,
+    liveBg,
+    radius,
+    density,
+  } = useSettingsStore(
+    useShallow(({ accent, accent2, dynamicTheme, style, aurora, glow, liveBg, radius, density }) => ({
       accent,
       accent2,
       dynamicTheme,
+      style,
       aurora,
       glow,
       liveBg,
@@ -138,6 +151,9 @@ export function useApplyAppearance() {
       density,
     })),
   );
+  // Minimalism — без фона и свечения; Aurora — как включено в настройках; Liquid Glass — фон нужен всегда (стекло без картинки под ним — серая муть)
+  const aurora = style === 'glass' || (style === 'aurora' && auroraSetting);
+  const glow = style !== 'minimal' && glowSetting;
   const pair = useDynamicPair(dynamicTheme);
 
   useEffect(() => {
@@ -148,6 +164,7 @@ export function useApplyAppearance() {
     const second = pair?.b ?? (accent2 === 'none' ? 'var(--accent-base)' : accent2 === 'auto' ? null : accentColor(accent2));
     if (second) root.style.setProperty('--accent-base-2', second);
     else root.style.removeProperty('--accent-base-2');
+    root.dataset.style = style;
     root.dataset.aurora = aurora ? 'on' : 'off';
     root.dataset.glow = glow ? 'on' : 'off';
     // Тёплый акцент (оранжевый, янтарь) совпал бы с цветом практики — тогда практика темнее
@@ -156,7 +173,7 @@ export function useApplyAppearance() {
     else delete root.dataset.practice;
     root.dataset.radius = radius;
     root.dataset.density = density;
-  }, [accent, accent2, pair, aurora, glow, radius, density]);
+  }, [accent, accent2, pair, style, aurora, glow, radius, density]);
 
   // Подсветка под курсором: один обработчик на всю страницу пишет координаты в ту карточку
   // [data-spot], над которой курсор, — никаких слушателей на каждой карточке

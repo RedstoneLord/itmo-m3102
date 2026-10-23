@@ -116,6 +116,29 @@ test('отметки из классической версии подхваты
   expect(stored.plan).toBe(classic.plan);
 });
 
+test('стиль «Liquid Glass» включается из меню «Оформление», переживает перезагрузку, Minimalism его выключает', async ({ page }) => {
+  await openSynced(page);
+  const root = page.locator('html');
+  const hero = page.locator('main section').first();
+  await expect(root).toHaveAttribute('data-style', 'aurora');
+  await expect(hero).toHaveCSS('backdrop-filter', 'none');
+
+  await page.getByRole('button', { name: 'Оформление' }).click();
+  await page.getByRole('menuitemradio', { name: 'Liquid Glass' }).click();
+  await expect(root).toHaveAttribute('data-style', 'glass');
+  // Стекло — это размытие под карточкой и слой света за страницей
+  await expect(hero).toHaveCSS('backdrop-filter', /blur/);
+  await expect(page.locator('.aurora')).toBeVisible();
+
+  await page.reload();
+  await expect(root).toHaveAttribute('data-style', 'glass');
+
+  await page.getByRole('button', { name: 'Оформление' }).click();
+  await page.getByRole('menuitemradio', { name: 'Minimalism' }).click();
+  await expect(root).toHaveAttribute('data-aurora', 'off');
+  await expect(hero).toHaveCSS('backdrop-filter', 'none');
+});
+
 test('PDF: страницы под тему сайта, тёмные по кнопке, «Продолжить» с прошлого места', async ({ page }) => {
   // По умолчанию страницы PDF следуют теме сайта: в тёмной — сразу тёмные
   await page.emulateMedia({ colorScheme: 'dark' });

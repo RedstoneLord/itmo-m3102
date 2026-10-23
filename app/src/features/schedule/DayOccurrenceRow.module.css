@@ -44,7 +44,7 @@
   margin-block: var(--space-1-5);
   padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
   border-radius: var(--radius-card);
-  background: var(--color-bg-elevated);
+  background: var(--surface-inner);
   box-shadow: var(--shadow-card);
 }
 
@@ -142,7 +142,7 @@
 
 /* В списке с линией времени у карточки свой фон (`background`), он перебил бы подсветку и полоску прогресса — повторяем их с большим весом */
 .timeline.timeline .row.row[style*='--progress'] {
-  background-color: var(--color-bg-elevated);
+  background-color: var(--surface-inner);
   background-image: var(--accent-gradient), var(--accent-soft-gradient);
   background-repeat: no-repeat;
   background-position:

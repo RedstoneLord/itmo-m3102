@@ -18,7 +18,7 @@ interface SectionProps {
 /** Блок страницы — плитка с заголовком. Плитки собираются в сетку («бенто») на главной и в обзоре предмета. */
 export function Section({ title, meta, action, tone = 'neutral', children, className }: SectionProps) {
   return (
-    <section className={cn(styles.section, className)}>
+    <section className={cn(styles.section, 'glass-edge', className)}>
       <header className={styles.header}>
         <h2 className={cn(styles.title, tone === 'danger' && styles.titleDanger)}>{title}</h2>
         {meta !== undefined && <span className={styles.meta}>{meta}</span>}

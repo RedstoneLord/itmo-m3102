@@ -45,3 +45,8 @@
   align-items: center;
   gap: var(--space-2);
 }
+
+/* Liquid Glass: подзаголовок страницы тоже на ярком фоне, без плитки под ним */
+:global(:root[data-style='glass']) .subtitle {
+  color: var(--color-text-secondary);
+}

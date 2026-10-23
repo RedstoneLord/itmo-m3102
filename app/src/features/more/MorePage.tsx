@@ -1,7 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router';
 import { MORE_PAGE_SECTIONS } from '../../app/navigation';
-import { ThemeToggle } from '../../components/layout/ThemeToggle';
+import { AppearanceMenu } from '../../components/layout/AppearanceMenu';
 import { PageHeader } from '../../components/ui/PageHeader';
 import styles from './MorePage.module.css';
 
@@ -28,8 +28,8 @@ export function MorePage() {
       </ul>
 
       <div className={styles.themeRow}>
-        <span>Тема</span>
-        <ThemeToggle />
+        <span>Оформление</span>
+        <AppearanceMenu />
       </div>
     </>
   );

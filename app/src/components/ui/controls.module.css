@@ -12,7 +12,7 @@
   padding: 0 var(--space-2-5);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
-  background: var(--color-bg);
+  background: var(--control-bg);
   font-size: var(--text-sm);
   color: var(--color-text);
   transition:

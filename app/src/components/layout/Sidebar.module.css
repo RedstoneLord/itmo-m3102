@@ -18,6 +18,18 @@
     visibility 0s;
 }
 
+/* Liquid Glass: меню — отдельная стеклянная панель с отступом от края окна, а не колонка во всю высоту */
+:global(:root[data-style='glass']) .inner {
+  width: calc(var(--sidebar-width) - var(--space-5));
+  height: calc(100% - var(--space-6));
+  margin: var(--space-3) var(--space-2) var(--space-3) var(--space-3);
+  border-radius: var(--radius-xl);
+  background: var(--surface-panel);
+  -webkit-backdrop-filter: var(--surface-filter-panel);
+  backdrop-filter: var(--surface-filter-panel);
+  box-shadow: var(--surface-shadow);
+}
+
 :global(:root[data-sidebar='collapsed']) .inner {
   visibility: hidden;
   transform: translateX(-100%);

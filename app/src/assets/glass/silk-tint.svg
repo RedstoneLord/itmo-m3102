@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="v" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#000" stop-opacity="0.8" />
+      <stop offset="0.5" stop-color="#000" stop-opacity="0.45" />
+      <stop offset="1" stop-color="#000" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="d" x1="0" y1="0" x2="1" y2="0.5">
+      <stop offset="0" stop-color="#000" stop-opacity="0" />
+      <stop offset="0.45" stop-color="#000" stop-opacity="0.4" />
+      <stop offset="1" stop-color="#000" stop-opacity="0" />
+    </linearGradient>
+    <filter id="b" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="26" /></filter>
+    <filter id="t" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="16" /></filter>
+  </defs>
+  <g filter="url(#b)">
+    <path fill="url(#v)" d="M520 -40 C760 120 960 20 1180 150 S1540 330 1700 280 L1700 -40 Z" />
+    <path fill="url(#v)" opacity="0.8" d="M-60 1060 C300 800 620 930 900 760 S1380 560 1700 640 L1700 1060 Z" />
+  </g>
+  <g filter="url(#t)" fill="none" stroke="url(#d)" stroke-linecap="round">
+    <path stroke-width="70" d="M-40 470 C300 350 560 640 920 500 S1440 320 1660 440" />
+    <path stroke-width="54" opacity="0.8" d="M200 1090 C520 910 800 1030 1080 850 S1500 710 1700 750" />
+  </g>
+</svg>

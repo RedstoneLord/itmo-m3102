@@ -144,30 +144,32 @@
   color-scheme: light;
 
   /* Поверхности. Серые чуть подкрашены акцентом — палитра из одного цвета выглядит выбранной, а не дефолтной */
-  --color-bg: #ffffff;
-  --color-bg-subtle: color-mix(in oklab, #f7f7f8 95%, var(--accent-base));
-  --color-bg-hover: color-mix(in oklab, #f0f0f2 94%, var(--accent-base));
-  --color-bg-active: color-mix(in oklab, #e8e8eb 93%, var(--accent-base));
-  --color-bg-elevated: #ffffff; /* выпадающие меню, модальные окна */
+  /* Графит и лаванда: страница — светлая лаванда, карточки — белые, серые слегка подкрашены акцентом */
+  --color-bg: color-mix(in oklab, #f5f3f7 96%, var(--accent-base));
+  --color-bg-subtle: color-mix(in oklab, #eeebf2 94%, var(--accent-base));
+  --color-bg-hover: color-mix(in oklab, #ece9f1 94%, var(--accent-base));
+  --color-bg-active: color-mix(in oklab, #e3dfea 93%, var(--accent-base));
+  --color-bg-elevated: #ffffff; /* карточки, выпадающие меню, модальные окна */
   --color-backdrop: rgba(24, 24, 27, 0.28);
 
   /* Переключатели (SegmentedControl) */
-  --color-control-track: color-mix(in oklab, #f0f0f2 94%, var(--accent-base));
+  --color-control-track: color-mix(in oklab, #ece9f1 94%, var(--accent-base));
   --color-control-thumb: #ffffff;
 
   /* Границы */
-  --color-border: color-mix(in oklab, #ebebef 93%, var(--accent-base));
-  --color-border-strong: color-mix(in oklab, #dcdce1 93%, var(--accent-base));
-  --color-border-hover: color-mix(in oklab, #c9c9d0 92%, var(--accent-base));
+  --color-border: color-mix(in oklab, #e6e2ec 93%, var(--accent-base));
+  --color-border-strong: color-mix(in oklab, #d7d2df 93%, var(--accent-base));
+  --color-border-hover: color-mix(in oklab, #c5bfd0 92%, var(--accent-base));
 
   /* Текст */
-  --color-text: #18181b;
-  --color-text-secondary: #52525b;
-  --color-text-muted: #8b8b94;
+  /* Подписи не должны теряться: и вторичный, и приглушённый текст держат контраст 4,5:1 и на белой карточке, и на фоне страницы */
+  --color-text: #242129;
+  --color-text-secondary: #4d4756;
+  --color-text-muted: #5b5467;
 
   /* Акцент */
   /* Все оттенки — из одного цвета --accent-base, его выбирают в настройках (appearance.ts) */
-  --accent-base: #5b6cf9;
+  --accent-base: #7c62c4;
   /* Второй акцент для градиента: по умолчанию — тот же цвет, повёрнутый по оттенку (settings: «Второй акцент») */
   --accent-base-2: oklch(from var(--accent-base) l c calc(h + 45));
   --color-accent-2: color-mix(in oklab, var(--accent-base-2) 92%, black);
@@ -190,11 +192,11 @@
   --glow-c: color-mix(in oklch, var(--accent-base) 75%, black);
 
   /* Статусы */
-  --color-success: #2f7d4f;
+  --color-success: #2a7246;
   --color-success-soft: #eaf5ee;
   --color-warning: #a35f0c;
   --color-warning-soft: #fbf1e2;
-  --color-danger: #c43d3d;
+  --color-danger: #b83636;
   --color-danger-soft: #fcecec;
 
   /* Типы занятий: лабораторная (фиолетовый), семинар/консультация/другое (тёмно-синий) */
@@ -204,8 +206,8 @@
   --color-consultation-soft: #eaeff6;
 
   /* Фокус */
-  --color-focus: rgba(48, 86, 211, 0.45);
-  --color-focus-ring: rgba(48, 86, 211, 0.14);
+  --color-focus: color-mix(in srgb, var(--accent-base) 60%, transparent);
+  --color-focus-ring: color-mix(in srgb, var(--accent-base) 16%, transparent);
 
   /* Тени — только для всплывающих слоёв */
   --shadow-xs: 0 1px 2px rgba(24, 24, 27, 0.06);
@@ -214,6 +216,28 @@
   /* Карточка-элемент (пара в расписании, задание): слой тени и блик по верхней кромке; радиус фиксированный — не зависит от настройки скруглений, иначе цветная палочка слева подходит к самому углу */
   --radius-card: 10px;
   --shadow-card: 0 1px 2px rgba(24, 24, 27, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  /* Поверхности. Обычно — сплошной цвет карточки, у стиля Liquid Glass (glass.css) — полупрозрачное стекло:
+     surface — карточка на странице, inner — карточка внутри карточки (без размытия: размывать дважды незачем),
+     overlay — меню, окна, подсказки (плотнее: под ними текст). Задавай поверхность этими токенами, а не цветом */
+  --surface: var(--color-bg-elevated);
+  --surface-inner: var(--color-bg-elevated);
+  --surface-overlay: var(--color-bg-elevated);
+  --surface-filter: none;
+  /* Панель — боковое меню и главная карточка: в стекле выразительнее обычных поверхностей */
+  --surface-panel: var(--surface);
+  --surface-filter-panel: var(--surface-filter);
+  --surface-filter-overlay: none;
+  --surface-border: var(--color-border);
+  --surface-shadow: var(--shadow-xs);
+  /* Заливка полей ввода и вторичных кнопок */
+  --control-bg: var(--color-bg);
+}
+
+/* Копия для PDF — белый лист, а не лавандовый фон страницы */
+[data-pdf] {
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f7f7f8;
 }
 
 /* Тёмная тема — только на экране: печать и «Сохранить как PDF» всегда светлые */
@@ -221,23 +245,23 @@
   :root[data-theme='dark'] {
     color-scheme: dark;
 
-    --color-bg: color-mix(in oklab, #131315 95%, var(--accent-base));
-    --color-bg-subtle: color-mix(in oklab, #0d0d0f 96%, var(--accent-base));
-    --color-bg-hover: color-mix(in oklab, #202024 93%, var(--accent-base));
-    --color-bg-active: color-mix(in oklab, #28282d 92%, var(--accent-base));
-    --color-bg-elevated: color-mix(in oklab, #19191c 95%, var(--accent-base));
+    --color-bg: color-mix(in oklab, #19181c 96%, var(--accent-base));
+    --color-bg-subtle: color-mix(in oklab, #131216 96%, var(--accent-base));
+    --color-bg-hover: color-mix(in oklab, #2a2930 93%, var(--accent-base));
+    --color-bg-active: color-mix(in oklab, #34323a 92%, var(--accent-base));
+    --color-bg-elevated: color-mix(in oklab, #222126 96%, var(--accent-base));
     --color-backdrop: rgba(0, 0, 0, 0.6);
 
-    --color-control-track: color-mix(in oklab, #1c1c1f 94%, var(--accent-base));
-    --color-control-thumb: color-mix(in oklab, #2c2c31 92%, var(--accent-base));
+    --color-control-track: color-mix(in oklab, #1e1d22 94%, var(--accent-base));
+    --color-control-thumb: color-mix(in oklab, #38363f 92%, var(--accent-base));
 
-    --color-border: color-mix(in oklab, #232327 92%, var(--accent-base));
-    --color-border-strong: color-mix(in oklab, #2f2f34 91%, var(--accent-base));
-    --color-border-hover: color-mix(in oklab, #3d3d44 90%, var(--accent-base));
+    --color-border: color-mix(in oklab, #2e2c34 92%, var(--accent-base));
+    --color-border-strong: color-mix(in oklab, #3a3841 91%, var(--accent-base));
+    --color-border-hover: color-mix(in oklab, #4b4853 90%, var(--accent-base));
 
-    --color-text: #ededef;
-    --color-text-secondary: #a8a8b0;
-    --color-text-muted: #70707a;
+    --color-text: #f3f0f2;
+    --color-text-secondary: #c4bec8;
+    --color-text-muted: #aea8b3;
 
     --color-accent: color-mix(in oklab, var(--accent-base) 80%, white);
     --color-accent-2: color-mix(in oklab, var(--accent-base-2) 80%, white);
@@ -260,8 +284,8 @@
     --color-consultation: #8fa8cc;
     --color-consultation-soft: rgba(143, 168, 204, 0.12);
 
-    --color-focus: rgba(124, 152, 240, 0.5);
-    --color-focus-ring: rgba(124, 152, 240, 0.2);
+    --color-focus: color-mix(in srgb, var(--color-accent) 65%, transparent);
+    --color-focus-ring: color-mix(in srgb, var(--color-accent) 22%, transparent);
 
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-popover: 0 12px 32px -8px rgba(0, 0, 0, 0.6);

@@ -120,7 +120,10 @@
   padding: var(--space-2) var(--space-2) calc(var(--space-3) + env(safe-area-inset-bottom));
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
-  background: var(--color-bg-elevated);
+  background: var(--surface-overlay);
+  -webkit-backdrop-filter: var(--surface-filter-overlay);
+  backdrop-filter: var(--surface-filter-overlay);
+
   box-shadow: var(--shadow-modal);
   animation: sheet-in var(--duration-base) var(--ease);
 }

@@ -6,6 +6,7 @@ import '@fontsource-variable/unbounded';
 import './styles/tokens.css';
 import './styles/global.css';
 import './styles/aurora.css';
+import './styles/glass.css';
 import { App } from './app/App';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { startClassicMarksSync } from './features/settings/classicMarksSync';

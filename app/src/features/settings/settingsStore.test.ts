@@ -19,3 +19,29 @@ it('сохранённая стартовая страница /homework отк�
   await useSettingsStore.persist.rehydrate();
   expect(useSettingsStore.getState().startPage).toBe('/deadlines?tab=homework');
 });
+
+it('до появления «Стиля»: сияние и свечение выключены — Minimalism, иначе Aurora', async () => {
+  localStorage.setItem('m3102:settings', JSON.stringify({ state: { aurora: false, glow: false }, version: 5 }));
+  await useSettingsStore.persist.rehydrate();
+  expect(useSettingsStore.getState().style).toBe('minimal');
+
+  localStorage.setItem('m3102:settings', JSON.stringify({ state: { aurora: false, glow: true }, version: 5 }));
+  await useSettingsStore.persist.rehydrate();
+  expect(useSettingsStore.getState().style).toBe('aurora');
+});
+
+it('прежняя пара по умолчанию (индиго + роза) переходит на лаванду, выбранные цвета остаются', async () => {
+  localStorage.setItem('m3102:settings', JSON.stringify({ state: { accent: 'indigo', accent2: 'rose' }, version: 5 }));
+  await useSettingsStore.persist.rehydrate();
+  expect(useSettingsStore.getState()).toMatchObject({ accent: 'lavender', accent2: 'dusty' });
+
+  localStorage.setItem('m3102:settings', JSON.stringify({ state: { accent: 'teal', accent2: 'rose' }, version: 5 }));
+  await useSettingsStore.persist.rehydrate();
+  expect(useSettingsStore.getState()).toMatchObject({ accent: 'teal', accent2: 'rose' });
+});
+
+it('сохранённый стиль новой версии не трогаем', async () => {
+  localStorage.setItem('m3102:settings', JSON.stringify({ state: { style: 'glass', accent: 'indigo', accent2: 'rose' }, version: 6 }));
+  await useSettingsStore.persist.rehydrate();
+  expect(useSettingsStore.getState()).toMatchObject({ style: 'glass', accent: 'indigo', accent2: 'rose' });
+});

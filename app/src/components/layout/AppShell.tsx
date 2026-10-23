@@ -54,6 +54,7 @@ export function AppShell() {
         <i />
         <i />
         <i />
+        <b />
       </div>
       <Sidebar />
 

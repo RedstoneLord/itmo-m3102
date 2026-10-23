@@ -13,7 +13,7 @@
     <!-- Синхронизация с GitHub стартует сразу при открытии — соединение готовим заранее -->
     <link rel="preconnect" href="https://api.github.com" crossorigin />
     <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin />
-    <meta name="theme-color" content="#131315" />
+    <meta name="theme-color" content="#19181c" />
     <script>
       // Применяем сохранённую тему ДО загрузки React,
       // чтобы страница не «мигала» светлой темой при открытии.
@@ -25,6 +25,12 @@
             theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
           }
           document.documentElement.dataset.theme = theme;
+          // Стиль и слои — тоже до React: иначе стекло или сияние «включались» бы уже после первой отрисовки
+          var s = saved.state || {};
+          var style = s.style === 'minimal' || s.style === 'glass' ? s.style : s.style ? 'aurora' : s.aurora === false && s.glow === false ? 'minimal' : 'aurora';
+          document.documentElement.dataset.style = style;
+          document.documentElement.dataset.aurora = style === 'glass' || (style === 'aurora' && s.aurora !== false) ? 'on' : 'off';
+          document.documentElement.dataset.glow = style !== 'minimal' && s.glow !== false ? 'on' : 'off';
         } catch (e) {}
       })();
     </script>

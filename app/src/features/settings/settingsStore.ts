@@ -17,7 +17,9 @@ interface LocalSettings {
   accent2: string;
   /** Динамическая тема: сама меняет пару акцентов — при запуске, раз в 15 минут или раз в час */
   dynamicTheme: DynamicTheme;
-  /** Фон-сияние: медленные пятна света в цвете акцента за страницей */
+  /** Стиль оформления: Minimalism — без фона и свечения, Aurora — сияние и подсветка, Liquid Glass — стекло с бликами */
+  style: AppStyle;
+  /** Фон-сияние (в стиле Aurora): медленные пятна света в цвете акцента за страницей */
   aurora: boolean;
   /** Свечение карточек: подсветка под курсором и светящиеся кнопки */
   glow: boolean;
@@ -39,6 +41,8 @@ interface LocalSettings {
 
 export type DynamicTheme = 'off' | 'launch' | '15' | '60';
 
+export type AppStyle = 'minimal' | 'aurora' | 'glass';
+
 export type Density = 'comfortable' | 'compact';
 
 export type RadiusPreference = 'sharp' | 'normal' | 'round';
@@ -54,6 +58,7 @@ interface SettingsStore extends LocalSettings {
         | 'accent'
         | 'accent2'
         | 'dynamicTheme'
+        | 'style'
         | 'aurora'
         | 'glow'
         | 'liveBg'
@@ -72,9 +77,10 @@ const DEFAULT_SETTINGS: LocalSettings = {
   theme: 'system',
   /** По умолчанию — режим просмотра, интерфейс максимально чистый */
   editMode: false,
-  accent: 'indigo',
-  accent2: 'rose',
+  accent: 'lavender',
+  accent2: 'dusty',
   dynamicTheme: 'off',
+  style: 'aurora',
   aurora: true,
   glow: true,
   liveBg: true,
@@ -99,11 +105,20 @@ export const useSettingsStore = create<SettingsStore>()(
     {
       name: storageKey('settings'),
       storage: localStore,
-      version: 5,
+      version: 6,
       // v3: вариант «Случайно» убрали (лагал) — заменяем на «15 мин»; v4: pdfDark по умолчанию null (как тема), старое false было значением по умолчанию;
-      // v5: «Календарь» стал режимом расписания, а ДЗ — вкладкой «Дедлайнов»: сохранённые стартовые страницы /calendar и /homework ведут туда
-      migrate: (stored) => {
+      // v5: «Календарь» стал режимом расписания, а ДЗ — вкладкой «Дедлайнов»: сохранённые стартовые страницы /calendar и /homework ведут туда;
+      // v6: появился «Стиль» — у кого сияние и свечение были выключены, это Minimalism; пара «индиго + роза» была значением по умолчанию,
+      // её хозяева (никто не выбирал её сам) переходят на новую по умолчанию — лаванду с пыльной розой
+      migrate: (stored, version) => {
         const state = stored as Omit<Partial<LocalSettings>, 'dynamicTheme'> & { dynamicTheme?: string };
+        if (version < 6) {
+          state.style = state.aurora === false && state.glow === false ? 'minimal' : 'aurora';
+          if (state.accent === 'indigo' && state.accent2 === 'rose') {
+            state.accent = 'lavender';
+            state.accent2 = 'dusty';
+          }
+        }
         if (state.dynamicTheme === 'random') state.dynamicTheme = '15';
         if ((state as { pdfDark?: boolean | null }).pdfDark === false) (state as { pdfDark?: boolean | null }).pdfDark = null;
         if (state.startPage === '/calendar') state.startPage = '/schedule?view=month';

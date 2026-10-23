@@ -22,6 +22,6 @@ it('интервалы динамической темы — в минутах',
 it('оранжевые и янтарные акценты — «тёплые» (практику делаем темнее), индиго и бирюза — нет', () => {
   const warm = (id: string) => isWarmHue(accentHue(ACCENTS.find((item) => item.id === id)!.color)!);
   expect(warm('amber')).toBe(true);
-  expect(['indigo', 'violet', 'sky', 'teal', 'emerald', 'coral', 'rose'].some(warm)).toBe(false);
+  expect(['lavender', 'dusty', 'indigo', 'violet', 'sky', 'teal', 'emerald', 'coral', 'rose'].some(warm)).toBe(false);
   expect(isWarmHue(accentHue('oklch(0.66 0.17 70)')!)).toBe(true);
 });

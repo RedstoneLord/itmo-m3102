@@ -5,7 +5,7 @@
   border: 0;
   border-radius: var(--radius-card);
   /* Чистая поверхность без цветной заливки (цвет на тёмном даёт грязь): тип пары — полоска слева и слово типа */
-  background: var(--color-bg-elevated);
+  background: var(--surface-inner);
   cursor: pointer;
   box-shadow: var(--shadow-card);
   /* y/scale на hover/tap — Framer Motion spring (WeekOccurrenceCard.tsx), не CSS:
@@ -51,7 +51,7 @@
 
 .past > *,
 .past::before {
-  opacity: 0.55;
+  opacity: 0.72;
   transition: opacity var(--duration-fast) var(--ease);
 }
 

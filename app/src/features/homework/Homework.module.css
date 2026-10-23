@@ -8,7 +8,7 @@
   margin-bottom: var(--space-2);
   padding: var(--space-3) var(--space-4) var(--space-3) var(--space-5);
   border-radius: var(--radius-card);
-  background: var(--color-bg-elevated);
+  background: var(--surface-inner);
   box-shadow: var(--shadow-card);
   transition: opacity var(--duration-base) var(--ease);
 }

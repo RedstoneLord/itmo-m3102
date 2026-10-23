@@ -132,10 +132,12 @@ interface DropdownItemProps {
   onSelect: () => void;
   /** Для пунктов-вариантов: у выбранного показывается галочка */
   checked?: boolean;
+  /** Не закрывать меню после выбора — для настроек, которые сразу видно (стиль, тема) */
+  keepOpen?: boolean;
   children: ReactNode;
 }
 
-export function DropdownItem({ icon: Icon, onSelect, checked, children }: DropdownItemProps) {
+export function DropdownItem({ icon: Icon, onSelect, checked, keepOpen = false, children }: DropdownItemProps) {
   const closeMenu = useContext(CloseMenuContext);
   const isOption = checked !== undefined;
 
@@ -149,7 +151,7 @@ export function DropdownItem({ icon: Icon, onSelect, checked, children }: Dropdo
       onPointerMove={(event) => event.currentTarget.focus()}
       onClick={() => {
         onSelect();
-        closeMenu();
+        if (!keepOpen) closeMenu();
       }}
     >
       {Icon && <Icon size={14} strokeWidth={1.75} className={styles.itemIcon} aria-hidden />}

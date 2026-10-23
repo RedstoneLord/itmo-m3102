@@ -80,6 +80,11 @@
   border-left-color: color-mix(in srgb, var(--color-border) 70%, transparent);
 }
 
+/* Liquid Glass: под стеклом — свой фон страницы (светлый или тёмный с оттенком), на нём слой света .aurora */
+:global(:root[data-style='glass'][data-aurora='on']) .shell {
+  background: var(--glass-base);
+}
+
 /* Фокус после «Перейти к содержимому» — без рамки вокруг всей страницы */
 .content:focus {
   outline: none;

@@ -2,11 +2,12 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useEffect, useLayoutEffect } from 'react';
 import { SECTIONS, SIDEBAR_PRIMARY, SIDEBAR_SECONDARY, type Section } from '../../app/navigation';
 import { useSettingsStore } from '../../features/settings/settingsStore';
+import { cn } from '../../lib/cn';
 import { IconButton } from '../ui/IconButton';
 import { Tooltip } from '../ui/Tooltip';
 import { Brand } from './Brand';
 import { NavItem } from './NavItem';
-import { ThemeToggle } from './ThemeToggle';
+import { AppearanceMenu } from './AppearanceMenu';
 import styles from './Sidebar.module.css';
 
 const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
@@ -19,7 +20,7 @@ export function Sidebar() {
   // inert и видимость кнопок ставит useSidebarAttribute без React — см. там же
   return (
     <aside id="sidebar" className={styles.sidebar}>
-      <div className={styles.inner}>
+      <div className={cn(styles.inner, 'glass-edge')}>
         <div className={styles.brand}>
           <Brand />
           <SidebarToggle action="close" />
@@ -35,7 +36,7 @@ export function Sidebar() {
           <div className={styles.footerLink}>
             <NavItem section={SECTIONS.settings} />
           </div>
-          <ThemeToggle />
+          <AppearanceMenu />
         </div>
       </div>
     </aside>

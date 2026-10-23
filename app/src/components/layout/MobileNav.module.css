@@ -16,6 +16,21 @@
   }
 }
 
+/* Liquid Glass: панель не прижата к краям, а парит над страницей */
+@media (max-width: 767px) {
+  :global(:root[data-style='glass']) .bar {
+    inset: auto var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom)) var(--space-3);
+    height: var(--mobile-nav-height);
+    padding-bottom: 0;
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-xl);
+    background: var(--surface-overlay);
+    -webkit-backdrop-filter: var(--surface-filter-overlay);
+    backdrop-filter: var(--surface-filter-overlay);
+    box-shadow: var(--surface-shadow);
+  }
+}
+
 .tab {
   position: relative;
   display: flex;
@@ -30,7 +45,7 @@
 }
 
 .active {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 /* Мягкая подложка под активной вкладкой — переезжает между вкладками */

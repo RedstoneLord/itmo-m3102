@@ -11,7 +11,7 @@ import { ACCENTS, SHUFFLE_EVENT } from './appearance';
 import { useSettingsStore, type DynamicTheme, type RadiusPreference } from './settingsStore';
 import styles from './settings.module.css';
 import { SettingsRow } from './SettingsRow';
-import { THEME_OPTIONS } from './themeOptions';
+import { STYLE_OPTIONS, THEME_OPTIONS } from './themeOptions';
 
 const ON_OFF: { value: 'on' | 'off'; label: string }[] = [
   { value: 'on', label: 'Вкл' },
@@ -35,7 +35,7 @@ const DYNAMIC_OPTIONS: { value: DynamicTheme; label: string }[] = [
 export function AppearanceSettings() {
   const theme = useSettingsStore((state) => state.theme);
   const setTheme = useSettingsStore((state) => state.setTheme);
-  const { accent, accent2, dynamicTheme, aurora, glow, liveBg, radius, setAppearance } = useSettingsStore();
+  const { accent, accent2, dynamicTheme, style, aurora, glow, liveBg, radius, setAppearance } = useSettingsStore();
   const album = slotsAlbum();
   // Палитры классической версии: пять — всегда, остальные открывают капсулы «Колючего куша»
   const groupPalettes = classicPalettes.palettes.filter((item) => item.base || album[`pal:${item.id}`]);
@@ -43,6 +43,13 @@ export function AppearanceSettings() {
 
   return (
     <>
+      <SettingsRow
+        label="Стиль"
+        description="Minimalism — чистые поверхности без фона и свечения. Aurora — мягкое сияние за страницей и подсветка карточек. Liquid Glass — прозрачное стекло с бликами. Компоновка и данные не меняются, а тема и палитра выбираются отдельно."
+      >
+        <SegmentedControl label="Стиль" options={STYLE_OPTIONS} value={style} onChange={(value) => setAppearance({ style: value })} />
+      </SettingsRow>
+
       <SettingsRow
         label="Тема"
         description="«Системная» повторяет оформление вашего устройства. Тема общая с классической версией: поменяли тут — поменяется и там."
@@ -169,32 +176,38 @@ export function AppearanceSettings() {
         )}
       </SettingsRow>
 
-      <SettingsRow label="Фон-сияние" description="Мягкие пятна света в цвете акцента за страницей.">
-        <SegmentedControl
-          label="Фон-сияние"
-          options={ON_OFF}
-          value={aurora ? 'on' : 'off'}
-          onChange={(value) => setAppearance({ aurora: value === 'on' })}
-        />
-      </SettingsRow>
+      {style === 'aurora' && (
+        <SettingsRow label="Фон-сияние" description="Мягкие пятна света в цвете акцента за страницей.">
+          <SegmentedControl
+            label="Фон-сияние"
+            options={ON_OFF}
+            value={aurora ? 'on' : 'off'}
+            onChange={(value) => setAppearance({ aurora: value === 'on' })}
+          />
+        </SettingsRow>
+      )}
 
-      <SettingsRow label="Живой фон" description="Пятна сияния плавно смещаются за курсором и при прокрутке. Работает вместе с фоном-сиянием.">
-        <SegmentedControl
-          label="Живой фон"
-          options={ON_OFF}
-          value={liveBg ? 'on' : 'off'}
-          onChange={(value) => setAppearance({ liveBg: value === 'on' })}
-        />
-      </SettingsRow>
+      {style !== 'minimal' && (
+        <>
+          <SettingsRow label="Живой фон" description="Фон плавно смещается за курсором и при прокрутке.">
+            <SegmentedControl
+              label="Живой фон"
+              options={ON_OFF}
+              value={liveBg ? 'on' : 'off'}
+              onChange={(value) => setAppearance({ liveBg: value === 'on' })}
+            />
+          </SettingsRow>
 
-      <SettingsRow label="Свечение" description="Подсветка и светящаяся рамка под курсором, светящиеся кнопки.">
-        <SegmentedControl
-          label="Свечение"
-          options={ON_OFF}
-          value={glow ? 'on' : 'off'}
-          onChange={(value) => setAppearance({ glow: value === 'on' })}
-        />
-      </SettingsRow>
+          <SettingsRow label="Свечение" description="Подсветка и светящаяся рамка под курсором, светящиеся кнопки.">
+            <SegmentedControl
+              label="Свечение"
+              options={ON_OFF}
+              value={glow ? 'on' : 'off'}
+              onChange={(value) => setAppearance({ glow: value === 'on' })}
+            />
+          </SettingsRow>
+        </>
+      )}
 
       <SettingsRow label="Скругления" description="Углы карточек, кнопок и полей. Общие с классической версией.">
         <SegmentedControl label="Скругления" options={RADIUS_OPTIONS} value={radius} onChange={(value) => setAppearance({ radius: value })} />
