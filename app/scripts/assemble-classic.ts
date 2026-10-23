@@ -2,7 +2,8 @@
 // data/…), — чтобы потом объединять репозитории без конфликтов. Скрипт собирает из него то, что нужно сайту:
 //
 //   npm run classic             корень репозитория → app/public/classic (для dev: приложение на /, классический на /classic/)
-//   npm run site                готовый сайт для Pages → app/site: классический в корне, приложение (app/dist) в /app/
+//   npm run site                готовый сайт для Pages → app/site: классический в корне, приложение (app/dist) в /app/,
+//                               выгрузки предметов «Для ИИ» (build-ai.ts) в /app/ai/
 //   … -- --fresh                к любому из них: самые свежие data/ и Дедлайны/ с их репозитория (в CI — всегда)
 //   npm run classic -- --pull   скачать файлы сайта с их репозитория (master) в корень — обновить закоммиченную копию
 //
@@ -95,8 +96,8 @@ function assemble(out: string): void {
   writeFileSync(join(out, 'index.html'), patchClassicIndex(readFileSync(join(ROOT, 'index.html'), 'utf8')));
 }
 
-/** Готовый сайт: классический — в корне, приложение (уже собранное в app/dist) — в /app/ */
-function assembleSite(out: string): void {
+/** Готовый сайт: классический — в корне, приложение (уже собранное в app/dist) — в /app/, выгрузки предметов для ИИ — в /app/ai/ */
+async function assembleSite(out: string): Promise<void> {
   const dist = join(APP, 'dist');
   if (!existsSync(join(dist, 'index.html'))) throw new Error('нет app/dist — сначала npm run build');
   assemble(out);
@@ -105,6 +106,13 @@ function assembleSite(out: string): void {
   rmSync(join(out, 'app', 'classic'), { recursive: true, force: true });
   // Подписка на календарь живёт по старому адресу (в корне) — у подписчиков он уже прописан
   if (existsSync(join(dist, 'm3102.ics'))) copyFileSync(join(dist, 'm3102.ics'), join(out, 'm3102.ics'));
+  // «Для ИИ» по ссылке: кнопка на странице предмета отдаёт адрес /app/ai/<предмет>.md. Не получилось — сайт всё равно собран
+  try {
+    const { writeAiFiles } = await import('./build-ai');
+    console.log(`Для ИИ: ${await writeAiFiles(ROOT, join(out, 'app', 'ai'))} файлов в app/ai`);
+  } catch (error) {
+    console.warn('Файлы «Для ИИ» не собраны:', error instanceof Error ? error.message : error);
+  }
 }
 
 const siteMode = process.argv.includes('--site');
@@ -116,7 +124,7 @@ try {
     await downloadAll(paths, ROOT);
     console.log(`Классический сайт обновлён в корне репозитория: ${paths.length} файлов, дерево ${sha.slice(0, 7)}`);
   } else {
-    if (siteMode) assembleSite(OUT);
+    if (siteMode) await assembleSite(OUT);
     else assemble(OUT);
     const where = siteMode ? 'app/site (классический в корне, приложение в /app/)' : 'app/public/classic';
     if (mode === 'fresh') {
