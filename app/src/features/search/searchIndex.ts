@@ -13,6 +13,7 @@ import { deadlineSubjectId } from '../subjects/subjectStats';
 import { useSubjectsStore } from '../subjects/subjectsStore';
 import { formatTaskMeta } from '../tasks/labels';
 import { useTasksStore } from '../tasks/tasksStore';
+import { collectPdfText, type SearchIndexFile } from './pdfText';
 
 export interface SearchResult {
   id: string;
@@ -174,14 +175,7 @@ export async function loadPdfTexts(): Promise<ReadonlyMap<string, string>> {
 export function loadPdfIndex(): Promise<void> {
   pdfIndexLoad ??= fetch(rawUrl('group', 'data/search-index.json'))
     .then((response) => (response.ok ? response.json() : null))
-    .then((raw: { files?: string[]; sections?: [number, string, string][] } | null) => {
-      if (!raw?.files || !Array.isArray(raw.sections)) return;
-      for (const [file, heading, text] of raw.sections) {
-        const path = raw.files[file];
-        if (!path?.toLowerCase().endsWith('.pdf')) continue;
-        pdfText.set(path, `${pdfText.get(path) ?? ''} ${heading} ${text}`);
-      }
-    })
+    .then((raw: SearchIndexFile | null) => collectPdfText(raw, pdfText))
     .catch(() => {
       pdfIndexLoad = null; // попробуем снова при следующем открытии
     });

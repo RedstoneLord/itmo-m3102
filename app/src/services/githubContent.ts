@@ -152,7 +152,7 @@ async function fetchResponse(url: string): Promise<Response> {
 
 const fetchText = (url: string) => fetchResponse(url).then((response) => response.text());
 
-interface TreeFile extends RepoFile {
+export interface TreeFile extends RepoFile {
   sha: string;
 }
 
@@ -263,7 +263,15 @@ function toNote(path: string, fields: NoteFields, previous: LectureNote[], now: 
   };
 }
 
-async function buildGroupNotes(tree: TreeFile[], previous: LectureNote[], now: string): Promise<LectureNote[]> {
+/** Откуда берётся текст файла: по умолчанию с GitHub; при сборке сайта — из чекаута репозитория (без сети) */
+type ReadFile = (file: TreeFile) => Promise<{ text: string; version?: string }>;
+
+export async function buildGroupNotes(
+  tree: TreeFile[],
+  previous: LectureNote[],
+  now: string,
+  read: ReadFile = (file) => fetchFile('group', file),
+): Promise<LectureNote[]> {
   const files = tree
     .map((file) => ({ file, path: file.path, parts: file.path.split('/') }))
     .filter(({ parts }) => parts[0] === 'Конспекты' && parts.length === 4 && parts[2]!.toLowerCase() !== 'img' && resolveSubjectFolder(parts[1]!));
@@ -283,7 +291,7 @@ async function buildGroupNotes(tree: TreeFile[], previous: LectureNote[], now: s
         // Файл-тест (mode: quiz) — один блок ```quiz, обычный конспект — без служебной шапки
         // Один недоступный файл не должен ломать всю синхронизацию (дедлайны, ДЗ, расписание): оставляем прошлую версию
         // или пропускаем конспект — в следующую синхронизацию он скачается снова
-        const fetched = await fetchFile('group', file).catch(() => null);
+        const fetched = await read(file).catch(() => null);
         if (!fetched) return old ? { ...old, archived: false } : null;
         sourceVersion = fetched.version;
         const text = stripFrontMatter(quizPageToMarkdown(fetched.text));
@@ -310,9 +318,8 @@ async function buildGroupNotes(tree: TreeFile[], previous: LectureNote[], now: s
 }
 
 /** Описания курсов — из встроенных файлов `src/data/courseInfo` (без сети): без списка конспектов и навигации */
-async function buildCourseInfo(info: SubjectInfo[], now: string): Promise<SubjectInfo[]> {
-  const { COURSE_INFO_FILES } = await import('./courseInfoFiles');
-  return Object.entries(COURSE_INFO_FILES).flatMap(([file, raw]): SubjectInfo[] => {
+export function buildCourseInfo(files: Record<string, string>, info: SubjectInfo[], now: string): SubjectInfo[] {
+  return Object.entries(files).flatMap(([file, raw]): SubjectInfo[] => {
     const name = stem(file.slice(file.lastIndexOf('/') + 1));
     const subjectId = STREAM_SUBJECT_FOLDERS[name];
     if (!subjectId) return [];
@@ -337,7 +344,7 @@ async function buildCourseInfo(info: SubjectInfo[], now: string): Promise<Subjec
   });
 }
 
-function buildMaterials(paths: string[], previous: Material[], now: string): Material[] {
+export function buildMaterials(paths: string[], previous: Material[], now: string): Material[] {
   return paths.flatMap((path): Material[] => {
     const parts = path.split('/');
     const section = MATERIAL_SECTIONS[parts[0]!];
@@ -423,7 +430,7 @@ export async function syncGithubContent(): Promise<SyncSummary> {
       ]);
       return { files, notes, deadlines, homework, links, schedule, greetings, materials: buildMaterials(paths, materialsBefore, now) };
     }),
-    buildCourseInfo(infoBefore, now),
+    import('./courseInfoFiles').then(({ COURSE_INFO_FILES }) => buildCourseInfo(COURSE_INFO_FILES, infoBefore, now)),
   ]);
 
   const summary: SyncSummary = { group: 0, subjectInfo: 0, materials: 0, deadlines: 0, homework: 0, links: 0, schedule: 0 };
