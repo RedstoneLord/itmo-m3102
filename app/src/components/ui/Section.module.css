@@ -1,22 +1,26 @@
+/* Плитка: рамка, скругление и отступ — как у всех карточек сайта. Заголовок — обычным регистром, без линии под ним */
 .section {
   min-width: 0;
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+  box-shadow: var(--shadow-xs);
 }
 
 .header {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 36px;
-  margin-bottom: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+  min-height: 32px;
+  margin-bottom: var(--space-2);
 }
 
 .title {
-  font-size: var(--text-2xs);
+  font-size: var(--text-md);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
+  letter-spacing: -0.01em;
+  color: var(--color-text);
 }
 
 .titleDanger {
@@ -24,7 +28,7 @@
 }
 
 .meta {
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
   font-weight: var(--weight-medium);
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
@@ -37,4 +41,10 @@
   /* текст ghost-кнопки встаёт ровно по правому краю контента */
   margin-right: calc(-1 * var(--space-2-5));
   margin-left: auto;
+}
+
+@media (max-width: 767px) {
+  .section {
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
 }

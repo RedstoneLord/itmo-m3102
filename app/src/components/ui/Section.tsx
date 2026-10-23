@@ -3,7 +3,7 @@ import { cn } from '../../lib/cn';
 import styles from './Section.module.css';
 
 interface SectionProps {
-  /** Короткий заголовок — показывается мелкими заглавными буквами */
+  /** Короткий заголовок блока */
   title: string;
   /** Число или короткий текст рядом с заголовком */
   meta?: ReactNode;
@@ -15,7 +15,7 @@ interface SectionProps {
   className?: string;
 }
 
-/** Блок страницы: заголовок и тонкая линия. Разделяет контент без карточек. */
+/** Блок страницы — плитка с заголовком. Плитки собираются в сетку («бенто») на главной и в обзоре предмета. */
 export function Section({ title, meta, action, tone = 'neutral', children, className }: SectionProps) {
   return (
     <section className={cn(styles.section, className)}>

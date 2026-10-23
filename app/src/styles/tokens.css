@@ -60,6 +60,7 @@
   --text-base: 0.875rem; /* 14px — основной текст */
   --text-md: 1rem; /* 16px — заголовки блоков и окон */
   --text-lg: 1.375rem; /* 22px — заголовок страницы */
+  --text-display: clamp(2.5rem, 1.2rem + 5vw, 4.75rem); /* 40–76px — одно большое время на странице («следующая пара») */
 
   --weight-regular: 400;
   --weight-medium: 500;
@@ -90,6 +91,8 @@
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
+  /* Главная карточка страницы: вдвое круглее обычных, но не «таблетка» при радиусе «Круглые» */
+  --radius-xl: min(calc(var(--radius-lg) * 2), 28px);
 
   /* Размеры каркаса */
   --sidebar-width: 224px;
