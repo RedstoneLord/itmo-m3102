@@ -59,8 +59,9 @@ test('«Для ИИ»: ссылка на предмет копируется и 
   await page.getByRole('button', { name: 'Для ИИ' }).click();
   await page.getByRole('menuitem', { name: 'Скопировать ссылку' }).click();
   const [link] = await page.evaluate(() => (window as unknown as { copied: string[] }).copied);
-  expect(link).toBe(new URL('ai/dm.md', page.url()).href);
-  const file = await page.request.get(link!);
+  // Адрес всегда опубликованного сайта группы; а сам файл, который по нему будет лежать, собран в наш сайт и отдаётся рядом: смотрим его
+  expect(link).toBe('https://redstonelord.github.io/itmo-m3102/app/ai/dm.md');
+  const file = await page.request.get(new URL('ai/dm.md', page.url()).href);
   expect(file.ok()).toBe(true);
   const text = await file.text();
   expect(text).toContain('# Дискретная математика — все материалы');

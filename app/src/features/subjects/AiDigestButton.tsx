@@ -20,8 +20,11 @@ interface AiDigestButtonProps {
   today: string;
 }
 
-/** Адрес выгрузки предмета (её кладёт в сайт scripts/build-ai.ts при сборке): ИИ открывает его и читает всё одной ссылкой */
-const aiLink = (subjectId: string) => new URL(`ai/${subjectId}.md`, document.baseURI).href;
+/**
+ * Адрес выгрузки предмета на опубликованном сайте (файл кладёт в сайт scripts/build-ai.ts при сборке): ИИ открывает его и читает
+ * всё одной ссылкой. Всегда адрес сайта группы, а не текущей страницы: ссылка одинакова в dev, в превью и у форка
+ */
+const aiLink = (subjectId: string) => `https://redstonelord.github.io/itmo-m3102/app/ai/${subjectId}.md`;
 
 /** «Для ИИ»: все конспекты и материалы предмета одним .md — скачать, скопировать текст или ссылку и отдать ChatGPT / Claude */
 export function AiDigestButton({ today, subjectId, ...data }: AiDigestButtonProps) {
@@ -74,20 +77,18 @@ export function AiDigestButton({ today, subjectId, ...data }: AiDigestButtonProp
       >
         Скопировать текст
       </DropdownItem>
-      {/* Файла в dev нет — он появляется при сборке сайта; личные заметки в него не попадают */}
-      {import.meta.env.PROD && (
-        <DropdownItem
-          icon={Link2}
-          onSelect={() =>
-            void navigator.clipboard.writeText(aiLink(subjectId)).then(() => {
-              setStatus('Ссылка скопирована');
-              setTimeout(() => setStatus(''), 4000);
-            })
-          }
-        >
-          Скопировать ссылку
-        </DropdownItem>
-      )}
+      {/* Личные заметки в файл по ссылке не попадают: он один на всех и собирается при деплое */}
+      <DropdownItem
+        icon={Link2}
+        onSelect={() =>
+          void navigator.clipboard.writeText(aiLink(subjectId)).then(() => {
+            setStatus('Ссылка скопирована');
+            setTimeout(() => setStatus(''), 4000);
+          })
+        }
+      >
+        Скопировать ссылку
+      </DropdownItem>
     </DropdownMenu>
   );
 }
