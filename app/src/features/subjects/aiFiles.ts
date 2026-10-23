@@ -14,6 +14,24 @@ export interface RepoSource {
 /** Описания курсов лежат у нас, рядом с кодом приложения */
 export const COURSE_INFO_DIR = 'app/src/data/courseInfo/';
 
+/** Когда собрано, по Москве — как у расписания: «23 октября, 15:42 МСК». Файл — снимок на момент деплоя, по времени видно, насколько он свежий */
+function mskStamp(now: Date): string {
+  const part = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Moscow',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(now)
+      .map(({ type, value }) => [type, value]),
+  );
+  return `${formatShortDate(`${part.year}-${part.month}-${part.day}`, 'long')}, ${part.hour}:${part.minute} МСК`;
+}
+
 /**
  * Файлы `{id предмета}.md` — то же, что «Для ИИ» на странице предмета, но по ссылке: ИИ открывает адрес и читает всё сразу.
  * Только публичное: конспекты, материалы и ссылки группы, описание курса. Личные заметки из браузера в ссылку попасть не могут.
@@ -28,7 +46,7 @@ export async function buildAiFiles(repo: RepoSource, now = new Date()): Promise<
   const info = buildCourseInfo(courseInfo, [], iso);
   const pdf = new Map<string, string>();
   collectPdfText(JSON.parse(repo.read('data/search-index.json')), pdf);
-  const date = formatShortDate(iso.slice(0, 10), 'long');
+  const date = mskStamp(now);
 
   return Object.fromEntries(
     M3102_SUBJECTS.map((subject) => [

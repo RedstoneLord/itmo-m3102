@@ -67,7 +67,10 @@ test('«Для ИИ»: ссылка на предмет копируется и 
   expect(link).toBe(new URL('ai/dm.md', page.url()).href);
   const file = await page.request.get(link!);
   expect(file.ok()).toBe(true);
-  expect(await file.text()).toContain('# Дискретная математика — все материалы');
+  const text = await file.text();
+  expect(text).toContain('# Дискретная математика — все материалы');
+  // В шапке — когда собрано, с временем по Москве
+  expect(text).toMatch(/\(ИТМО\) \d+ \S+, \d{2}:\d{2} МСК\./);
 });
 
 test('«Для ИИ»: снятый конспект пропадает и из текста, и из ссылки', async ({ page }) => {

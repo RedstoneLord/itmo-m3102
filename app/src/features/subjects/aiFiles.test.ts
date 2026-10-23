@@ -29,6 +29,14 @@ describe('выгрузка предметов для ИИ по ссылке', ()
     expect(dm).toContain('Экзамен в конце семестра');
   });
 
+  it('в шапке — дата и время сборки по Москве, а не по UTC и без «24:00»', async () => {
+    const header = async (iso: string) => (await buildAiFiles(repo, new Date(iso)))['dm.md']!.split('\n')[2];
+    expect(await header('2026-10-22T10:00:00Z')).toContain('(ИТМО) 22 октября, 13:00 МСК.');
+    // 22:30 UTC — уже 01:30 следующих суток в Москве; 21:05 UTC — 00:05, а не 24:05
+    expect(await header('2026-10-22T22:30:00Z')).toContain('23 октября, 01:30 МСК.');
+    expect(await header('2026-10-22T21:05:00Z')).toContain('23 октября, 00:05 МСК.');
+  });
+
   it('чужие предметы не смешиваются, личных заметок нет', async () => {
     const out = await buildAiFiles(repo, new Date('2026-10-22T10:00:00Z'));
     const aisd = out['aisd.md']!;
