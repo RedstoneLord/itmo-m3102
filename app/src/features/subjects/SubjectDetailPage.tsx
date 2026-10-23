@@ -130,6 +130,7 @@ export function SubjectDetailPage() {
         actions={
           <>
             <AiDigestButton
+              subjectId={subject.id}
               subjectName={subject.name}
               info={subjectInfoItems}
               notes={subjectLectureNotes}

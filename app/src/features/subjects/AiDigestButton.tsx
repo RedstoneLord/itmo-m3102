@@ -1,4 +1,4 @@
-import { Copy, Download, FileText } from 'lucide-react';
+import { Copy, Download, FileText, Link2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { DropdownItem, DropdownMenu } from '../../components/ui/DropdownMenu';
@@ -10,6 +10,7 @@ import { loadPdfTexts } from '../search/searchIndex';
 import { buildSubjectDigest, estimateTokens } from './aiDigest';
 
 interface AiDigestButtonProps {
+  subjectId: string;
   subjectName: string;
   info: SubjectInfo[];
   notes: LectureNote[];
@@ -19,8 +20,11 @@ interface AiDigestButtonProps {
   today: string;
 }
 
-/** «Для ИИ»: все конспекты и материалы предмета одним .md — скачать или скопировать и отдать ChatGPT / Claude */
-export function AiDigestButton({ today, ...data }: AiDigestButtonProps) {
+/** Адрес выгрузки предмета (её кладёт в сайт scripts/build-ai.ts при сборке): ИИ открывает его и читает всё одной ссылкой */
+const aiLink = (subjectId: string) => new URL(`ai/${subjectId}.md`, document.baseURI).href;
+
+/** «Для ИИ»: все конспекты и материалы предмета одним .md — скачать, скопировать текст или ссылку и отдать ChatGPT / Claude */
+export function AiDigestButton({ today, subjectId, ...data }: AiDigestButtonProps) {
   const [status, setStatus] = useState('');
 
   async function build() {
@@ -70,6 +74,20 @@ export function AiDigestButton({ today, ...data }: AiDigestButtonProps) {
       >
         Скопировать текст
       </DropdownItem>
+      {/* Файла в dev нет — он появляется при сборке сайта; личные заметки в него не попадают */}
+      {import.meta.env.PROD && (
+        <DropdownItem
+          icon={Link2}
+          onSelect={() =>
+            void navigator.clipboard.writeText(aiLink(subjectId)).then(() => {
+              setStatus('Ссылка скопирована');
+              setTimeout(() => setStatus(''), 4000);
+            })
+          }
+        >
+          Скопировать ссылку
+        </DropdownItem>
+      )}
     </DropdownMenu>
   );
 }

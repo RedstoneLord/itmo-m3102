@@ -49,6 +49,22 @@ test('поиск находит слово в тексте конспекта и
   await expect(page.getByRole('heading', { name: 'Степени' })).toBeVisible();
 });
 
+test('«Для ИИ»: ссылка на предмет копируется и ведёт на готовый файл со всеми конспектами', async ({ page }) => {
+  // Настоящий буфер обмена зависит от разрешений и фокуса браузера — подменяем запись и смотрим, что в неё передали
+  await page.addInitScript(() => {
+    Object.assign(window, { copied: [] as string[] });
+    navigator.clipboard.writeText = async (text) => void (window as unknown as { copied: string[] }).copied.push(text);
+  });
+  await openSynced(page, './#/subjects/dm');
+  await page.getByRole('button', { name: 'Для ИИ' }).click();
+  await page.getByRole('menuitem', { name: 'Скопировать ссылку' }).click();
+  const [link] = await page.evaluate(() => (window as unknown as { copied: string[] }).copied);
+  expect(link).toBe(new URL('ai/dm.md', page.url()).href);
+  const file = await page.request.get(link!);
+  expect(file.ok()).toBe(true);
+  expect(await file.text()).toContain('# Дискретная математика — все материалы');
+});
+
 test('неделя расписания — сеткой по часам', async ({ page }) => {
   // Первое открытие стартует со снимка данных группы и потом меняет расписание на синхронизированное — ждём, пока оно устоится
   await openSynced(page, './#/schedule?date=2026-10-01');
