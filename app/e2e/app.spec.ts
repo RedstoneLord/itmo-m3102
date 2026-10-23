@@ -49,21 +49,16 @@ test('поиск находит слово в тексте конспекта и
   await expect(page.getByRole('heading', { name: 'Степени' })).toBeVisible();
 });
 
-/** Настоящий буфер обмена зависит от разрешений и фокуса браузера — подменяем запись; что скопировали, читает `copiedText` */
-async function spyClipboard(page: Page) {
+test('«Для ИИ»: ссылка на предмет копируется и ведёт на готовый файл со всеми конспектами', async ({ page }) => {
+  // Настоящий буфер обмена зависит от разрешений и фокуса браузера — подменяем запись и смотрим, что в неё передали
   await page.addInitScript(() => {
     Object.assign(window, { copied: [] as string[] });
     navigator.clipboard.writeText = async (text) => void (window as unknown as { copied: string[] }).copied.push(text);
   });
-  return () => page.evaluate(() => (window as unknown as { copied: string[] }).copied);
-}
-
-test('«Для ИИ»: ссылка на предмет копируется и ведёт на готовый файл со всеми конспектами', async ({ page }) => {
-  const copiedText = await spyClipboard(page);
   await openSynced(page, './#/subjects/dm');
   await page.getByRole('button', { name: 'Для ИИ' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Скопировать ссылку' }).click();
-  const [link] = await copiedText();
+  await page.getByRole('menuitem', { name: 'Скопировать ссылку' }).click();
+  const [link] = await page.evaluate(() => (window as unknown as { copied: string[] }).copied);
   expect(link).toBe(new URL('ai/dm.md', page.url()).href);
   const file = await page.request.get(link!);
   expect(file.ok()).toBe(true);
@@ -71,25 +66,6 @@ test('«Для ИИ»: ссылка на предмет копируется и 
   expect(text).toContain('# Дискретная математика — все материалы');
   // В шапке — когда собрано, с временем по Москве
   expect(text).toMatch(/\(ИТМО\) \d+ \S+, \d{2}:\d{2} МСК\./);
-});
-
-test('«Для ИИ»: снятый конспект пропадает и из текста, и из ссылки', async ({ page }) => {
-  const copiedText = await spyClipboard(page);
-  await openSynced(page, './#/subjects/dm');
-  await page.getByRole('button', { name: 'Для ИИ' }).click();
-  const dialog = page.getByRole('dialog');
-  await dialog.getByRole('button', { name: 'Скопировать текст' }).click();
-  await dialog.getByLabel('Лекция 1. Графы').uncheck();
-  await dialog.getByRole('button', { name: 'Скопировать текст' }).click();
-  await dialog.getByRole('button', { name: 'Скопировать ссылку' }).click();
-
-  const [all, without, links] = await copiedText();
-  expect(all).toContain('зюзюка');
-  expect(without).not.toContain('зюзюка');
-  expect(without).toContain('Лекция 2. Деревья');
-  // Выбрано не всё — вместо одной ссылки на файл предмета список адресов выбранного
-  expect(links).toContain('Лекция 2. Деревья (PDF): https://raw.githubusercontent.com/');
-  expect(links).not.toContain('Графы');
 });
 
 test('неделя расписания — сеткой по часам', async ({ page }) => {
