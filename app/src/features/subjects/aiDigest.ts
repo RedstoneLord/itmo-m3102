@@ -51,7 +51,9 @@ function noteBody(note: LectureNote, input: DigestInput): string {
   if (note.content.startsWith('data:')) return 'Файл загружен на сайт вручную, текста нет.';
   if (note.contentType === 'pdf') {
     const text = input.pdfText(note)?.replace(/\s+/g, ' ').trim();
-    return text ? `(Текст PDF, извлечён автоматически — формулы и таблицы могут быть искажены)\n\n${text}` : `PDF, текст не включён: ${note.content}`;
+    return text
+      ? `(Текст PDF, извлечён автоматически — формулы и таблицы могут быть искажены)\n\n${text}`
+      : `PDF без текста в индексе: ${note.content}`;
   }
   return `Ссылка: ${note.content}`;
 }
