@@ -20,6 +20,7 @@
 
 .box {
   display: grid;
+  flex-shrink: 0;
   place-items: center;
   width: 16px;
   height: 16px;
