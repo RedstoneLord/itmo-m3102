@@ -1,4 +1,5 @@
 import { FolderOpen, Link2, NotebookText, SquareCheck } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { SECTIONS } from '../../app/navigation';
 import { Button, buttonClass } from '../../components/ui/Button';
@@ -24,6 +25,8 @@ const QUICK_LINKS_LIMIT = 5;
 const LAST_NOTES_LIMIT = 4;
 
 interface SubjectOverviewProps {
+  /** Плитки перед остальными: контакты и «О курсе» */
+  lead?: ReactNode;
   subjectId: string;
   lectureNotes: LectureNote[];
   onEditNote: (note: LectureNote) => void;
@@ -42,6 +45,7 @@ interface SubjectOverviewProps {
  * свой учебный план, материалы и ссылки. Раньше «Обзор» показывал только личные задачи — общего тут не было.
  */
 export function SubjectOverview({
+  lead,
   subjectId,
   lectureNotes,
   onEditNote,
@@ -74,6 +78,8 @@ export function SubjectOverview({
 
   return (
     <div className={styles.grid}>
+      {lead}
+
       <DeadlinesPanel subjectId={subjectId} />
 
       <HomeworkPanel subjectId={subjectId} today={today} />
@@ -98,6 +104,19 @@ export function SubjectOverview({
         )}
       </Section>
 
+      <Section title="Быстрые ссылки" action={seeAll('links')}>
+        {groupLinks.length > 0 && <LinkCards links={groupLinks} />}
+        {quickLinks.length === 0 ? (
+          groupLinks.length === 0 && <EmptyState compact icon={Link2} title="Пока нет ссылок" />
+        ) : (
+          <List>
+            {quickLinks.map((link) => (
+              <MaterialRow key={link.id} material={link} today={today} onEdit={onEditMaterial} />
+            ))}
+          </List>
+        )}
+      </Section>
+
       <Section title="Мой план" meta={plan.length || undefined} action={seeAll('tasks')}>
         {plan.length === 0 ? (
           <EmptyState compact icon={SquareCheck} title="Своих задач по предмету нет" />
@@ -117,19 +136,6 @@ export function SubjectOverview({
           <List>
             {recentMaterials.map((material) => (
               <MaterialRow key={material.id} material={material} today={today} onEdit={onEditMaterial} />
-            ))}
-          </List>
-        )}
-      </Section>
-
-      <Section title="Быстрые ссылки" action={seeAll('links')}>
-        {groupLinks.length > 0 && <LinkCards links={groupLinks} />}
-        {quickLinks.length === 0 ? (
-          groupLinks.length === 0 && <EmptyState compact icon={Link2} title="Пока нет ссылок" />
-        ) : (
-          <List>
-            {quickLinks.map((link) => (
-              <MaterialRow key={link.id} material={link} today={today} onEdit={onEditMaterial} />
             ))}
           </List>
         )}

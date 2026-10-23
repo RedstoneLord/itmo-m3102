@@ -29,16 +29,15 @@ interface SubjectInfoSectionProps {
 
 /**
  * Нелекционный контент предмета (описание курса, правила аттестации, ссылки), пришедший
- * из GitHub-синхронизации — показывается до вкладок Overview/Tasks/Materials (PROMPT 25).
- * Несколько категорий — переключаются табами; внутри категории — все записи подряд.
+ * из GitHub-синхронизации — плитка в обзоре предмета. Свёрнута: длинное описание не должно отодвигать остальное;
+ * развёрнутая занимает всю ширину сетки. Несколько категорий — переключаются табами; внутри категории — все записи подряд.
  */
 export function SubjectInfoSection({ items, onEdit }: SubjectInfoSectionProps) {
   const { isEditMode } = useEditMode();
   const active = items.filter((item) => !item.archived);
   const categories = Array.from(new Set(active.map((item) => item.category)));
   const [category, setCategory] = useState<SubjectInfoCategory>(categories[0] ?? 'description');
-  // На телефоне длинное описание отодвигало вкладки предмета вниз — там оно свёрнуто, на компьютере открыто
-  const [open, setOpen] = useState(() => !window.matchMedia('(max-width: 767px)').matches);
+  const [open, setOpen] = useState(false);
 
   if (active.length === 0) return null;
 
@@ -53,7 +52,7 @@ export function SubjectInfoSection({ items, onEdit }: SubjectInfoSectionProps) {
   return (
     <Section
       title="О курсе"
-      className={styles.section}
+      className={cn(open && styles.open)}
       action={
         <Button variant="ghost" size="sm" aria-expanded={open} onClick={() => setOpen(!open)}>
           <ChevronDown size={14} strokeWidth={2} className={cn(styles.chevron, open && styles.chevronOpen)} aria-hidden />
@@ -61,6 +60,14 @@ export function SubjectInfoSection({ items, onEdit }: SubjectInfoSectionProps) {
         </Button>
       }
     >
+      {!open && (
+        <ul className={styles.teaser}>
+          {active.slice(0, 3).map((item) => (
+            <li key={item.id}>{item.title}</li>
+          ))}
+        </ul>
+      )}
+
       {open && categories.length > 1 && (
         <Tabs label="Категория информации о курсе" items={tabItems} value={currentCategory} onChange={setCategory} className={styles.tabs} />
       )}

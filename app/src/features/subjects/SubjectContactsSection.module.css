@@ -1,7 +1,3 @@
-.section {
-  margin-bottom: var(--space-6);
-}
-
 .role {
   min-width: 96px;
   font-size: var(--text-xs);

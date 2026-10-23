@@ -1,5 +1,17 @@
-.section {
-  margin-bottom: var(--space-8);
+/* Развёрнутое описание — на всю ширину: в половине колонки таблица баллов не помещается */
+.open {
+  column-span: all;
+}
+
+/* Свёрнутая плитка: названия записей, чтобы было понятно, что внутри */
+.teaser {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
 }
 
 .tabs {

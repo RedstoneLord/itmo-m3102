@@ -150,15 +150,17 @@ export function SubjectDetailPage() {
 
       <SubjectCover subjectId={subject.id} today={today} time={time} nextDeadline={nextDeadline} />
 
-      <SubjectContactsSection contacts={resolvedContacts} telegramChatUrl={subject.telegramChatUrl} />
-
-      <SubjectInfoSection items={subjectInfoItems} onEdit={subjectInfoDialog.openEdit} />
-
       <Tabs label="Разделы предмета" items={tabItems} value={tab} onChange={setTab} className={styles.tabs} />
 
       <div role="tabpanel" className={styles.panel}>
         {tab === 'overview' && (
           <SubjectOverview
+            lead={
+              <>
+                <SubjectInfoSection items={subjectInfoItems} onEdit={subjectInfoDialog.openEdit} />
+                <SubjectContactsSection contacts={resolvedContacts} telegramChatUrl={subject.telegramChatUrl} />
+              </>
+            }
             subjectId={subject.id}
             lectureNotes={subjectLectureNotes}
             onEditNote={lectureNoteDialog.openEdit}
