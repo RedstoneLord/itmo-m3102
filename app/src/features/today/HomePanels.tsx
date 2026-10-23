@@ -29,7 +29,7 @@ import styles from './HomePanels.module.css';
 export function SectionLink({ to, children }: { to: string; children: string }) {
   return (
     <Link to={to} className={buttonClass('ghost', 'sm')}>
-      {children} ↗
+      {children}
     </Link>
   );
 }
@@ -49,12 +49,14 @@ function DeadlineRow({ item, done }: { item: GroupDeadline; done: boolean }) {
         onChange={(event) => toggle(item.id, event.target.checked)}
       />
       <Link to={SECTIONS.deadlines.path} className={styles.rowLink}>
-        <span className={styles.day}>{dayMonth(item.deadline)}</span>
         <span className={styles.detail}>
           <strong>{item.name}</strong>
           <small>{item.note || 'Общий дедлайн'}</small>
         </span>
-        {!done && <span className={styles.status}>{deadlineInfo(item.deadline).label}</span>}
+        <span className={styles.when}>
+          <strong>{dayMonth(item.deadline)}</strong>
+          {!done && <small>{deadlineInfo(item.deadline).label}</small>}
+        </span>
       </Link>
     </div>
   );
@@ -114,8 +116,8 @@ const FOLDERS = [
 ];
 
 /**
- * Бенто, а не четыре одинаковые плитки: конспекты — главное, крупно и с числом; папки — компактно.
- * Ровная сетка равных карточек — примета шаблонного сайта, асимметрия читается как решение (21st.dev)
+ * Конспекты — главное, крупно и с числом; папки — компактными строками под ними.
+ * Равные плитки одной высоты читаются как шаблон, неравные — как решение.
  */
 export function MaterialsPanel() {
   const notes = useLectureNotesStore((state) => state.lectureNotes.filter((note) => !note.archived).length);
@@ -124,24 +126,21 @@ export function MaterialsPanel() {
 
   return (
     <Section title="Материалы" action={<SectionLink to="/materials?tab=materials">Все материалы</SectionLink>}>
-      <div className={styles.tiles}>
-        <Link to={SECTIONS.materials.path} className={cn(styles.tile, styles.tileMain)} data-spot>
-          <span className={styles.tileIndex}>01</span>
-          <strong>Конспекты</strong>
-          <small>Лекции и практики по предметам</small>
-          <span className={styles.tileCount}>
-            <AnimatedNumber value={notes} />
-            <small>{pluralize(notes, ['конспект', 'конспекта', 'конспектов']).split(' ')[1]}</small>
-          </span>
-        </Link>
-        {FOLDERS.map((folder, index) => (
-          <Link key={folder.name} to={filePath(folder.name)} className={styles.tile} data-spot>
-            <span className={styles.tileIndex}>{String(index + 2).padStart(2, '0')}</span>
-            <strong>{folder.name}</strong>
-            <small>
-              {folder.desc}
-              {count(folder.name) > 0 && ` · ${count(folder.name)}`}
-            </small>
+      <Link to={SECTIONS.materials.path} className={styles.tileMain} data-spot>
+        <span className={styles.tileCount}>
+          <AnimatedNumber value={notes} />
+          <small>{pluralize(notes, ['конспект', 'конспекта', 'конспектов']).split(' ')[1]}</small>
+        </span>
+        <small>Лекции и практики по предметам</small>
+      </Link>
+      <div className={styles.folders}>
+        {FOLDERS.map((folder) => (
+          <Link key={folder.name} to={filePath(folder.name)} className={styles.folder}>
+            <span>
+              <strong>{folder.name}</strong>
+              <small>{folder.desc}</small>
+            </span>
+            {count(folder.name) > 0 && <span className={styles.folderCount}>{count(folder.name)}</span>}
           </Link>
         ))}
       </div>

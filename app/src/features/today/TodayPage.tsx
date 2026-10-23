@@ -5,7 +5,7 @@ import { ConfirmDeleteModal } from '../../components/ui/ConfirmDeleteModal';
 import { cn } from '../../lib/cn';
 import { useSettingsStore } from '../settings/settingsStore';
 import { HomeCustomizeDialog } from './HomeCustomizeDialog';
-import { arrangeBlocks, HOME_BLOCKS } from './homeLayout';
+import { arrangeBlocks, groupBlocks, type HomeBlockId } from './homeLayout';
 import { Reveal } from '../../components/ui/Reveal';
 import { getStudyWeek } from '../../lib/studyWeek';
 import { useClock } from '../../lib/useClock';
@@ -21,6 +21,13 @@ import { ReviewBanner, SubjectsPanel } from './SubjectsPanel';
 import { TodayHeader } from './TodayHeader';
 import { TodaySchedule } from './TodaySchedule';
 import styles from './TodayPage.module.css';
+
+/** «Сейчас» и дедлайны стоят рядом (8 + 4 колонки из 12), если идут подряд; остальные крупные блоки — во всю ширину */
+function featureSpan(ids: HomeBlockId[], at: number) {
+  if (ids[at] === 'next' && ids[at + 1] === 'deadlines') return styles.span8;
+  if (ids[at] === 'deadlines' && ids[at - 1] === 'next') return styles.span4;
+  return styles.span12;
+}
 
 /**
  * Главная группы М3102: учебный день, дедлайны, ДЗ, материалы, личный план, недавние конспекты. Порядок и видимость
@@ -38,29 +45,48 @@ export function TodayPage() {
   const todayOccurrences = getOccurrencesForDate(today, scheduleData);
   const classStatus = getClassStatus(scheduleData, today, time);
 
+  const visible = arrangeBlocks(homeOrder).filter((id) => !homeHidden.includes(id));
+
+  const renderBlock = (id: HomeBlockId) => {
+    switch (id) {
+      case 'next':
+        return <NextClassBlock status={classStatus} occurrences={todayOccurrences} time={time} />;
+      case 'review':
+        return <ReviewBanner today={today} />;
+      case 'schedule':
+        return <TodaySchedule occurrences={todayOccurrences} today={today} time={time} onAction={scheduleDialogs.handleAction} />;
+      case 'deadlines':
+        return <DeadlinesPanel />;
+      case 'homework':
+        return <HomeworkPanel today={today} />;
+      case 'materials':
+        return <MaterialsPanel />;
+      case 'plan':
+        return <StudyPlanPanel today={today} />;
+      case 'notes':
+        return <RecentNotesPanel />;
+      case 'subjects':
+        return <SubjectsPanel today={today} time={time} />;
+      case 'bookmarks':
+        return <BookmarksPanel />;
+    }
+  };
+
   return (
     <>
       <TodayHeader date={today} week={week} />
 
-      <div className={styles.grid}>
-        {arrangeBlocks(homeOrder)
-          .filter((id) => !homeHidden.includes(id))
-          .map((id, index) => (
-            <Reveal key={id} index={index + 1} className={cn(HOME_BLOCKS.find((block) => block.id === id)!.wide && styles.wide)}>
-              {id === 'next' && <NextClassBlock status={classStatus} />}
-              {id === 'review' && <ReviewBanner today={today} />}
-              {id === 'schedule' && (
-                <TodaySchedule occurrences={todayOccurrences} today={today} time={time} onAction={scheduleDialogs.handleAction} />
-              )}
-              {id === 'deadlines' && <DeadlinesPanel />}
-              {id === 'homework' && <HomeworkPanel today={today} />}
-              {id === 'materials' && <MaterialsPanel />}
-              {id === 'plan' && <StudyPlanPanel today={today} />}
-              {id === 'notes' && <RecentNotesPanel />}
-              {id === 'subjects' && <SubjectsPanel today={today} time={time} />}
-              {id === 'bookmarks' && <BookmarksPanel />}
-            </Reveal>
-          ))}
+      <div className={styles.groups}>
+        {groupBlocks(visible).map((group) => (
+          <div key={group.ids[0]} className={group.feature ? styles.features : styles.tiles}>
+            {group.ids.map((id, at) => (
+              // Каскад только у первых блоков: дальше всё появляется разом, длинная страница не «ползёт»
+              <Reveal key={id} index={Math.min(visible.indexOf(id), 3)} className={cn(styles.item, group.feature && featureSpan(group.ids, at))}>
+                {renderBlock(id)}
+              </Reveal>
+            ))}
+          </div>
+        ))}
       </div>
 
       <div className={styles.customize}>

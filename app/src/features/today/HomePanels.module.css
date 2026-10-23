@@ -57,8 +57,10 @@ label.row > :first-child {
   inset: 0;
 }
 
-.linkRow:hover .detail strong {
-  color: var(--color-accent-text);
+@media (hover: hover) {
+  .linkRow:hover .detail strong {
+    color: var(--color-accent-text);
+  }
 }
 
 .done {
@@ -69,11 +71,22 @@ label.row > :first-child {
   text-decoration: line-through;
 }
 
-.day {
+/* Срок справа двумя строками: дата и «через 3 дня» — название получает всю ширину */
+.when {
+  display: flex;
   flex-shrink: 0;
-  width: 56px;
-  font-weight: var(--weight-semibold);
+  flex-direction: column;
+  align-items: flex-end;
   font-variant-numeric: tabular-nums;
+}
+
+.when strong {
+  font-weight: var(--weight-semibold);
+}
+
+.when small {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
 }
 
 .detail {
@@ -87,11 +100,6 @@ label.row > :first-child {
 .hint,
 .empty {
   color: var(--color-text-muted);
-}
-
-.status {
-  flex-shrink: 0;
-  color: var(--color-text-secondary);
 }
 
 .completed {
@@ -110,25 +118,28 @@ label.row > :first-child {
   font-size: var(--text-sm);
 }
 
-.tiles {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: var(--space-3);
-}
-
-/* Главная плитка — на всю высоту колонки, с крупным числом внизу */
 .tileMain {
-  grid-row: span 3;
-  justify-content: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
   padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text);
+  text-decoration: none;
 }
 
+.tileMain small,
+.folder small {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* Одно большое число — сколько конспектов у группы */
 .tileCount {
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
-  margin-top: auto;
-  padding-top: var(--space-4);
   font-family: var(--font-display);
   font-size: clamp(2.25rem, 1.5rem + 2vw, 3rem);
   font-weight: 650;
@@ -139,51 +150,64 @@ label.row > :first-child {
 
 .tileCount small {
   font-family: var(--font-sans);
+  font-size: var(--text-sm);
   letter-spacing: 0;
+  color: var(--color-text-secondary);
 }
 
-.tile {
+.folders {
+  display: grid;
+  margin-top: var(--space-2);
+}
+
+.folder {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
   color: var(--color-text);
   text-decoration: none;
-  transition: border-color var(--duration-fast) var(--ease);
+}
+
+.folder span:first-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.folder strong {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.folderCount {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (hover: hover) {
-  .tile:hover {
-    border-color: var(--color-border-hover);
+  .folder:hover {
+    background: var(--color-bg-hover);
   }
-}
-
-.tile small {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-}
-
-.tileIndex {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  color: var(--color-accent-text);
 }
 
 .planForm {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
 }
 
+/* Поле — во всю ширину, иначе подсказка «Добавить свою задачу…» обрезается; дата и кнопка — под ним */
 .planForm > :first-child {
-  flex: 1;
+  flex: 1 1 100%;
   min-width: 0;
 }
 
 .planForm > :nth-child(2) {
-  width: 150px;
+  flex: 1 1 140px;
 }
 
 .planDate {
@@ -235,20 +259,7 @@ label.row > :first-child {
 }
 
 @media (max-width: 767px) {
-  .tiles,
   .notes {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .tileMain {
-    grid-row: auto;
-  }
-
-  .planForm {
-    flex-wrap: wrap;
-  }
-
-  .planForm > :nth-child(2) {
-    flex: 1;
   }
 }

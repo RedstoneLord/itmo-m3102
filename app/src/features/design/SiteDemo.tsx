@@ -17,6 +17,13 @@ const occurrence = (subjectId: string, type: ClassType, startTime: string, endTi
   details: { subjectId, type, startTime, endTime, room, teacher: '' },
 });
 
+/** Учебный день для полоски на карточке: три пары подряд */
+const DAY = [
+  occurrence('op', 'lab', '09:50', '11:20', '2238'),
+  occurrence('linal', 'practice', '11:30', '13:00', '2430'),
+  occurrence('aisd', 'lecture', '13:30', '15:00', '1404'),
+];
+
 const HOUR = 3_600_000;
 const NOW = Date.parse('2026-10-01T12:00:00+03:00');
 const DEADLINES = [-1, 5, 40, 24 * 9].map((hours) => deadlineInfo(new Date(NOW + hours * HOUR).toISOString(), NOW));
@@ -46,11 +53,9 @@ export function SiteDemo() {
     <Section title="Элементы сайта группы">
       <Demo label="Следующая пара · главная; таблетка слева — цвет типа пары">
         <div className={styles.blocks}>
-          <NextClassBlock status={{ kind: 'now', occurrence: occurrence('linal', 'practice', '11:30', '13:00', '2430'), minutesLeft: 42 }} />
-          <NextClassBlock status={{ kind: 'next', occurrence: occurrence('aisd', 'lecture', '13:30', '15:00', '1404'), minutesUntil: 25 }} />
-          <NextClassBlock
-            status={{ kind: 'finished', next: { occurrence: occurrence('op', 'lab', '09:50', '11:20', '2238'), dayLabel: 'завтра' } }}
-          />
+          <NextClassBlock status={{ kind: 'now', occurrence: DAY[1]!, minutesLeft: 42 }} occurrences={DAY} time="12:18" />
+          <NextClassBlock status={{ kind: 'next', occurrence: DAY[2]!, minutesUntil: 25 }} occurrences={DAY} time="13:05" />
+          <NextClassBlock status={{ kind: 'finished', next: { occurrence: DAY[0]!, dayLabel: 'завтра' } }} occurrences={DAY} time="16:00" />
         </div>
       </Demo>
       <Demo label="Типы пар · полоска-таблетка у карточек расписания, календаря и главной">

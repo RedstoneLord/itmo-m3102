@@ -1,33 +1,79 @@
-/* Две колонки панелей, на телефоне — одна */
-.grid {
+/* Крупные блоки («Сейчас», дедлайны, повторение) — сетка из 12 колонок; остальные — плитки в две колонки,
+   которые сами выравниваются по высоте: у плиток с разным содержимым нет пустых «хвостов» */
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.features {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: var(--space-10) var(--space-12);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-4);
 }
 
-@media (max-width: 1023px) {
-  .grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-10);
-  }
+.tiles {
+  columns: 2;
+  column-gap: var(--space-4);
+  /* у последних плиток в колонках свой нижний отступ — он не нужен, его даёт зазор между группами */
+  margin-bottom: calc(-1 * var(--space-4));
 }
 
-/* «Сейчас», «Повторение» — во всю ширину; свой нижний отступ у них не нужен — его даёт сетка */
-.wide {
+.item {
+  min-width: 0;
+}
+
+/* Плитки в колонках: целиком в одной колонке, с отступом снизу вместо зазора сетки */
+.tiles > .item {
+  margin-bottom: var(--space-4);
+  break-inside: avoid;
+}
+
+/* Рядом стоящие крупные блоки одной высоты */
+.features > .item > * {
+  height: 100%;
+}
+
+/* Блок сам решил не показываться (пар нет, повторять нечего) — без пустой ячейки; группа из одних таких блоков — тоже */
+.item:empty,
+.groups > :not(:has(> .item:not(:empty))) {
+  display: none;
+}
+
+.span4 {
+  grid-column: span 4;
+}
+
+.span8 {
+  grid-column: span 8;
+}
+
+.span12 {
   grid-column: 1 / -1;
 }
 
-.wide > * {
-  margin-bottom: 0;
-}
+@media (max-width: 1023px) {
+  .groups,
+  .features {
+    gap: var(--space-3);
+  }
 
-/* Блок сам решил не показываться (пар нет, повторять нечего) — без пустой строки сетки */
-.wide:empty {
-  display: none;
+  .features > .item {
+    grid-column: 1 / -1;
+  }
+
+  .tiles {
+    columns: 1;
+    margin-bottom: calc(-1 * var(--space-3));
+  }
+
+  .tiles > .item {
+    margin-bottom: var(--space-3);
+  }
 }
 
 .customize {
   display: flex;
   justify-content: center;
-  margin-top: var(--space-12);
+  margin-top: var(--space-10);
 }
