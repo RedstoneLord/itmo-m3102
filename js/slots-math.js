@@ -646,7 +646,7 @@ export const CATALOG = [
   it('title:patient', 'title', 'Титул: Терпеливый', 'common', 'Эффект: эпическая капсула гарантирована на одну капсулу раньше'),
   it('title:early', 'title', 'Титул: Ранняя пташка', 'rare', 'Эффект: +1 к ежедневным спинам'),
   it('title:legend', 'title', 'Титул: Легенда зала', 'legendary', 'Эффект: +0,5% к выплатам и +10% к шансу капсулы-символа. Награда за три талисмана', true),
-  it('cardback:marked', 'cardback', 'Меченая рубашка', 'rare', 'Эффект: «Удвоить» подсказывает три последние карты'),
+  it('cardback:marked', 'cardback', 'Меченая рубашка', 'rare', 'Эффект: показывает вероятность того, что закрытая карта крупье — десятка'),
   it('chips:berry', 'chips', 'Ягодные фишки', 'common', 'Оформление фишек за столом', true),
   it('felt:burgundy', 'felt', 'Бордовое сукно', 'common', 'Оформление игрового стола', true),
   it('emote:fyr', 'emote', 'Эмоция «Фыр!»', 'common', 'Реплика ёжика за столами казино'),
@@ -665,7 +665,7 @@ export const grantSets = S => { const got = []; for (const set of SETS) { if (!S
 export const HAT_SET = CATALOG.filter(x => x.kind === 'hat').map(x => x.id);
 export const CHARM_SET = CATALOG.filter(x => x.kind === 'perkcharm').map(x => x.id); /* casino:step3 CHARM_SET */
 export const albumProgress = S => ({
-  have: CATALOG.filter(x => S.album[x.id]).length,
+  have: CATALOG.filter(x => (S && S.album && S.album[x.id]) || FREE_ITEMS.includes(x.id)).length,
   total: CATALOG.length
 });
 
@@ -699,8 +699,8 @@ export function clampPerks(p = {}) {
 // id надетых и при этом имеющихся в альбоме предметов
 export function equippedIds(S) {
   S = S || {}; const album = S.album || {}, eq = S.equip || {}, out = [];
-  if (S.title && album[S.title]) out.push(S.title);
-  for (const k of EQUIP_KINDS) { const id = eq[k]; if (id && album[id] && ITEM[id] && ITEM[id].kind === k) out.push(id); }
+  if (S.title && (album[S.title] || FREE_ITEMS.includes(S.title))) out.push(S.title);
+  for (const k of EQUIP_KINDS) { const id = eq[k]; if (id && (album[id] || FREE_ITEMS.includes(id)) && ITEM[id] && ITEM[id].kind === k) out.push(id); }
   return out;
 }
 // S — состояние слотов, H — общее сохранение (шляпа). Вызывается без S — вернёт только перки шляпы
@@ -718,7 +718,9 @@ export function activePerks(S, H) {
   return clampPerks(p);
 }
 export function equipItem(S, id) {
-  const x = ITEM[id]; if (!x || !S.album || !S.album[id]) return false;
+  const x = ITEM[id];
+  const owned = (S && S.album && S.album[id]) || FREE_ITEMS.includes(id);
+  if (!x || !owned) return false;
   if (x.kind === 'title') S.title = id; else if (x.kind === 'theme') S.theme = id;
   else if (EQUIP_KINDS.includes(x.kind)) (S.equip || (S.equip = {}))[x.kind] = id; else return false;
   return true;
@@ -785,7 +787,7 @@ export const signSlots = S => {
 export const signShared = save =>
   cyrb53(
     SALT + stable({
-      b: save.berries | 0,
+      b: Math.max(0, Math.floor(Number(save.berries) || 0)),
       o: [...(save.owned || [])].sort(),
       s: save.bonusSpins | 0,
       x: save.boosts || {}

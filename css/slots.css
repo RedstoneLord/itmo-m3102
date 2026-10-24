@@ -141,7 +141,7 @@
 
 /* ---------- пульт слева, рычаг справа ---------- */
 @property --pull{syntax:'<number>';inherits:true;initial-value:0}
-.sl-cab{display:grid;grid-template-columns:150px minmax(0,1fr) 76px;gap:14px;align-items:stretch}
+.sl-cab{display:grid;grid-template-columns:150px minmax(0,1fr) 76px;gap:14px;align-items:start}
 .sl-mid{min-width:0}
 .sl-controls.sl-side{flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:flex-start;gap:8px;margin-top:0}
 .sl-side .btn2,.sl-side select{width:100%;min-height:42px}
@@ -184,12 +184,12 @@
 .sl-stat{padding:9px 12px}
 .sl-stat b{font-size:1.15rem}
 .sl-machine{padding:16px}
-.sl-cab{grid-template-columns:200px minmax(0,1fr) 104px;gap:16px}
+.sl-cab{grid-template-columns:220px minmax(0,1fr) 104px;gap:16px;align-items:start}
 /* барабаны: не шире 960px и не выше экрана */
 .sl-mid{width:100%;max-width:max(320px,min(960px,calc((100vh - 280px) * 5 / 3)));margin:0 auto}
 
 /* ---- пульт слева ---- */
-.sl-controls.sl-side{gap:8px;min-width:0}
+.sl-controls.sl-side{gap:8px;min-width:0;align-self:start}
 .sl-side>*{min-width:0}
 .sl-side .btn2,.sl-side select{min-height:44px;font-size:.92rem;padding:8px 10px}
 .sl-side .sl-bet{grid-template-columns:44px minmax(0,1fr) 44px}
@@ -202,7 +202,7 @@
 .sl-heatbar i svg{width:14px;height:14px}
 
 /* ---- «Удвоить или ничего»: всё в колонку, ничего не вылезает ---- */
-.sl-gamble{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:6px 0 0;padding:10px;min-width:0}
+.sl-gamble{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:6px 0 0;padding:10px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.18);border-radius:calc(10px * var(--rs,1));box-sizing:border-box;min-width:0}
 .sl-gamble[hidden]{display:none}
 .sl-gtxt{display:grid;gap:3px;min-width:0;font-size:.84rem;line-height:1.35}
 .sl-gtxt span,.sl-gtxt em{overflow-wrap:anywhere}

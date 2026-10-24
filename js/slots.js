@@ -10,7 +10,7 @@ import { makeSlotsAudio } from './slots-audio.js';
 import { ic } from './icons.js';
 import { esc, KEY, SNAP, HHK, CANCEL, reduce, fmt, readJson, writeJson, KIND_EMOJI, KIND_NAME, THEME_CLASS, ACH, loadAll, saveAll, applyItem, perksOf, clock, isOnBreak, setBreak, makeAwards } from './casino-common.js';
 export { ACH, loadAll, saveAll, applyItem, perksOf }; /* casino:step5 SPLIT: общие помощники теперь в casino-common.js */
-const FILL = ['berry', 'apple', 'mush', 'git', 'orange', 'cpp', 'rust', 'pi', 'hog', 'king', 'scatter', 'wild', 'bonus', 'berry', 'apple', 'mush'];
+const FILL = ['seven', 'itmo', 'claude', 'king', 'hog', 'rust', 'pi', 'orange', 'cpp', 'mush', 'git', 'apple', 'berry', 'scatter', 'wild', 'bonus'];
 /* casino:step5 moved: KIND_EMOJI, KIND_NAME, THEME_CLASS → casino-common.js */
 const QUIPS = ['Фыр!', 'Эй! Колется.', 'Не тыкай ёжика.', 'Сегфолт (core dumped)', 'Я при исполнении.', 'Мяу. (Это не я.)', 'Очевидно, что… ай!'];
 
@@ -26,7 +26,7 @@ export function renderSlotsPage() {
   const audio = makeSlotsAudio(), rng = M.cryptoRng();
   const timers = new Set(), aborts = new Set(), anims = new Set();
   let dead = false, busy = false, skip = false, turbo = false, auto = null, pending = 0, gambleRounds = 0, fxRaf = 0, rafId = 0, parts = [], breakTimer = 0, lastPool = Math.floor(S.pool);
-  let bet = M.BETS.includes(S.bet) ? S.bet : 5; const sess = { spins: 0, net: 0 }; let shownBal = null;
+  let bet = M.BETS.includes(S.bet) ? S.bet : 5; const sess = { spins: 0, net: 0 }; let shownBal = null, shownHeat = null;
   const autoOpts = { stopBig: true, stopFeature: true, below: 0 };
   const $ = sel => content.querySelector(sel);
   const later = (fn, ms) => { const t = setTimeout(() => { timers.delete(t); if (!dead) fn(); }, ms); timers.add(t); return t; };
@@ -153,8 +153,9 @@ export function renderSlotsPage() {
     $('#sl-frac').textContent = S.frac > 0.004 ? `в копилке долей: ${S.frac.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} 🍓` : '';
     $('#sl-title').textContent = itemName(S.title).replace(/^Титул: /, '');
     $('#sl-bet').textContent = String(bet);
-    const bar = $('#sl-heatbar'), full = S.heat >= M.HEAT_MAX;
-    bar.innerHTML = Array.from({ length: M.HEAT_MAX }, (_, i) => `<i class="${i < S.heat ? 'on' : ''}">${icon('flame', 16)}</i>`).join(''); bar.classList.toggle('is-full', full);
+    const heatVal = shownHeat ?? S.heat;
+    const bar = $('#sl-heatbar'), full = heatVal >= M.HEAT_MAX;
+    bar.innerHTML = Array.from({ length: M.HEAT_MAX }, (_, i) => `<i class="${i < heatVal ? 'on' : ''}">${icon('flame', 16)}</i>`).join(''); bar.classList.toggle('is-full', full);
     $('#sl-heattxt').textContent = full ? 'Следующий спин «тёплый»!' : 'Копится после неудач';
     const br = onBreak(); $('#sl-breakmsg').hidden = !br; if (br) $('#sl-breakmsg').textContent = `Перерыв до ${clock(S.breakUntil)}. Хороший ход — отдохнуть. Загляни к ёжику или конспектам.`;
     $('#sl-spin').disabled = busy || br || H.berries < bet; $('#sl-free').disabled = busy || br || freeLeft() < 1; $('#sl-free').textContent = freeLeft() ? `Бесплатный спин (${freeLeft()})` : 'Бесплатный спин';
@@ -305,12 +306,12 @@ export function renderSlotsPage() {
     if (free ? freeLeft() < 1 : H.berries < bet) { audio.nope(); toast(free ? 'Бесплатных спинов нет.' : 'Не хватает ягод — ёжик уже зовёт.'); hud(); return; }
     const betEff = free ? M.DAILY_BET : bet; gambleBet = betEff; busy = true; skip = false; pullLever(); clearWin(); closeGamble(); $('#sl-win').textContent = '0'; $('#sl-winlabel').textContent = 'Выигрыш'; hideOver();
     if (free) { if (S.free > 0) S.free--; else H.bonusSpins--; } else { H.berries -= bet; S.stats.wagered += bet; sess.net -= bet; }
-    S.stats.spins++; sess.spins++; S.bet = bet; shownBal = H.berries;
+    S.stats.spins++; sess.spins++; S.bet = bet; shownBal = H.berries; shownHeat = S.heat;
     const R = M.rollRound(rng, S, betEff, perksOf(H, S), { paid: !free }), res = R.res, tr = R.trace, x = R.won / betEff, set = M.settle(S.frac, R.won); S.frac = set.frac;
     let credit = set.whole; const gambleable = !res.fsSpins && !res.bonus && !R.parts.jp && credit > 0 && M.gambleAllowed(credit, betEff, 0);
     if (gambleable) { pending = credit; S.pending = credit; credit = 0; }
     H.berries += credit; sess.net += credit; S.stats.won += credit; S.stats.biggest = Math.max(S.stats.biggest, set.whole);
-    let caps = 0; if (x >= 50) caps++; if (res.fsSpins) caps++; if (res.bonus) caps++; S.capsules += caps; save(); hud();
+    let caps = 0; if (x >= 50) caps++; if (res.fsSpins) caps++; if (res.bonus) caps++; S.capsules += caps; save(); shownBal = H.berries - credit; hud();
     try {
       await animateTo(res.raw); await expandWilds(res);
       if (res.warm) { toast('🔥 Горячая серия: этот спин был «тёплым»'); audio.heat(); award('heat'); }
@@ -334,7 +335,7 @@ export function renderSlotsPage() {
       say(R.won > 0 ? `Выигрыш: ${fw(R.won)} ягод` : 'Без выигрыша');
     } catch (e) { if (e !== CANCEL) console.error(e); }
     finally {
-      busy = false; shownBal = null;
+      busy = false; shownBal = null; shownHeat = null;
       if (!dead) {
         save(); checkAlbum(); refresh(); $('#sl-winlabel').textContent = 'Выигрыш';
         if (pending > 0 && !auto) renderGamble('Рискнёшь удвоить? Шансы — ровно пополам.'); else if (pending > 0) collectPending();
@@ -347,15 +348,18 @@ export function renderSlotsPage() {
 
   /* ---------- диалоги ---------- */
   function openPay() {
-    const pm = (s, n) => M.payMult(s, n).toLocaleString('ru-RU', { maximumFractionDigits: 2 }), rows = ['king', 'hog', 'rust', 'pi', 'orange', 'cpp', 'mush', 'git', 'apple', 'berry'];
+    const pm = (s, n) => M.payMult(s, n).toLocaleString('ru-RU', { maximumFractionDigits: 2 }), rows = ['seven', 'itmo', 'claude', 'king', 'hog', 'rust', 'pi', 'orange', 'cpp', 'mush', 'git', 'apple', 'berry'];
     dlg.innerHTML = `<div class="dialog-head"><h2>Таблица выплат</h2><button type="button" data-close-dialog aria-label="Закрыть">×</button></div><p class="dialog-hint">Выплаты — в долях общей ставки за каждую выигрышную линию. Три и более одинаковых символа подряд на соседних барабанах платят с любого барабана, не только с первого; Wild заменяют. 20 линий.</p>
       <div class="sl-pay"><div class="sl-payrow sl-payhead"><span></span><span></span><b>3</b><b>4</b><b>5</b></div>${rows.map(s => `<div class="sl-payrow">${sym(s, 44)}<span>${LABELS[s]}</span><b>×${pm(s, 3)}</b><b>×${pm(s, 4)}</b><b>×${pm(s, 5)}</b></div>`).join('')}</div>
-      <h3>Особые символы</h3><ul class="sl-rules"><li>${sym('wild', 30)} <b>Wild</b> — на барабанах 2–4, заменяет всё, кроме Scatter и Bonus. Расширяется на весь барабан и добавляет +1 к множителю спина.</li>
+      <h3>Особые символы</h3><ul class="sl-rules">
+      <li>${sym('wild', 30)} <b>Wild</b> — на барабанах 2–4, заменяет всё, кроме Scatter, Bonus и капсулы. Расширяется на весь барабан и добавляет +1 к множителю спина.</li>
       <li>${sym('scatter', 30)} <b>Scatter</b> — 3, 4 или 5 где угодно платят ×2, ×10, ×50 ставки и запускают 8, 12 или 20 фриспинов. Во фриспинах множитель растёт после каждого выигрыша, а 3 Scatter добавляют +5 вращений.</li>
       <li>${sym('bonus', 30)} <b>Bonus</b> — корзины на барабанах 1, 3 и 5 разом открывают «Ягодную поляну».</li>
+      <li>${sym('capsule', 30)} <b>Капсула</b> — редкий символ, дарит гарантированную капсулу с призом в коллекцию.</li>
+      <li>7️⃣ <b>Семёрка</b> — пять семёрок в одном ряду дают огромный шанс сорвать джекпот!</li>
       <li><b>Вертикаль и диагонали</b> — три одинаковых символа в одном барабане платят как три в линии; диагонали, V-образные и зигзагообразные серии тоже считаются, с любого барабана.</li>
       <li>🔥 <b>Жар</b> — после серии неудач следующий спин «тёплый»: выигрыши чаще.</li>
-      <li>💰 <b>Джекпот</b> — три расширенных Wild дают шанс сорвать копилку; чем выше ставка, тем он больше. Копилка хранится на этом устройстве.</li>
+      <li>💰 <b>Джекпот</b> — три расширенных Wild или пять семёрок дают шанс сорвать копилку; чем выше ставка, тем он больше. Копилка хранится на этом устройстве.</li>
       <li>🃏 <b>Удвоить или ничего</b> — после небольшого выигрыша можно до 3 раз угадать цвет карты: честные пополам.</li><li>Максимальный выигрыш за раунд — 5000× ставки.</li></ul>`;
     dlg.showModal();
   }

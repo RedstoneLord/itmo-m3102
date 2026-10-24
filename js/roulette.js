@@ -15,6 +15,7 @@ import {
   toast, clearToasts,
   renderHud, getAudio,
   makeTimers, makeFx, makeAwards,
+  stepBet,
   ACH
 } from './casino-common.js';
 import { applyCasinoTheme, chipTier } from './casino-themes.js';
@@ -31,6 +32,7 @@ export function renderRoulettePage() {
   let bets = new Map();
   let lastBets = null;
   let rotorAngle = 0;
+  let removeMode = false;
 
   const { later, wait, guard, destroy: stopTimers } = makeTimers(() => dead);
   const fx = makeFx(), burst = (n, kind) => fx.burst(n, kind);
@@ -51,56 +53,59 @@ export function renderRoulettePage() {
     <div class="intro cs-intro">
       <span class="sched-eyebrow">ВИРТУАЛЬНЫЙ ЗАЛ · М3102</span>
       <h1>Рулетка</h1>
-      <p class="sub">Европейское колесо, шарик и ставки на числа и шансы.</p>
+      <p class="sub">Европейское колесо слева, шарик и ставки на числа и шансы.</p>
     </div>
 
     <div id="ro-hud-host"></div>
 
-    <div class="ro-top-row">
-      <div class="ro-wheel-box ct-felt">
-        <div class="ro-wheel-wrap" id="ro-wheel-wrap">
-          ${buildWheelSvg()}
-          <div class="ro-wheel-center">
-            <span class="ro-last-num" id="ro-last-num">—</span>
+    <div class="ro-main-layout">
+      <div class="ro-left-col">
+        <div class="ro-wheel-box ct-felt">
+          <div class="ro-wheel-wrap" id="ro-wheel-wrap">
+            ${buildWheelSvg()}
+            <div class="ro-wheel-center">
+              <span class="ro-last-num" id="ro-last-num">—</span>
+            </div>
+          </div>
+          <div class="ro-hot-badge" id="ro-hot-badge" hidden>
+            <span class="ro-hot-txt" id="ro-hot-txt">🔥 Горячее число: —</span>
           </div>
         </div>
-        <div class="ro-hot-badge" id="ro-hot-badge" hidden>
-          <span class="ro-hot-txt" id="ro-hot-txt">🔥 Горячее число: —</span>
-        </div>
-      </div>
 
-      <div class="ro-side-box">
         <div class="ro-hist-box">
           <span class="ro-hist-title">Последние 10 чисел:</span>
           <div class="ro-hist-list" id="ro-hist-list" role="region" aria-label="История выпавших чисел"></div>
         </div>
         <div class="ro-perks-bar" id="ro-perks-bar"></div>
       </div>
-    </div>
 
-    <div class="ro-table ct-felt" id="ro-table" role="grid" aria-label="Игровой стол рулетки">
-      ${buildTableHtml()}
-    </div>
+      <div class="ro-right-col">
+        <div class="ro-table ct-felt" id="ro-table" role="grid" aria-label="Игровой стол рулетки">
+          ${buildTableHtml()}
+        </div>
 
-    <div class="ro-controls-row">
-      <div class="ro-chip-selector" id="ro-chips" role="radiogroup" aria-label="Номинал фишки">
-        <span class="ro-chip-label">Фишка:</span>
-        ${[1, 5, 25, 100, 500].map(val => `<button type="button" class="ct-chip ro-chip-btn ${val === currentChip ? 'is-selected' : ''}" data-tier="${chipTier(val)}" data-chip-val="${val}" aria-label="Фишка ${val}">${val >= 1000 ? (val/1000) + 'k' : val}</button>`).join('')}
+        <div class="ro-controls-row">
+          <div class="ro-chip-selector" id="ro-chips" role="radiogroup" aria-label="Номинал фишки">
+            <span class="ro-chip-label">Фишка:</span>
+            ${[1, 5, 25, 100, 500].map(val => `<button type="button" class="ct-chip ro-chip-btn ${val === currentChip ? 'is-selected' : ''}" data-tier="${chipTier(val)}" data-chip-val="${val}" aria-label="Фишка ${val}">${val >= 1000 ? (val/1000) + 'k' : val}</button>`).join('')}
+          </div>
+
+          <div class="ro-stake-stat">
+            <span>Ставок на столе:</span>
+            <b id="ro-total-stake">0 🍓</b>
+          </div>
+
+          <div class="ro-btns">
+            <button class="btn2 ro-mode-btn" id="ro-mode-remove" type="button" aria-pressed="false">Снять ставку</button>
+            <button class="btn2" id="ro-rebet" type="button" disabled>Повторить</button>
+            <button class="btn2" id="ro-clear" type="button" disabled>Очистить</button>
+            <button class="btn2 btn-primary ro-spin-btn" id="ro-spin" type="button" disabled>Крутить колесо</button>
+          </div>
+        </div>
+
+        <div class="ro-summary" id="ro-summary" role="status" aria-live="polite" hidden></div>
       </div>
-
-      <div class="ro-stake-stat">
-        <span>Ставок на столе:</span>
-        <b id="ro-total-stake">0 🍓</b>
-      </div>
-
-      <div class="ro-btns">
-        <button class="btn2" id="ro-rebet" type="button" disabled>Повторить ставки</button>
-        <button class="btn2" id="ro-clear" type="button" disabled>Очистить</button>
-        <button class="btn2 btn-primary ro-spin-btn" id="ro-spin" type="button" disabled>Крутить колесо</button>
-      </div>
     </div>
-
-    <div class="ro-summary" id="ro-summary" role="status" aria-live="polite" hidden></div>
 
     <dialog id="ro-dlg" class="app-dialog ro-dlg"></dialog>
   </section>`;
@@ -193,7 +198,7 @@ export function renderRoulettePage() {
     if (curStake === 0) {
       nextStake = currentChip;
     } else {
-      nextStake = M.stepBet ? M.stepBet(curStake, 1) : curStake + currentChip;
+      nextStake = typeof stepBet === 'function' ? stepBet(curStake, 1) : curStake + currentChip;
     }
 
     const delta = nextStake - curStake;
@@ -213,7 +218,7 @@ export function renderRoulettePage() {
     const key = `${type}:${Array.isArray(arg) ? arg.join('-') : arg}`;
     const existing = bets.get(key);
     if (!existing) return;
-    const nextStake = M.stepBet ? M.stepBet(existing.stake, -1) : existing.stake - currentChip;
+    const nextStake = typeof stepBet === 'function' ? stepBet(existing.stake, -1) : existing.stake - currentChip;
     if (nextStake <= 0) {
       bets.delete(key);
     } else {
@@ -284,13 +289,22 @@ export function renderRoulettePage() {
     // Сохраняем немедленно!
     save();
 
-    // Анимация вращения колеса
+    // Показываем горячее число перед началом вращения!
+    const hotEl = $('#ro-hot-badge');
+    const hotTxt = $('#ro-hot-txt');
+    if (hotEl && hotTxt) {
+      hotEl.hidden = false;
+      hotEl.classList.remove('is-hit');
+      hotTxt.textContent = `🔥 Горячее число: ${spinRes.hot}`;
+    }
+
+    // Анимация вращения колеса: абсолютное совмещение сектора со стрелкой
     const rotor = $('#ro-wheel-rotor');
     const numIdx = WHEEL_ORDER.indexOf(spinRes.n);
     const step = 360 / 37;
-    // Целевой угол поворота
-    const targetDeg = 360 * 6 - (numIdx * step);
-    rotorAngle = (rotorAngle || 0) + targetDeg;
+    const currentTurns = Math.floor((rotorAngle || 0) / 360);
+    const targetMod = (360 - numIdx * step) % 360;
+    rotorAngle = (currentTurns + 6) * 360 + targetMod;
 
     if (reduce()) {
       if (rotor) rotor.style.transform = `rotate(${rotorAngle}deg)`;
@@ -317,11 +331,8 @@ export function renderRoulettePage() {
       numEl.className = `ro-last-num is-${winCol}`;
     }
 
-    // Показываем горячее число
-    const hotEl = $('#ro-hot-badge');
-    const hotTxt = $('#ro-hot-txt');
+    // Обновляем статус горячего числа
     if (hotEl && hotTxt) {
-      hotEl.hidden = false;
       const isHotHit = spinRes.n === spinRes.hot;
       hotTxt.textContent = `🔥 Горячее число: ${spinRes.hot}${isHotHit ? ' — СЫГРАЛО (выплаты ×3.5)!' : ''}`;
       hotEl.classList.toggle('is-hit', isHotHit);
@@ -426,7 +437,7 @@ export function renderRoulettePage() {
       const type = cell.dataset.cell;
       let arg = cell.dataset.arg;
       if (type === 'straight' || type === 'column' || type === 'dozen') arg = Number(arg);
-      if (e.shiftKey) removeBet(type, arg);
+      if (removeMode || e.shiftKey) removeBet(type, arg);
       else addBet(type, arg);
       return;
     }
@@ -441,6 +452,13 @@ export function renderRoulettePage() {
       btn.textContent = `Звук: ${audio.on ? 'вкл' : 'выкл'}`;
     }
     else if (id === 'ro-spin') { audio.click(); guard(doSpin()); }
+    else if (id === 'ro-mode-remove') {
+      removeMode = !removeMode;
+      btn.classList.toggle('is-remove', removeMode);
+      btn.setAttribute('aria-pressed', String(removeMode));
+      btn.textContent = removeMode ? 'Режим: Снятие' : 'Снять ставку';
+      audio.click();
+    }
     else if (id === 'ro-clear') {
       audio.click();
       if (bets.size > 0) lastBets = new Map(bets);
@@ -509,9 +527,9 @@ function buildWheelSvg() {
     const textAngle = i * step;
     const textRad = (textAngle - 90) * Math.PI / 180;
     const tx = (cx + 118 * Math.cos(textRad)).toFixed(1);
-    const ty = (cy + 118 * Math.sin(textRad) + 4).toFixed(1);
+    const ty = (cy + 118 * Math.sin(textRad)).toFixed(1);
     return `<path d="${path}" fill="${fill}" stroke="#c9a24a" stroke-width="0.8"/>`
-      + `<text x="${tx}" y="${ty}" font-size="10.5" font-weight="800" fill="#fff" text-anchor="middle" transform="rotate(${textAngle} ${tx} ${ty})">${num}</text>`;
+      + `<text x="${tx}" y="${ty}" font-size="10.5" font-weight="800" fill="#fff" text-anchor="middle" dominant-baseline="central" transform="rotate(${textAngle} ${tx} ${ty})">${num}</text>`;
   }).join('');
 
   return '<svg viewBox="0 0 300 300" class="ro-wheelsvg" id="ro-wheelsvg" role="img" aria-label="Колесо рулетки">'

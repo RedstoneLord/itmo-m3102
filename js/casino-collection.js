@@ -46,8 +46,36 @@ export function renderCollectionPage(initial = '') {
     el.innerHTML = `<div class="panel-head"><h2>Достижения</h2><span class="sl-count">${n} из ${ACH.length}</span></div><ul class="sl-achlist">${ACH.map(a => `<li class="${S.ach[a.id] ? 'is-done' : ''}"><span aria-hidden="true">${S.ach[a.id] ? '🏆' : '🔒'}</span><div><strong>${esc(a.name)}</strong><small>${esc(a.desc)}</small></div></li>`).join('')}</ul><p class="plan-hint">За каждое достижение — капсула.</p>`;
   }
   function renderStats() {
-    const st = S.stats;
-    $('#sl-stats').innerHTML = `<div class="panel-head"><h2>Статистика</h2></div><dl class="sl-statlist"><div><dt>Спинов</dt><dd>${fmt(st.spins)}</dd></div><div><dt>Поставлено</dt><dd>${fmt(st.wagered)} 🍓</dd></div><div><dt>Выиграно</dt><dd>${fmt(st.won)} 🍓</dd></div><div><dt>Лучший выигрыш</dt><dd>${fmt(st.biggest)} 🍓</dd></div><div><dt>Фриспинов</dt><dd>${fmt(st.fs)}</dd></div><div><dt>Полян</dt><dd>${fmt(st.picks)}</dd></div><div><dt>Джекпотов</dt><dd>${fmt(st.jackpots)}</dd></div><div><dt>«Удвоить»: побед</dt><dd>${st.gambleWins}/${st.gambles}</dd></div></dl>`;
+    const st = S.stats || {};
+    $('#sl-stats').innerHTML = `<div class="panel-head"><h2>Статистика</h2></div>
+      <h3 class="sl-kindh" style="margin-top:4px">Слоты</h3>
+      <dl class="sl-statlist">
+        <div><dt>Спинов</dt><dd>${fmt(st.spins || 0)}</dd></div>
+        <div><dt>Поставлено</dt><dd>${fmt(st.wagered || 0)} 🍓</dd></div>
+        <div><dt>Выиграно</dt><dd>${fmt(st.won || 0)} 🍓</dd></div>
+        <div><dt>Лучший куш</dt><dd>${fmt(st.biggest || 0)} 🍓</dd></div>
+        <div><dt>Фриспинов</dt><dd>${fmt(st.fs || 0)}</dd></div>
+        <div><dt>Полян</dt><dd>${fmt(st.picks || 0)}</dd></div>
+        <div><dt>Джекпотов</dt><dd>${fmt(st.jackpots || 0)}</dd></div>
+        <div><dt>«Удвоить»</dt><dd>${st.gambleWins || 0}/${st.gambles || 0}</dd></div>
+      </dl>
+      <h3 class="sl-kindh" style="margin-top:14px">Блэкджек</h3>
+      <dl class="sl-statlist">
+        <div><dt>Побед</dt><dd>${fmt(st.bjWins || 0)}</dd></div>
+        <div><dt>Выиграно</dt><dd>${fmt(st.bjWon || 0)} 🍓</dd></div>
+        <div><dt>Блэкджеков</dt><dd>${fmt(st.bjBlackjacks || 0)}</dd></div>
+        <div><dt>Чарли (5 карт)</dt><dd>${fmt(st.bjCharlies || 0)}</dd></div>
+        <div><dt>Ничьих</dt><dd>${fmt(st.bjPushes || 0)}</dd></div>
+        <div><dt>Лучший стрик</dt><dd>${fmt(st.bjStreak || 0)}</dd></div>
+      </dl>
+      <h3 class="sl-kindh" style="margin-top:14px">Рулетка</h3>
+      <dl class="sl-statlist">
+        <div><dt>Вращений</dt><dd>${fmt(st.rouletteSpins || 0)}</dd></div>
+        <div><dt>Поставлено</dt><dd>${fmt(st.rouletteWagered || 0)} 🍓</dd></div>
+        <div><dt>Выиграно</dt><dd>${fmt(st.rouletteWon || 0)} 🍓</dd></div>
+        <div><dt>Счастливый Hot</dt><dd>${fmt(st.rouletteHotHits || 0)}</dd></div>
+        <div><dt>Выпадений Зеро</dt><dd>${fmt(st.rouletteZeros || 0)}</dd></div>
+      </dl>`;
   }
   function renderDaily() {
     const p = M.dailyPreview(S), today = M.dayKey(), yest = M.dayKey(M.addDay(new Date(), -1)), chain = S.lastDay === today || S.lastDay === yest ? S.streak : 0;
@@ -68,7 +96,7 @@ export function renderCollectionPage(initial = '') {
     $('#sl-album').innerHTML = `<div class="panel-head"><h2>Альбом и капсулы</h2><span class="sl-count">${p.have} из ${p.total}</span></div>
       <div class="sl-shelf"><div class="sl-caps">${icon('cap-common', 44)}${icon('cap-rare', 44)}${icon('cap-epic', 44)}${icon('cap-legendary', 44)}</div><div><b>Капсул: ${S.capsules}</b><small>Эпик гарантирован не позже ${M.pityOf(perksOf(H, S))}-й капсулы без него</small></div><button class="btn2 btn-primary" id="sl-opencap" type="button" ${S.capsules > 0 && !busy ? '' : 'disabled'}>Открыть капсулу</button></div>
       <div class="sl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${p.total}" aria-valuenow="${p.have}"><span style="width:${(100 * p.have / p.total).toFixed(1)}%"></span></div>
-      ${kinds.map(k => `<h3 class="sl-kindh">${KIND_NAME[k]}</h3><div class="sl-items">${M.CATALOG.filter(x => x.kind === k).map(x => { const n = S.album[x.id] | 0, eq = M.isEquipped(S, x.id); return `<div class="sl-item r-${x.rarity}${n ? ' is-own' : ''}"><span class="sl-itemic" aria-hidden="true">${n ? KIND_EMOJI[k] : '❔'}</span><strong>${n ? esc(x.name) : 'Ещё не найдено'}</strong><small>${n ? esc(x.desc) : esc(M.RARITY[x.rarity].name)}${n > 1 ? ` · ×${n}` : ''}</small>${n && M.EQUIPPABLE.includes(x.kind) ? `<button class="btn2" type="button" data-equip="${x.id}" ${eq ? 'disabled' : ''}>${eq ? 'Выбрано' : 'Выбрать'}</button>` : ''}${n && x.kind === 'palette' ? '<a class="btn2" href="#/settings">В настройки</a>' : ''}</div>`; }).join('')}</div>`).join('')}`;
+      ${kinds.map(k => `<h3 class="sl-kindh">${KIND_NAME[k]}</h3><div class="sl-items">${M.CATALOG.filter(x => x.kind === k).map(x => { const n = (S.album[x.id] | 0) || (M.FREE_ITEMS.includes(x.id) ? 1 : 0), eq = M.isEquipped(S, x.id); return `<div class="sl-item r-${x.rarity}${n ? ' is-own' : ''}"><span class="sl-itemic" aria-hidden="true">${n ? KIND_EMOJI[k] : '❔'}</span><strong>${n ? esc(x.name) : 'Ещё не найдено'}</strong><small>${n ? esc(x.desc) : esc(M.RARITY[x.rarity].name)}${n > 1 ? ` · ×${n}` : ''}</small>${n && M.EQUIPPABLE.includes(x.kind) ? (eq ? (x.kind === 'theme' || x.kind === 'title' ? '<button class="btn2" type="button" disabled>Выбрано</button>' : `<button class="btn2" type="button" data-unequip="${x.kind}">Снять</button>`) : `<button class="btn2" type="button" data-equip="${x.id}">Выбрать</button>`) : ''}${n && x.kind === 'palette' ? '<a class="btn2" href="#/settings">В настройки</a>' : ''}</div>`; }).join('')}</div>`).join('')}`;
   }
 
   const hud = () => {
@@ -123,6 +151,13 @@ export function renderCollectionPage(initial = '') {
     const id = btn.id;
     if (id === 'sl-claim') claimDaily(); else if (id === 'sl-wheelgo') guard(runWheel()); else if (id === 'sl-opencap') guard(openCapsuleUi());
     else if (btn.dataset.equip) { M.equipItem(S, btn.dataset.equip); save(); refresh(); }
+    else if (btn.dataset.unequip) {
+      const k = btn.dataset.unequip;
+      if (k === 'theme') S.theme = 'forest';
+      else if (k === 'title') S.title = 'title:newbie';
+      else if (S.equip) delete S.equip[k];
+      save(); refresh();
+    }
   });
   listen('keydown', e => {
     const t = e.target.closest && e.target.closest('[role=tab]'); if (!t) return;

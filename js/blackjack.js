@@ -59,11 +59,19 @@ export function renderBlackjackPage() {
       <div class="bj-perks-bar" id="bj-perks-bar"></div>
 
       <div class="bj-hand-section bj-dealer-section">
+        <div class="bj-dealer-wrap">
+          <div class="bj-dealer-art">
+            <span class="bj-dealer-pic" aria-hidden="true">🦔</span>
+            <span class="bj-dealer-title">Крупье-ёжик</span>
+          </div>
+          <div class="bj-dealer-bubble" id="bj-dealer-bubble" role="status">Фыр! Делайте ставку и погнали.</div>
+        </div>
         <div class="bj-hand-header">
-          <div class="bj-avatar">🦔 <span class="bj-hand-label">Крупье-ёжик</span></div>
+          <span class="bj-hand-label">Карты дилера</span>
           <span class="bj-score" id="bj-dealer-score" aria-live="polite"></span>
         </div>
         <div class="bj-cards" id="bj-dealer-cards" role="region" aria-label="Карты дилера"></div>
+        <div class="bj-dealer-hint" id="bj-dealer-hint" style="font-size:.8rem;color:#ffe97a;display:none;margin-top:4px"></div>
       </div>
 
       <div class="bj-status-wrap">
@@ -112,14 +120,24 @@ export function renderBlackjackPage() {
     }
   }
 
-  function renderCard(card, faceDown = false) {
+  function dealerSay(msg) {
+    const el = $('#bj-dealer-bubble');
+    if (el) {
+      el.textContent = msg;
+      el.classList.remove('sl-pop');
+      void el.offsetWidth;
+      el.classList.add('sl-pop');
+    }
+  }
+
+  function renderCard(card, faceDown = false, isNew = false) {
     if (faceDown) {
-      return '<div class="bj-card is-facedown ct-cardback" role="img" aria-label="Закрытая карта"></div>';
+      return '<div class="bj-card is-facedown ct-cardback' + (isNew ? ' is-dealing' : '') + '" role="img" aria-label="Закрытая карта"></div>';
     }
     const r = card.r, s = card.s;
     const rank = B.rankLabel(r), suit = B.SUITS[s] || '♠';
     const isRed = s === 1 || s === 2;
-    return `<div class="bj-card ${isRed ? 'is-red' : ''}" role="img" aria-label="${rank} ${suit}">`
+    return `<div class="bj-card ${isRed ? 'is-red' : ''} ${isNew ? 'is-dealing' : ''}" role="img" aria-label="${rank} ${suit}">`
       + `<div class="bj-card-corner top"><b>${rank}</b><i>${suit}</i></div>`
       + `<div class="bj-card-center">${r >= 11 ? rank : suit}</div>`
       + `<div class="bj-card-corner btm"><b>${rank}</b><i>${suit}</i></div>`
@@ -160,16 +178,27 @@ export function renderBlackjackPage() {
       $('#bj-player-cards').innerHTML = '<div class="bj-placeholder">Ожидание ставки…</div>';
       $('#bj-dealer-score').textContent = '';
       $('#bj-player-score').textContent = '';
+      const hHint = $('#bj-dealer-hint'); if (hHint) hHint.style.display = 'none';
       return;
     }
 
     const dCards = currentRound.dealer || [];
-    $('#bj-dealer-cards').innerHTML = dCards.map((c, i) => renderCard(c, i === 1 && !dealerRevealed)).join('');
+    $('#bj-dealer-cards').innerHTML = dCards.map((c, i) => renderCard(c, i === 1 && !dealerRevealed, true)).join('');
     $('#bj-dealer-score').textContent = formatScore(dCards, !dealerRevealed);
 
     const pCards = currentRound.player || [];
-    $('#bj-player-cards').innerHTML = pCards.map(c => renderCard(c, false)).join('');
+    $('#bj-player-cards').innerHTML = pCards.map(c => renderCard(c, false, true)).join('');
     $('#bj-player-score').textContent = formatScore(pCards, false);
+
+    const hHint = $('#bj-dealer-hint');
+    if (hHint) {
+      if (S.equip && S.equip.cardback === 'cardback:marked' && !dealerRevealed && dCards.length >= 2) {
+        hHint.style.display = 'block';
+        hHint.textContent = '🂠 Меченая рубашка: вероятность 10-ки у крупье ≈ 30.8%';
+      } else {
+        hHint.style.display = 'none';
+      }
+    }
     updateShoePill();
   }
 
@@ -246,6 +275,7 @@ export function renderBlackjackPage() {
     } else {
       busy = false;
       const pVal = B.handValue(currentRound.player).total;
+      dealerSay(`У вас ${pVal}. Карта [H] или хватит [S]?`);
       setOutcome(`Ваш ход: у вас ${pVal}. Взять карту [H] или остановиться [S]?`);
       renderActions();
     }
@@ -256,6 +286,7 @@ export function renderBlackjackPage() {
     busy = true; renderActions();
     B.hit(currentRound, shoe);
     audio.deal();
+    dealerSay('Ещё одну? Аккуратнее!');
     renderHands();
     await wait(180);
 
@@ -272,6 +303,7 @@ export function renderBlackjackPage() {
   async function doStand() {
     if (busy || !inHand || !currentRound || currentRound.done) return;
     busy = true; renderActions();
+    dealerSay('Хватит так хватит. Смотрим карты…');
     setOutcome('Дилер открывает карты…');
 
     // Запоминаем карты дилера до добора
@@ -310,6 +342,20 @@ export function renderBlackjackPage() {
     S.stats.won = (S.stats.won | 0) + pay;
     S.stats.bjBiggest = Math.max(S.stats.bjBiggest | 0, pay);
     S.stats.biggest = Math.max(S.stats.biggest | 0, pay);
+
+    if (currentRound.outcome === 'charlie') {
+      dealerSay('Пять карт без перебора?! Настоящий Чарли!');
+    } else if (currentRound.outcome === 'blackjack' || currentRound.outcome === 'suited-blackjack') {
+      dealerSay('Чистые 21! Блэкджек у игрока! Фыр!');
+    } else if (currentRound.mult > 0) {
+      dealerSay('Твоя взяла! Забирай ягоды.');
+    } else if (currentRound.mult === 0) {
+      dealerSay('Ничья! Ставки возвращаются.');
+    } else if (currentRound.outcome === 'bust') {
+      dealerSay('Многовато будет. Перебор!');
+    } else {
+      dealerSay('В этот раз банк забирает крупье. Фыр!');
+    }
 
     if (currentRound.mult > 0) {
       award('bj_win');

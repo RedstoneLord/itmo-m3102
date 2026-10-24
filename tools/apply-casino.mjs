@@ -472,7 +472,7 @@ steps.push({
   id: 2, name: 'Slots math: new symbols, capsule, seven row, calibration',
   run(ctx) {
     const F = 'js/slots-math.js';
-    const edit = (tag, anchor, repl) => ctx.replaceOnce(F, anchor, repl, { done: 'casino:step2 ' + tag });
+    const edit = (tag, anchor, repl) => ctx.replaceOnce(F, anchor, repl, { done: repl.includes('casino:step9') ? 'casino:step9 ' + tag : 'casino:step2 ' + tag });
 
     edit('SYMBOLS',
       "export const SYMBOLS = ['berry', 'apple', 'mush', 'git', 'orange', 'cpp', 'rust', 'pi', 'hog', 'king', 'wild', 'scatter', 'bonus'];",
@@ -602,7 +602,7 @@ steps.push({
       statsAnchor.replace('poked: 0', 'poked: 0, capsuleSyms: 0 /* casino:step2 STATS */'));
 
     // ---- tests: границы RTP и новый файл ----
-    const T = 'tests/slots.mjs', tedit = (tag, a, r) => ctx.replaceOnce(T, a, r, { done: 'casino:step2 ' + tag });
+    const T = 'tests/slots.mjs', tedit = (tag, a, r) => ctx.replaceOnce(T, a, r, { done: tag });
     tedit('T-TITLE',
       "test('RTP ≈ 96–97.8%, частота выигрышей 24–31%, миллионы спинов (SLOTS_FAST — быстрая версия)', () => {",
       "test('RTP ≈ 101.5–102.5% (casino:step2 T-TITLE), частота выигрышей 23–34%, миллионы спинов (SLOTS_FAST — быстрая версия)', () => {");
@@ -1040,7 +1040,7 @@ steps.push({
     const albumProgressAnchor = ctx.read(M).includes('export const albumProgress = S => ({\n  have: CATALOG.filter(x => S.album[x.id]).length,\n  total: CATALOG.length\n});')
       ? 'export const albumProgress = S => ({\n  have: CATALOG.filter(x => S.album[x.id]).length,\n  total: CATALOG.length\n});'
       : 'export const albumProgress = S => ({ have: CATALOG.filter(x => S.album[x.id]).length, total: CATALOG.length });';
-    ctx.insertAfter(M, albumProgressAnchor, '\n' + S3_PERKS);
+    ctx.insertAfter(M, albumProgressAnchor, '\n' + S3_PERKS, { done: 'casino:step3 PERKS' });
     // NOTE(step9): поддержка многострочного equip в newSlotsState
     const equipAnchor = ctx.read(M).includes("title: '',\n    theme: 'forest',\n    hist: []\n  };")
       ? "title: '',\n    theme: 'forest',\n    hist: []\n  };"
@@ -1065,29 +1065,33 @@ steps.push({
       + '    if (pk > 1) { res.win = Math.min(MAX_WIN, res.win * pk); parts.base = res.win * bet; parts.fs = Math.min(MAX_WIN * bet, parts.fs * pk); parts.pick = Math.min(MAX_WIN * bet, parts.pick * pk); } }\n  ');
 
     /* ---- slots.js ---- */
-    edit(U, 'KIND_EMOJI', 'const KIND_EMOJI = {', "const KIND_EMOJI = { cardback: '🂠', chips: '⚪', felt: '🟩', emote: '🦔', perkcharm: '🍀', /* casino:step3 KIND_EMOJI */");
-    edit(U, 'KIND_NAME', 'const KIND_NAME = {', "const KIND_NAME = { cardback: 'Рубашки карт', chips: 'Фишки', felt: 'Сукно столов', emote: 'Эмоции ёжика', perkcharm: 'Талисманы', /* casino:step3 KIND_NAME */");
-    edit(U, 'THEME_CLASS', 'const THEME_CLASS = {', "const THEME_CLASS = { 'theme:velvet': 'th-velvet', 'theme:arcade': 'th-arcade', 'theme:vault': 'th-vault', /* casino:step3 THEME_CLASS */");
-    ctx.insertAfter(U, "{ id: 'picker', name: 'Ягодный сборщик', desc: 'Набери в поляне от 20× ставки' },", S3_ACH);
-    edit(U, 'PERKSOF',
-      "export const perksOf = H => ({ wizard: H.hat === 'wizard', crown: H.hat === 'crown', foil: H.hat === 'foil', halo: H.hat === 'halo' });",
-      'export const perksOf = (H, S) => M.activePerks(S, H); /* casino:step3 PERKSOF — S нужен для перков предметов */');
-    edit(U, 'ROLL', 'M.rollRound(rng, S, betEff, perksOf(H), { paid: !free })', 'M.rollRound(rng, S, betEff, perksOf(H, S), { paid: !free })');
-    edit(U, 'DAILYCALL', 'M.dailyClaim(S, new Date(), perksOf(H))', 'M.dailyClaim(S, new Date(), perksOf(H, S))');
-    edit(U, 'OPENCAP', 'M.openCapsule(rng, S);', 'M.openCapsule(rng, S, perksOf(H, S));');
-    edit(U, 'DAILYUI', "${n}${perksOf(H).crown && i === 6 ? '+1' : ''}</b>", "${n + (perksOf(H, S).dailyExtra | 0)}${perksOf(H).crown && i === 6 ? '+1' : ''}</b>");
-    edit(U, 'HINT1', 'perksOf(H).halo && S.hist.length ?', 'perksOf(H, S).gambleHint > 0 && S.hist.length ?');
-    edit(U, 'HINT2', 'Нимб подсказывает прошлые карты: ${S.hist.slice(-5).map(cardHtml)', 'Подсказка — прошлые карты: ${S.hist.slice(-perksOf(H, S).gambleHint).map(cardHtml)');
-    edit(U, 'PITYUI', '${M.PITY_CAPSULES}-й капсулы', '${M.pityOf(perksOf(H, S))}-й капсулы');
-    edit(U, 'GRANT', 'toast(`🎩 Все шляпы собраны! Титул «${itemName(id)}»`);', 'toast(`🏅 Собран набор! Титул «${itemName(id)}»`);');
-    edit(U, 'KINDS', "kinds = ['hat', 'palette', 'greeting', 'boost', 'title', 'theme'];", "kinds = ['hat', 'palette', 'greeting', 'boost', 'title', 'theme', 'cardback', 'chips', 'felt', 'emote', 'perkcharm'];");
-    edit(U, 'EQ1', 'eq = S.title === x.id || S.theme === x.id;', 'eq = M.isEquipped(S, x.id);');
-    edit(U, 'EQ2', "${n && (x.kind === 'title' || x.kind === 'theme') ? ", '${n && M.EQUIPPABLE.includes(x.kind) ? ');
-    edit(U, 'EQ3', "{ const it = M.ITEM[btn.dataset.equip]; if (it.kind === 'title') S.title = it.id; else S.theme = it.id; save(); refresh(); }", '{ M.equipItem(S, btn.dataset.equip); save(); refresh(); /* casino:step3 EQ3 */ }');
-    ctx.insertAfter(U, "if (res.lines.some(l => l.count === 5 && l.sym === 'orange')) award('orange_king');",
-      "\n      if (res.lines.some(l => l.count === 5 && l.sym === 'claude')) award('five_claude'); /* casino:step3 AWARDS */\n"
-      + "      if (res.lines.some(l => l.count === 5 && l.sym === 'itmo')) award('five_itmo');\n"
-      + "      if (res.sevenRow) award('seven_row');\n      if (res.capsules) award('capsule_sym');");
+    if (!ctx.read(U).includes('casino:step5')) {
+      edit(U, 'KIND_EMOJI', 'const KIND_EMOJI = {', "const KIND_EMOJI = { cardback: '🂠', chips: '⚪', felt: '🟩', emote: '🦔', perkcharm: '🍀', /* casino:step3 KIND_EMOJI */");
+      edit(U, 'KIND_NAME', 'const KIND_NAME = {', "const KIND_NAME = { cardback: 'Рубашки карт', chips: 'Фишки', felt: 'Сукно столов', emote: 'Эмоции ёжика', perkcharm: 'Талисманы', /* casino:step3 KIND_NAME */");
+      edit(U, 'THEME_CLASS', 'const THEME_CLASS = {', "const THEME_CLASS = { 'theme:velvet': 'th-velvet', 'theme:arcade': 'th-arcade', 'theme:vault': 'th-vault', /* casino:step3 THEME_CLASS */");
+      ctx.insertAfter(U, "{ id: 'picker', name: 'Ягодный сборщик', desc: 'Набери в поляне от 20× ставки' },", S3_ACH);
+      edit(U, 'PERKSOF',
+        "export const perksOf = H => ({ wizard: H.hat === 'wizard', crown: H.hat === 'crown', foil: H.hat === 'foil', halo: H.hat === 'halo' });",
+        'export const perksOf = (H, S) => M.activePerks(S, H); /* casino:step3 PERKSOF — S нужен для перков предметов */');
+      edit(U, 'ROLL', 'M.rollRound(rng, S, betEff, perksOf(H), { paid: !free })', 'M.rollRound(rng, S, betEff, perksOf(H, S), { paid: !free })');
+      edit(U, 'DAILYCALL', 'M.dailyClaim(S, new Date(), perksOf(H))', 'M.dailyClaim(S, new Date(), perksOf(H, S))');
+      edit(U, 'OPENCAP', 'M.openCapsule(rng, S);', 'M.openCapsule(rng, S, perksOf(H, S));');
+      edit(U, 'DAILYUI', "${n}${perksOf(H).crown && i === 6 ? '+1' : ''}</b>", "${n + (perksOf(H, S).dailyExtra | 0)}${perksOf(H).crown && i === 6 ? '+1' : ''}</b>");
+      edit(U, 'HINT1', 'perksOf(H).halo && S.hist.length ?', 'perksOf(H, S).gambleHint > 0 && S.hist.length ?');
+      edit(U, 'HINT2', 'Нимб подсказывает прошлые карты: ${S.hist.slice(-5).map(cardHtml)', 'Подсказка — прошлые карты: ${S.hist.slice(-perksOf(H, S).gambleHint).map(cardHtml)');
+      edit(U, 'PITYUI', '${M.PITY_CAPSULES}-й капсулы', '${M.pityOf(perksOf(H, S))}-й капсулы');
+      edit(U, 'GRANT', 'toast(`🎩 Все шляпы собраны! Титул «${itemName(id)}»`);', 'toast(`🏅 Собран набор! Титул «${itemName(id)}»`);');
+      edit(U, 'KINDS', "kinds = ['hat', 'palette', 'greeting', 'boost', 'title', 'theme'];", "kinds = ['hat', 'palette', 'greeting', 'boost', 'title', 'theme', 'cardback', 'chips', 'felt', 'emote', 'perkcharm'];");
+      edit(U, 'EQ1', 'eq = S.title === x.id || S.theme === x.id;', 'eq = M.isEquipped(S, x.id);');
+      edit(U, 'EQ2', "${n && (x.kind === 'title' || x.kind === 'theme') ? ", '${n && M.EQUIPPABLE.includes(x.kind) ? ');
+      edit(U, 'EQ3', "{ const it = M.ITEM[btn.dataset.equip]; if (it.kind === 'title') S.title = it.id; else S.theme = it.id; save(); refresh(); }", '{ M.equipItem(S, btn.dataset.equip); save(); refresh(); /* casino:step3 EQ3 */ }');
+    }
+    if (!ctx.read(U).includes('casino:step3 AWARDS')) {
+      ctx.insertAfter(U, "if (res.lines.some(l => l.count === 5 && l.sym === 'orange')) award('orange_king');",
+        "\n      if (res.lines.some(l => l.count === 5 && l.sym === 'claude')) award('five_claude'); /* casino:step3 AWARDS */\n"
+        + "      if (res.lines.some(l => l.count === 5 && l.sym === 'itmo')) award('five_itmo');\n"
+        + "      if (res.sevenRow) award('seven_row');\n      if (res.capsules) award('capsule_sym');");
+    }
 
     /* ---- игра «Ёжик» (index.html): шляпа hat:luckyseven ---- */
     edit('index.html', 'HATS',
@@ -2007,15 +2011,19 @@ steps.push({
 
     // 4. index.html
     ctx.insertAfter(HTML, "import { renderSlotsPage, installSlots } from './js/slots.js';",
-      "\n    import { renderCasinoPage } from './js/casino.js'; /* casino:step5 */\n    import { renderCollectionPage } from './js/casino-collection.js';\n    import { renderBlackjackPage } from './js/blackjack.js';\n    import { renderRoulettePage } from './js/roulette.js';");
-    ctx.insertAfter(HTML, '<link rel="stylesheet" href="./css/slots.css">', '\n    <link rel="stylesheet" href="./css/casino.css">\n    <link rel="stylesheet" href="./css/casino-themes.css">');
+      "\n    import { renderCasinoPage } from './js/casino.js'; /* casino:step5 */\n    import { renderCollectionPage } from './js/casino-collection.js';\n    import { renderBlackjackPage } from './js/blackjack.js';\n    import { renderRoulettePage } from './js/roulette.js';",
+      { done: 'renderCasinoPage' });
+    ctx.insertAfter(HTML, '<link rel="stylesheet" href="./css/slots.css">', '\n    <link rel="stylesheet" href="./css/casino.css">\n    <link rel="stylesheet" href="./css/casino-themes.css">',
+      { done: 'css/casino.css' });
     ctx.insertAfter(HTML, "if(h==='slots')return{mode:'slots',path:''};",
-      "\n      if(h==='casino')return{mode:'casino',path:''};\n      if(h==='blackjack')return{mode:'blackjack',path:''};\n      if(h==='roulette')return{mode:'roulette',path:''};\n      if(h==='collection'||h.startsWith('collection/'))return{mode:'collection',path:h.slice(11)};");
+      "\n      if(h==='casino')return{mode:'casino',path:''};\n      if(h==='blackjack')return{mode:'blackjack',path:''};\n      if(h==='roulette')return{mode:'roulette',path:''};\n      if(h==='collection'||h.startsWith('collection/'))return{mode:'collection',path:h.slice(11)};",
+      { done: "mode:'casino'" });
     ctx.replaceOnce(HTML, "['diagrams','memes','hedgehog','slots','other','students','settings'].includes(mode)",
       "['diagrams','memes','hedgehog','slots','casino','blackjack','roulette','collection','other','students','settings'].includes(mode)");
     ctx.replaceOnce(HTML, 'settings:4,slots:4}', 'settings:4,slots:4,casino:4,blackjack:4,roulette:4,collection:4}');
     ctx.insertAfter(HTML, "else if(mode==='slots')renderSlotsPage();",
-      "\n  else if(mode==='casino')renderCasinoPage();\n  else if(mode==='blackjack')renderBlackjackPage();\n  else if(mode==='roulette')renderRoulettePage();\n  else if(mode==='collection')renderCollectionPage(path);");
+      "\n  else if(mode==='casino')renderCasinoPage();\n  else if(mode==='blackjack')renderBlackjackPage();\n  else if(mode==='roulette')renderRoulettePage();\n  else if(mode==='collection')renderCollectionPage(path);",
+      { done: 'renderCasinoPage();' });
     ctx.replaceOnce(HTML,
       '<a class="card" data-go="slots"><div class="ic">${ic(\'sparkles\',22)}</div><div class="meta"><div class="name">Колючий куш</div><div class="desc">Слоты на ягоды ёжика, капсулы и альбом</div></div></a>',
       '<a class="card" data-go="casino"><div class="ic">${ic(\'sparkles\',22)}</div><div class="meta"><div class="name">Казино</div><div class="desc">Слоты, блэкджек и рулетка на ягоды ёжика</div></div></a>\n          <a class="card" data-go="collection"><div class="ic">${ic(\'trophy\',22)}</div><div class="meta"><div class="name">Коллекция</div><div class="desc">Капсулы, альбом, ежедневные спины и достижения</div></div></a>');
@@ -3201,7 +3209,8 @@ steps.push({
 
 // ===== STEP 8: Blackjack and roulette UIs =====
 const S8_DEC = s => s.replaceAll('@@DS@@', '${').replaceAll('@@BT@@', '`');
-const S8_BJ = S8_DEC(String.raw`/*
+const S8_BJ = S8_DEC(String.raw`/* casino:step8 */
+/*
   Блэкджек (#/blackjack): двадцать одно против крупье-ёжика.
   Математика — js/blackjack-math.js, HUD и звук — casino-common.js, темы — casino-themes.js.
   Дисциплина сохранения: результат раунда вычисляется и сохраняется СРАЗУ (H.berries, S.stats, S.capsules),
@@ -3261,11 +3270,19 @@ export function renderBlackjackPage() {
       <div class="bj-perks-bar" id="bj-perks-bar"></div>
 
       <div class="bj-hand-section bj-dealer-section">
+        <div class="bj-dealer-wrap">
+          <div class="bj-dealer-art">
+            <span class="bj-dealer-pic" aria-hidden="true">🦔</span>
+            <span class="bj-dealer-title">Крупье-ёжик</span>
+          </div>
+          <div class="bj-dealer-bubble" id="bj-dealer-bubble" role="status">Фыр! Делайте ставку и погнали.</div>
+        </div>
         <div class="bj-hand-header">
-          <div class="bj-avatar">🦔 <span class="bj-hand-label">Крупье-ёжик</span></div>
+          <span class="bj-hand-label">Карты дилера</span>
           <span class="bj-score" id="bj-dealer-score" aria-live="polite"></span>
         </div>
         <div class="bj-cards" id="bj-dealer-cards" role="region" aria-label="Карты дилера"></div>
+        <div class="bj-dealer-hint" id="bj-dealer-hint" style="font-size:.8rem;color:#ffe97a;display:none;margin-top:4px"></div>
       </div>
 
       <div class="bj-status-wrap">
@@ -3314,14 +3331,24 @@ export function renderBlackjackPage() {
     }
   }
 
-  function renderCard(card, faceDown = false) {
+  function dealerSay(msg) {
+    const el = $('#bj-dealer-bubble');
+    if (el) {
+      el.textContent = msg;
+      el.classList.remove('sl-pop');
+      void el.offsetWidth;
+      el.classList.add('sl-pop');
+    }
+  }
+
+  function renderCard(card, faceDown = false, isNew = false) {
     if (faceDown) {
-      return '<div class="bj-card is-facedown ct-cardback" role="img" aria-label="Закрытая карта"></div>';
+      return '<div class="bj-card is-facedown ct-cardback' + (isNew ? ' is-dealing' : '') + '" role="img" aria-label="Закрытая карта"></div>';
     }
     const r = card.r, s = card.s;
     const rank = B.rankLabel(r), suit = B.SUITS[s] || '♠';
     const isRed = s === 1 || s === 2;
-    return @@BT@@<div class="bj-card @@DS@@isRed ? 'is-red' : ''}" role="img" aria-label="@@DS@@rank} @@DS@@suit}">@@BT@@
+    return @@BT@@<div class="bj-card @@DS@@isRed ? 'is-red' : ''} @@DS@@isNew ? 'is-dealing' : ''}" role="img" aria-label="@@DS@@rank} @@DS@@suit}">@@BT@@
       + @@BT@@<div class="bj-card-corner top"><b>@@DS@@rank}</b><i>@@DS@@suit}</i></div>@@BT@@
       + @@BT@@<div class="bj-card-center">@@DS@@r >= 11 ? rank : suit}</div>@@BT@@
       + @@BT@@<div class="bj-card-corner btm"><b>@@DS@@rank}</b><i>@@DS@@suit}</i></div>@@BT@@
@@ -3362,16 +3389,27 @@ export function renderBlackjackPage() {
       $('#bj-player-cards').innerHTML = '<div class="bj-placeholder">Ожидание ставки…</div>';
       $('#bj-dealer-score').textContent = '';
       $('#bj-player-score').textContent = '';
+      const hHint = $('#bj-dealer-hint'); if (hHint) hHint.style.display = 'none';
       return;
     }
 
     const dCards = currentRound.dealer || [];
-    $('#bj-dealer-cards').innerHTML = dCards.map((c, i) => renderCard(c, i === 1 && !dealerRevealed)).join('');
+    $('#bj-dealer-cards').innerHTML = dCards.map((c, i) => renderCard(c, i === 1 && !dealerRevealed, true)).join('');
     $('#bj-dealer-score').textContent = formatScore(dCards, !dealerRevealed);
 
     const pCards = currentRound.player || [];
-    $('#bj-player-cards').innerHTML = pCards.map(c => renderCard(c, false)).join('');
+    $('#bj-player-cards').innerHTML = pCards.map(c => renderCard(c, false, true)).join('');
     $('#bj-player-score').textContent = formatScore(pCards, false);
+
+    const hHint = $('#bj-dealer-hint');
+    if (hHint) {
+      if (S.equip && S.equip.cardback === 'cardback:marked' && !dealerRevealed && dCards.length >= 2) {
+        hHint.style.display = 'block';
+        hHint.textContent = '🂠 Меченая рубашка: вероятность 10-ки у крупье ≈ 30.8%';
+      } else {
+        hHint.style.display = 'none';
+      }
+    }
     updateShoePill();
   }
 
@@ -3448,6 +3486,7 @@ export function renderBlackjackPage() {
     } else {
       busy = false;
       const pVal = B.handValue(currentRound.player).total;
+      dealerSay(@@BT@@У вас @@DS@@pVal}. Карта [H] или хватит [S]?@@BT@@);
       setOutcome(@@BT@@Ваш ход: у вас @@DS@@pVal}. Взять карту [H] или остановиться [S]?@@BT@@);
       renderActions();
     }
@@ -3458,6 +3497,7 @@ export function renderBlackjackPage() {
     busy = true; renderActions();
     B.hit(currentRound, shoe);
     audio.deal();
+    dealerSay('Ещё одну? Аккуратнее!');
     renderHands();
     await wait(180);
 
@@ -3474,6 +3514,7 @@ export function renderBlackjackPage() {
   async function doStand() {
     if (busy || !inHand || !currentRound || currentRound.done) return;
     busy = true; renderActions();
+    dealerSay('Хватит так хватит. Смотрим карты…');
     setOutcome('Дилер открывает карты…');
 
     // Запоминаем карты дилера до добора
@@ -3512,6 +3553,20 @@ export function renderBlackjackPage() {
     S.stats.won = (S.stats.won | 0) + pay;
     S.stats.bjBiggest = Math.max(S.stats.bjBiggest | 0, pay);
     S.stats.biggest = Math.max(S.stats.biggest | 0, pay);
+
+    if (currentRound.outcome === 'charlie') {
+      dealerSay('Пять карт без перебора?! Настоящий Чарли!');
+    } else if (currentRound.outcome === 'blackjack' || currentRound.outcome === 'suited-blackjack') {
+      dealerSay('Чистые 21! Блэкджек у игрока! Фыр!');
+    } else if (currentRound.mult > 0) {
+      dealerSay('Твоя взяла! Забирай ягоды.');
+    } else if (currentRound.mult === 0) {
+      dealerSay('Ничья! Ставки возвращаются.');
+    } else if (currentRound.outcome === 'bust') {
+      dealerSay('Многовато будет. Перебор!');
+    } else {
+      dealerSay('В этот раз банк забирает крупье. Фыр!');
+    }
 
     if (currentRound.mult > 0) {
       award('bj_win');
@@ -3653,7 +3708,8 @@ export function renderBlackjackPage() {
   renderActions();
 }
 `);
-const S8_ROU = S8_DEC(String.raw`/*
+const S8_ROU = S8_DEC(String.raw`/* casino:step8 */
+/*
   Рулетка (#/roulette): европейская рулетка на виртуальные ягоды.
   Математика — js/roulette-math.js, HUD и звук — casino-common.js, темы — casino-themes.js.
   Дисциплина сохранения: результат спина считается и сохраняется СРАЗУ (H.berries, S.stats, S.capsules),
@@ -3669,6 +3725,7 @@ import {
   toast, clearToasts,
   renderHud, getAudio,
   makeTimers, makeFx, makeAwards,
+  stepBet,
   ACH
 } from './casino-common.js';
 import { applyCasinoTheme, chipTier } from './casino-themes.js';
@@ -3685,6 +3742,7 @@ export function renderRoulettePage() {
   let bets = new Map();
   let lastBets = null;
   let rotorAngle = 0;
+  let removeMode = false;
 
   const { later, wait, guard, destroy: stopTimers } = makeTimers(() => dead);
   const fx = makeFx(), burst = (n, kind) => fx.burst(n, kind);
@@ -3705,56 +3763,59 @@ export function renderRoulettePage() {
     <div class="intro cs-intro">
       <span class="sched-eyebrow">ВИРТУАЛЬНЫЙ ЗАЛ · М3102</span>
       <h1>Рулетка</h1>
-      <p class="sub">Европейское колесо, шарик и ставки на числа и шансы.</p>
+      <p class="sub">Европейское колесо слева, шарик и ставки на числа и шансы.</p>
     </div>
 
     <div id="ro-hud-host"></div>
 
-    <div class="ro-top-row">
-      <div class="ro-wheel-box ct-felt">
-        <div class="ro-wheel-wrap" id="ro-wheel-wrap">
-          @@DS@@buildWheelSvg()}
-          <div class="ro-wheel-center">
-            <span class="ro-last-num" id="ro-last-num">—</span>
+    <div class="ro-main-layout">
+      <div class="ro-left-col">
+        <div class="ro-wheel-box ct-felt">
+          <div class="ro-wheel-wrap" id="ro-wheel-wrap">
+            @@DS@@buildWheelSvg()}
+            <div class="ro-wheel-center">
+              <span class="ro-last-num" id="ro-last-num">—</span>
+            </div>
+          </div>
+          <div class="ro-hot-badge" id="ro-hot-badge" hidden>
+            <span class="ro-hot-txt" id="ro-hot-txt">🔥 Горячее число: —</span>
           </div>
         </div>
-        <div class="ro-hot-badge" id="ro-hot-badge" hidden>
-          <span class="ro-hot-txt" id="ro-hot-txt">🔥 Горячее число: —</span>
-        </div>
-      </div>
 
-      <div class="ro-side-box">
         <div class="ro-hist-box">
           <span class="ro-hist-title">Последние 10 чисел:</span>
           <div class="ro-hist-list" id="ro-hist-list" role="region" aria-label="История выпавших чисел"></div>
         </div>
         <div class="ro-perks-bar" id="ro-perks-bar"></div>
       </div>
-    </div>
 
-    <div class="ro-table ct-felt" id="ro-table" role="grid" aria-label="Игровой стол рулетки">
-      @@DS@@buildTableHtml()}
-    </div>
+      <div class="ro-right-col">
+        <div class="ro-table ct-felt" id="ro-table" role="grid" aria-label="Игровой стол рулетки">
+          @@DS@@buildTableHtml()}
+        </div>
 
-    <div class="ro-controls-row">
-      <div class="ro-chip-selector" id="ro-chips" role="radiogroup" aria-label="Номинал фишки">
-        <span class="ro-chip-label">Фишка:</span>
-        @@DS@@[1, 5, 25, 100, 500].map(val => @@BT@@<button type="button" class="ct-chip ro-chip-btn @@DS@@val === currentChip ? 'is-selected' : ''}" data-tier="@@DS@@chipTier(val)}" data-chip-val="@@DS@@val}" aria-label="Фишка @@DS@@val}">@@DS@@val >= 1000 ? (val/1000) + 'k' : val}</button>@@BT@@).join('')}
+        <div class="ro-controls-row">
+          <div class="ro-chip-selector" id="ro-chips" role="radiogroup" aria-label="Номинал фишки">
+            <span class="ro-chip-label">Фишка:</span>
+            @@DS@@[1, 5, 25, 100, 500].map(val => @@BT@@<button type="button" class="ct-chip ro-chip-btn @@DS@@val === currentChip ? 'is-selected' : ''}" data-tier="@@DS@@chipTier(val)}" data-chip-val="@@DS@@val}" aria-label="Фишка @@DS@@val}">@@DS@@val >= 1000 ? (val/1000) + 'k' : val}</button>@@BT@@).join('')}
+          </div>
+
+          <div class="ro-stake-stat">
+            <span>Ставок на столе:</span>
+            <b id="ro-total-stake">0 🍓</b>
+          </div>
+
+          <div class="ro-btns">
+            <button class="btn2 ro-mode-btn" id="ro-mode-remove" type="button" aria-pressed="false">Снять ставку</button>
+            <button class="btn2" id="ro-rebet" type="button" disabled>Повторить</button>
+            <button class="btn2" id="ro-clear" type="button" disabled>Очистить</button>
+            <button class="btn2 btn-primary ro-spin-btn" id="ro-spin" type="button" disabled>Крутить колесо</button>
+          </div>
+        </div>
+
+        <div class="ro-summary" id="ro-summary" role="status" aria-live="polite" hidden></div>
       </div>
-
-      <div class="ro-stake-stat">
-        <span>Ставок на столе:</span>
-        <b id="ro-total-stake">0 🍓</b>
-      </div>
-
-      <div class="ro-btns">
-        <button class="btn2" id="ro-rebet" type="button" disabled>Повторить ставки</button>
-        <button class="btn2" id="ro-clear" type="button" disabled>Очистить</button>
-        <button class="btn2 btn-primary ro-spin-btn" id="ro-spin" type="button" disabled>Крутить колесо</button>
-      </div>
     </div>
-
-    <div class="ro-summary" id="ro-summary" role="status" aria-live="polite" hidden></div>
 
     <dialog id="ro-dlg" class="app-dialog ro-dlg"></dialog>
   </section>@@BT@@;
@@ -3847,7 +3908,7 @@ export function renderRoulettePage() {
     if (curStake === 0) {
       nextStake = currentChip;
     } else {
-      nextStake = M.stepBet ? M.stepBet(curStake, 1) : curStake + currentChip;
+      nextStake = typeof stepBet === 'function' ? stepBet(curStake, 1) : curStake + currentChip;
     }
 
     const delta = nextStake - curStake;
@@ -3867,7 +3928,7 @@ export function renderRoulettePage() {
     const key = @@BT@@@@DS@@type}:@@DS@@Array.isArray(arg) ? arg.join('-') : arg}@@BT@@;
     const existing = bets.get(key);
     if (!existing) return;
-    const nextStake = M.stepBet ? M.stepBet(existing.stake, -1) : existing.stake - currentChip;
+    const nextStake = typeof stepBet === 'function' ? stepBet(existing.stake, -1) : existing.stake - currentChip;
     if (nextStake <= 0) {
       bets.delete(key);
     } else {
@@ -3938,13 +3999,22 @@ export function renderRoulettePage() {
     // Сохраняем немедленно!
     save();
 
-    // Анимация вращения колеса
+    // Показываем горячее число перед началом вращения!
+    const hotEl = $('#ro-hot-badge');
+    const hotTxt = $('#ro-hot-txt');
+    if (hotEl && hotTxt) {
+      hotEl.hidden = false;
+      hotEl.classList.remove('is-hit');
+      hotTxt.textContent = @@BT@@🔥 Горячее число: @@DS@@spinRes.hot}@@BT@@;
+    }
+
+    // Анимация вращения колеса: абсолютное совмещение сектора со стрелкой
     const rotor = $('#ro-wheel-rotor');
     const numIdx = WHEEL_ORDER.indexOf(spinRes.n);
     const step = 360 / 37;
-    // Целевой угол поворота
-    const targetDeg = 360 * 6 - (numIdx * step);
-    rotorAngle = (rotorAngle || 0) + targetDeg;
+    const currentTurns = Math.floor((rotorAngle || 0) / 360);
+    const targetMod = (360 - numIdx * step) % 360;
+    rotorAngle = (currentTurns + 6) * 360 + targetMod;
 
     if (reduce()) {
       if (rotor) rotor.style.transform = @@BT@@rotate(@@DS@@rotorAngle}deg)@@BT@@;
@@ -3971,11 +4041,8 @@ export function renderRoulettePage() {
       numEl.className = @@BT@@ro-last-num is-@@DS@@winCol}@@BT@@;
     }
 
-    // Показываем горячее число
-    const hotEl = $('#ro-hot-badge');
-    const hotTxt = $('#ro-hot-txt');
+    // Обновляем статус горячего числа
     if (hotEl && hotTxt) {
-      hotEl.hidden = false;
       const isHotHit = spinRes.n === spinRes.hot;
       hotTxt.textContent = @@BT@@🔥 Горячее число: @@DS@@spinRes.hot}@@DS@@isHotHit ? ' — СЫГРАЛО (выплаты ×3.5)!' : ''}@@BT@@;
       hotEl.classList.toggle('is-hit', isHotHit);
@@ -4080,7 +4147,7 @@ export function renderRoulettePage() {
       const type = cell.dataset.cell;
       let arg = cell.dataset.arg;
       if (type === 'straight' || type === 'column' || type === 'dozen') arg = Number(arg);
-      if (e.shiftKey) removeBet(type, arg);
+      if (removeMode || e.shiftKey) removeBet(type, arg);
       else addBet(type, arg);
       return;
     }
@@ -4095,6 +4162,13 @@ export function renderRoulettePage() {
       btn.textContent = @@BT@@Звук: @@DS@@audio.on ? 'вкл' : 'выкл'}@@BT@@;
     }
     else if (id === 'ro-spin') { audio.click(); guard(doSpin()); }
+    else if (id === 'ro-mode-remove') {
+      removeMode = !removeMode;
+      btn.classList.toggle('is-remove', removeMode);
+      btn.setAttribute('aria-pressed', String(removeMode));
+      btn.textContent = removeMode ? 'Режим: Снятие' : 'Снять ставку';
+      audio.click();
+    }
     else if (id === 'ro-clear') {
       audio.click();
       if (bets.size > 0) lastBets = new Map(bets);
@@ -4163,9 +4237,9 @@ function buildWheelSvg() {
     const textAngle = i * step;
     const textRad = (textAngle - 90) * Math.PI / 180;
     const tx = (cx + 118 * Math.cos(textRad)).toFixed(1);
-    const ty = (cy + 118 * Math.sin(textRad) + 4).toFixed(1);
+    const ty = (cy + 118 * Math.sin(textRad)).toFixed(1);
     return @@BT@@<path d="@@DS@@path}" fill="@@DS@@fill}" stroke="#c9a24a" stroke-width="0.8"/>@@BT@@
-      + @@BT@@<text x="@@DS@@tx}" y="@@DS@@ty}" font-size="10.5" font-weight="800" fill="#fff" text-anchor="middle" transform="rotate(@@DS@@textAngle} @@DS@@tx} @@DS@@ty})">@@DS@@num}</text>@@BT@@;
+      + @@BT@@<text x="@@DS@@tx}" y="@@DS@@ty}" font-size="10.5" font-weight="800" fill="#fff" text-anchor="middle" dominant-baseline="central" transform="rotate(@@DS@@textAngle} @@DS@@tx} @@DS@@ty})">@@DS@@num}</text>@@BT@@;
   }).join('');
 
   return '<svg viewBox="0 0 300 300" class="ro-wheelsvg" id="ro-wheelsvg" role="img" aria-label="Колесо рулетки">'
@@ -4232,19 +4306,27 @@ const S8_CSS = S8_DEC(String.raw`/* casino:step8 styles: blackjack and roulette 
 .cs-top-actions{display:flex;align-items:center;gap:8px}
 
 /* ----- Блэкджек: стол, карты, табло ----- */
-.bj-table{display:flex;flex-direction:column;gap:16px;max-width:820px;margin:0 auto 24px;padding:20px;border-radius:var(--ct-r-frame,calc(20px * var(--rs,1)))}
+.bj-table{display:flex;flex-direction:column;gap:16px;max-width:920px;margin:0 auto 24px;padding:20px;border-radius:var(--ct-r-frame,calc(20px * var(--rs,1)))}
 .bj-perks-bar,.ro-perks-bar{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;font-size:.82rem}
 .bj-perk-pill,.ro-perk-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:calc(999px * var(--rp,1));background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.2);color:#fff}
+.bj-dealer-wrap{display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:center}
+.bj-dealer-pic{font-size:3.2rem;line-height:1;text-align:center;filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))}
+.bj-dealer-bubble{position:relative;padding:10px 16px;border-radius:calc(12px * var(--rs,1));background:rgba(0,0,0,.52);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:.9rem;line-height:1.45}
+.bj-dealer-bubble::before{content:"";position:absolute;left:-8px;top:50%;transform:translateY(-50%);border:5px solid transparent;border-right-color:rgba(0,0,0,.52)}
 .bj-hand-section{display:flex;flex-direction:column;gap:10px;padding:14px 18px;border-radius:calc(14px * var(--rs,1));background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.12)}
 .bj-hand-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .bj-avatar{display:inline-flex;align-items:center;gap:6px;font-weight:750;font-size:1.05rem}
 .bj-hand-label{font-weight:750;font-size:1.05rem}
 .bj-score{display:inline-block;padding:3px 12px;border-radius:calc(999px * var(--rp,1));background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.22);color:#fff;font-weight:800;font-size:1.05rem;font-variant-numeric:tabular-nums}
-.bj-cards{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:92px}
+.bj-score:empty{display:none}
+.bj-cards{display:flex;align-items:center;flex-wrap:nowrap;min-height:96px;padding:4px 0;overflow-x:auto}
+.bj-card+.bj-card{margin-left:-20px}
 .bj-placeholder{color:rgba(255,255,255,.45);font-size:.9rem;font-style:italic;padding:8px 0}
-.bj-card{position:relative;display:flex;flex-direction:column;justify-content:space-between;width:62px;height:90px;padding:5px 6px;border-radius:calc(8px * var(--rs,1));background:#fff;color:#1a1a24;box-shadow:0 6px 14px rgba(0,0,0,.35);font-family:var(--ct-font,sans-serif);user-select:none;transition:transform .2s}
+.bj-card{position:relative;display:flex;flex-direction:column;justify-content:space-between;width:62px;height:90px;padding:5px 6px;border-radius:calc(8px * var(--rs,1));background:#fff;color:#1a1a24;box-shadow:0 6px 14px rgba(0,0,0,.35);font-family:var(--ct-font,sans-serif);user-select:none;transition:transform .2s;flex:none}
 .bj-card.is-red{color:#c4232f}
 .bj-card.is-facedown{width:62px;height:90px;aspect-ratio:auto;padding:0}
+@keyframes bj-deal-in{from{opacity:0;transform:translate(70px,-35px) rotate(14deg) scale(.75)}to{opacity:1;transform:none}}
+.bj-card.is-dealing{animation:bj-deal-in .26s cubic-bezier(.2,.8,.2,1) both}
 .bj-card-corner{display:flex;flex-direction:column;align-items:center;line-height:1}
 .bj-card-corner.top{align-self:flex-start}
 .bj-card-corner.btm{align-self:flex-end;transform:rotate(180deg)}
@@ -4259,17 +4341,19 @@ const S8_CSS = S8_DEC(String.raw`/* casino:step8 styles: blackjack and roulette 
 .bj-rules-list,.ro-rules-list{margin:10px 0;padding-left:20px;line-height:1.6;font-size:.88rem}
 
 /* ----- Рулетка: колесо, история, стол, фишки ----- */
-.ro-top-row{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:center;max-width:820px;margin:0 auto 16px}
+.ro-main-layout{display:grid;grid-template-columns:350px 1fr;gap:20px;align-items:start;max-width:1100px;margin:0 auto 16px}
+.ro-left-col{display:flex;flex-direction:column;gap:14px}
+.ro-right-col{display:flex;flex-direction:column;gap:14px;min-width:0}
 .ro-wheel-box{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;border-radius:var(--ct-r-frame,calc(20px * var(--rs,1)))}
-.ro-wheel-wrap{position:relative;width:220px;height:220px;margin:0 auto}
+.ro-wheel-wrap{position:relative;width:290px;height:290px;margin:0 auto}
 .ro-wheelsvg{display:block;width:100%;height:100%;filter:drop-shadow(0 8px 18px rgba(0,0,0,.45))}
 .ro-wheel-center{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
-.ro-last-num{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#1d1a10;color:#fff;font-weight:900;font-size:1.4rem;box-shadow:0 3px 8px rgba(0,0,0,.6);border:2px solid #ffd84a}
+.ro-last-num{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:#1d1a10;color:#fff;font-weight:900;font-size:1.5rem;box-shadow:0 3px 8px rgba(0,0,0,.6);border:2px solid #ffd84a}
 .ro-last-num.is-red{background:#c4232f}
 .ro-last-num.is-black{background:#1a1a24}
 .ro-last-num.is-green{background:#188038}
-.ro-hot-badge{margin-top:10px;padding:4px 14px;border-radius:calc(999px * var(--rp,1));background:rgba(0,0,0,.45);border:1px solid #ffd84a;color:#ffd84a;font-size:.82rem;font-weight:750;text-align:center}
-.ro-hot-badge.is-hit{background:#c4232f;color:#fff;border-color:#fff}
+.ro-hot-badge{margin-top:10px;padding:5px 14px;border-radius:calc(999px * var(--rp,1));background:rgba(0,0,0,.45);border:1px solid #ffd84a;color:#ffd84a;font-size:.84rem;font-weight:750;text-align:center}
+.ro-hot-badge.is-hit{background:#c4232f;color:#fff;border-color:#fff;animation:sl-pop .4s ease}
 .ro-side-box{display:flex;flex-direction:column;gap:12px}
 .ro-hist-box{padding:12px 14px;background:var(--gl-fill,var(--card));border:1px solid var(--border);border-radius:calc(14px * var(--rs,1))}
 .ro-hist-title{display:block;margin-bottom:8px;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -4281,7 +4365,7 @@ const S8_CSS = S8_DEC(String.raw`/* casino:step8 styles: blackjack and roulette 
 .ro-hist-ball.is-green{background:#188038}
 
 /* стол рулетки */
-.ro-table{display:flex;flex-direction:column;gap:8px;max-width:820px;margin:0 auto 16px;padding:16px;border-radius:var(--ct-r-frame,calc(20px * var(--rs,1)))}
+.ro-table{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--ct-r-frame,calc(20px * var(--rs,1)))}
 .ro-grid-zero{display:grid;grid-template-columns:1fr}
 .ro-cell{position:relative;display:flex;align-items:center;justify-content:center;min-height:42px;padding:4px;border-radius:calc(8px * var(--rs,1));border:1px solid rgba(255,255,255,.24);background:rgba(0,0,0,.22);color:#fff;font:inherit;font-weight:750;font-size:.95rem;cursor:pointer;transition:transform .12s,filter .15s}
 .ro-cell:hover:not(:disabled){filter:brightness(1.22);z-index:2}
@@ -4294,15 +4378,16 @@ const S8_CSS = S8_DEC(String.raw`/* casino:step8 styles: blackjack and roulette 
 .ro-grid-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .ro-grid-dozens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .ro-grid-chances{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
-.ro-chip-anchor{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
-.ro-chip-badge{width:34px;height:34px;font-size:.7rem;box-shadow:0 4px 8px rgba(0,0,0,.6)}
+.ro-chip-anchor{position:absolute;top:2px;right:2px;pointer-events:none}
+.ro-chip-badge{width:22px;height:22px;font-size:.62rem;box-shadow:0 2px 5px rgba(0,0,0,.6)}
 
 /* управление рулеткой */
-.ro-controls-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;max-width:820px;margin:0 auto 16px}
+.ro-controls-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:0 0 16px}
 .ro-chip-selector{display:flex;align-items:center;gap:6px}
 .ro-chip-label{font-size:.8rem;font-weight:750;color:var(--muted);margin-right:2px}
 .ro-chip-btn{cursor:pointer;transition:transform .15s}
 .ro-chip-btn.is-selected{transform:scale(1.15);outline:3px solid #ffd84a;outline-offset:2px}
+.ro-mode-btn.is-remove{background:#c4232f!important;color:#fff!important;border-color:#ff99a8!important}
 .ro-stake-stat{font-size:.88rem;display:flex;align-items:center;gap:6px}
 .ro-stake-stat b{font-size:1.15rem;color:var(--accent)}
 .ro-btns{display:flex;align-items:center;gap:8px}
@@ -4318,8 +4403,8 @@ const S8_CSS = S8_DEC(String.raw`/* casino:step8 styles: blackjack and roulette 
 .ro-sum-list li.is-perk{color:var(--accent)}
 .ro-sum-empty{margin:4px 0 0;font-size:.86rem;color:var(--muted)}
 
-@media(max-width:760px){
-  .ro-top-row{grid-template-columns:1fr;justify-items:center}
+@media(max-width:860px){
+  .ro-main-layout{grid-template-columns:1fr;justify-items:center}
   .ro-grid-chances{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media(max-width:480px){

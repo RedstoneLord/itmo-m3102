@@ -36,7 +36,7 @@ export function renderCasinoPage() {
 
   function paint() {
     if (dead) return;
-    const { S, H } = loadAll(), bal = (H.berries | 0) + (S.pending > 0 ? Math.floor(S.pending) : 0), br = isOnBreak(S);
+    const { S, H } = loadAll(), bal = Math.max(0, Math.floor(Number(H.berries) || 0)) + (S.pending > 0 ? Math.floor(S.pending) : 0), br = isOnBreak(S);
     $('#cs-bal').textContent = fmt(bal);
     $('#cs-free').textContent = String((S.free | 0) + (H.bonusSpins | 0));
     $('#cs-caps').textContent = String(S.capsules | 0);
@@ -45,7 +45,12 @@ export function renderCasinoPage() {
     const c = $('#cs-chip'); c.hidden = !chip; c.textContent = chip;
     content.querySelectorAll('.cs-game').forEach(a => a.classList.toggle('is-break', br));
     for (const g of GAMES) { const cta = $(`[data-cta="${g.id}"]`); if (cta) cta.textContent = br ? 'Перерыв' : g.cta; }
-    const meta = $('[data-meta="slots"]'); if (meta) meta.textContent = S.stats && S.stats.spins ? `Спинов: ${fmt(S.stats.spins)} · лучший выигрыш ${fmt(S.stats.biggest | 0)}` : '';
+    const metaSlots = $('[data-meta="slots"]');
+    if (metaSlots) metaSlots.textContent = S.stats && S.stats.spins ? `Спинов: ${fmt(S.stats.spins)} · лучший выигрыш ${fmt(S.stats.biggest | 0)}` : 'Барабаны ждут первого спина';
+    const metaBj = $('[data-meta="blackjack"]');
+    if (metaBj) metaBj.textContent = S.stats && (S.stats.bjWon || S.stats.bjWins) ? `Побед: ${fmt(S.stats.bjWins || 0)} · стрик: ${S.stats.bjStreak || 0}` : 'Сыграйте партию с крупье-ёжиком';
+    const metaRo = $('[data-meta="roulette"]');
+    if (metaRo) metaRo.textContent = S.stats && S.stats.rouletteSpins ? `Вращений: ${fmt(S.stats.rouletteSpins)} · выигрыш ${fmt(S.stats.rouletteWon || 0)} 🍓` : 'Испытайте колесо фортуны';
     const low = bal < 25; $('#cs-nudge').classList.toggle('is-low', low);
     $('#cs-nudgetxt').textContent = low ? 'Ягоды на исходе. Ёжик уже разминает лапки на холмах.' : 'Ягод маловато? Холмы, кувырки и яблоки ждут в игре «Ёжик».';
   }
