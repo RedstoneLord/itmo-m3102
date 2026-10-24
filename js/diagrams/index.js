@@ -121,6 +121,34 @@ const styleOf = line => {
   const raw = Object.fromEntries(style[1].split(',').map(part => part.split(':').map(value => value?.trim())).filter(part => part.length === 2));
   return { line: line.slice(0, style.index).trim(), color: raw.color ? safeColor(raw.color) : '', dashed: /\bdashed\b/.test(style[1]), label: raw.label?.replace(/^"|"$/g, '') || '' };
 };
+
+// «Хвост» строки вершины: любые из "подпись", @ x, y, {стиль} в любом порядке, каждое не больше раза.
+// Возвращает null, если осталось что-то непонятное.
+function attrs(rest) {
+  const out = { label: undefined, x: undefined, y: undefined, color: undefined, dashed: false };
+  let s = rest.trim(), m;
+  while (s) {
+    if ((m = /^"([^"]*)"\s*/.exec(s))) { if (out.label !== undefined) return null; out.label = m[1]; }
+    else if ((m = /^@\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*/.exec(s))) { if (out.x !== undefined) return null; out.x = number(m[1]); out.y = number(m[2]); }
+    else if ((m = /^\{([^}]*)\}\s*/.exec(s))) { const st = styleOf(`x {${m[1]}}`); out.color = st.color || undefined; out.dashed = st.dashed; }
+    else return null;
+    s = s.slice(m[0].length);
+  }
+  return out;
+}
+// Повторное описание вершины дополняет прежнее и не затирает уже заданные поля пустыми значениями
+const merge = (a, b) => { const o = { ...a }; for (const k in b) if (b[k] !== undefined && b[k] !== '') o[k] = b[k]; return o; };
+// Цепочки рёбер: a -> b -> c, стрелки ->, -->, --; подпись после «:» или в кавычках
+function edgeLine(text) {
+  let weight = '', q;
+  if ((q = /\s+"([^"]*)"\s*$/.exec(text))) { weight = q[1]; text = text.slice(0, q.index); }
+  else { const c = /^([^:]*?)\s*:\s*(.+)$/.exec(text); if (c) { text = c[1]; weight = c[2]; } }
+  const parts = text.trim().split(/\s*(-->|->|--)\s*/);
+  if (parts.length < 3 || parts.some((p, i) => i % 2 === 0 && !/^[^\s"@{]+$/.test(p))) return null;
+  return { ids: parts.filter((_, i) => i % 2 === 0), arrows: parts.filter((_, i) => i % 2 === 1), weight };
+}
+
+
 export function registerDiagram(lang, definition) { registry.set(lang, definition); }
 export const hasDiagram = lang => registry.has(lang);
 export const diagramLanguages = () => [...registry.keys()];
@@ -148,12 +176,22 @@ function parseGraph(text) {
     m.nodes ||= new Map(); m.edges ||= []; m.layout ||= 'circle';
     if (/^graph(?:\s+directed)?$/i.test(line)) { m.directed = /directed/i.test(line); return; }
     if (/^layout:\s*/i.test(line)) { const value = line.split(':')[1].trim(); if (!['circle', 'grid', 'layered', 'force', 'manual'].includes(value)) lineError(at, 'неизвестная раскладка'); m.layout = value; return; }
-    const styled = styleOf(line), edge = /^([^\s]+)\s*(->|--)\s*([^\s:]+)(?:\s*:\s*(.+))?$/.exec(styled.line);
-    if (edge) { if (m.edges.length >= 500) lineError(at, 'слишком много рёбер'); for (const key of [edge[1], edge[3]]) if (!m.nodes.has(key)) m.nodes.set(key, { id: key }); m.edges.push({ from: edge[1], to: edge[3], directed: edge[2] === '->', weight: edge[4] || '', color: styled.color, dashed: styled.dashed }); return; }
-    const positioned = /^([^\s@]+)\s*@\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)$/.exec(styled.line);
-    if (positioned) { m.nodes.set(positioned[1], { ...m.nodes.get(positioned[1]), id: positioned[1], x: number(positioned[2]), y: number(positioned[3]), color: styled.color }); return; }
-    const node = /^([^\s]+)(?:\s+"([^"]+)")?$/.exec(styled.line);
-    if (node) { if (m.nodes.size >= 500) lineError(at, 'слишком много вершин'); m.nodes.set(node[1], { ...m.nodes.get(node[1]), id: node[1], label: node[2] || node[1], color: styled.color }); return; }
+    const styled = styleOf(line), chain = edgeLine(styled.line);
+    if (chain) {
+      for (const key of chain.ids) if (!m.nodes.has(key)) { if (m.nodes.size >= 500) lineError(at, 'слишком много вершин'); m.nodes.set(key, { id: key }); }
+      chain.arrows.forEach((arrow, i) => {
+        if (m.edges.length >= 500) lineError(at, 'слишком много рёбер');
+        m.edges.push({ from: chain.ids[i], to: chain.ids[i + 1], directed: arrow !== '--', weight: chain.weight || styled.label, color: styled.color, dashed: styled.dashed });
+      });
+      return;
+    }
+    const head = /^([^\s@"{]+)\s*(.*)$/.exec(line), a = head && attrs(head[2]);
+    if (a) {
+      const prev = m.nodes.get(head[1]);
+      if (!prev && m.nodes.size >= 500) lineError(at, 'слишком много вершин');
+      m.nodes.set(head[1], merge(prev || { id: head[1], label: head[1] }, { id: head[1], label: a.label, x: a.x, y: a.y, color: a.color }));
+      return;
+    }
     lineError(at, 'не удалось прочитать вершину или ребро');
   });
   model.nodes ||= new Map(); model.edges ||= []; model.layout ||= 'circle';
@@ -484,11 +522,16 @@ function parseFlow(text) {
     m.nodes ||= new Map(); m.edges ||= [];
     if (line === 'diagram') return;
     const edge = /^([^\s]+)\s*->\s*([^\s:]+)(?:\s*:\s*(.+))?$/.exec(line);
-    if (edge) { m.edges.push({ from: edge[1], to: edge[2], label: edge[3] || '' }); return; }
-    const node = /^([^\s:]+)\s*:\s*(box|round|diamond|circle|db|note)\s*(?:"([^"]*)")?(?:\s*@\s*(-?[\d.]+),\s*(-?[\d.]+))?$/.exec(line);
-    if (node) { m.nodes.set(node[1], { id: node[1], shape: node[2], label: node[3] || node[1], x: node[4] == null ? null : number(node[4]), y: node[5] == null ? null : number(node[5]) }); return; }
-    lineError(at, 'ожидался узел «A: box "Текст"» или стрелка «A -> B»');
-  });
+        const chain = edgeLine(line);
+    if (chain) { chain.ids.slice(0, -1).forEach((from, i) => m.edges.push({ from, to: chain.ids[i + 1], label: chain.weight })); return; }
+    const head = /^([^\s:@"{]+)\s*(?::\s*(box|round|diamond|circle|db|note)\b)?\s*(.*)$/.exec(line), a = head && attrs(head[3]);
+    if (a) {
+      const prev = m.nodes.get(head[1]);
+      if (!prev && !head[2]) lineError(at, 'сначала задайте форму: «A: box "Текст"»');
+      m.nodes.set(head[1], merge(prev || { id: head[1], label: head[1], x: null, y: null }, { id: head[1], shape: head[2], label: a.label, x: a.x, y: a.y, color: a.color }));
+      return;
+    }
+    lineError(at, 'ожидался узел «A: box "Текст" @ x, y» или стрелка «A -> B»');
   model.nodes ||= new Map(); model.edges ||= [];
   if (model.nodes.size + model.edges.length > 500) throw new Error('Слишком большая схема');
   for (const edge of model.edges) if (!model.nodes.has(edge.from) || !model.nodes.has(edge.to)) throw new Error('Стрелка указывает на неизвестный узел');
@@ -642,7 +685,7 @@ function drawFlow(model) {
     else if (node.shape === 'db') { const top = format(p.y - h / 2 + 12), bottom = format(p.y + h / 2 - 12); shape = `<path d="M${left} ${top} A${format(w / 2)} 12 0 0 1 ${right} ${top} V${bottom} A${format(w / 2)} 12 0 0 1 ${left} ${bottom} Z"/><ellipse cx="${x}" cy="${top}" rx="${format(w / 2)}" ry="12"/>`; textY += 5; }
     else if (node.shape === 'note') shape = `<path d="M${left} ${format(p.y - h / 2)} H${format(p.x + w / 2 - 22)} L${right} ${format(p.y - h / 2 + 22)} V${format(p.y + h / 2)} H${left} Z M${format(p.x + w / 2 - 22)} ${format(p.y - h / 2)} V${format(p.y - h / 2 + 22)} H${right}"/>`;
     else shape = `<rect x="${left}" y="${format(p.y - h / 2)}" width="${w}" height="${h}" rx="${node.shape === 'round' ? Math.min(25, h / 2) : 9}"/>`;
-    return `<g data-dgm-node="${escape(node.id)}"><g fill="var(--card)" stroke="var(--accent)" stroke-width="2">${shape}</g>${renderFit(p.x, textY, fit, node.label, {})}</g>`;
+    return `<g data-dgm-node="${escape(node.id)}"><g fill="var(--card)" stroke="${node.color || 'var(--accent)'}" stroke-width="2">${shape}</g>${shape}</g>${renderFit(p.x, textY, fit, node.label, {})}</g>`;
   }).join('');
   const fitted = fitView(model, arrows + shapes, bounds, width, wantedH);
   return svg(model, fitted.inner, width, wantedH, defs, fitted.view);
