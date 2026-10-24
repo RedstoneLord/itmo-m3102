@@ -176,3 +176,14 @@
     box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-accent) 0%, transparent);
   }
 }
+
+/* Minimalism — «чистые поверхности без фона и свечения»: идущая пара без цветной тени, а точка на линии времени без пульсирующего кольца (волны) */
+:global(:root[data-style='minimal']) .row[style*='--progress'],
+:global(:root[data-style='minimal']) .timeline.timeline .row.row[style*='--progress'] {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 50%, transparent);
+}
+
+:global(:root[data-style='minimal']) .timeline.timeline .row.row.row.row[style*='--progress']::before {
+  box-shadow: none;
+  animation: none;
+}

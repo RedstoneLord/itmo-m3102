@@ -160,3 +160,8 @@
   min-height: 240px;
   touch-action: pan-y;
 }
+
+/* Minimalism: выбранный день — заливка без цветной тени */
+:global(:root[data-style='minimal']) .daySelected {
+  box-shadow: none;
+}

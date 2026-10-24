@@ -314,3 +314,17 @@
     inset 0 1px 0 color-mix(in srgb, white var(--glass-gloss, 38%), transparent),
     0 6px 12px -6px var(--type-color, var(--color-accent));
 }
+
+/* Minimalism: главная карточка без цветных пятен света в углах и без акцентной рамки в покое; точка «идёт сейчас» не мигает */
+:global(:root[data-style='minimal']) .block {
+  --hero-wash-a: 0%;
+  --hero-wash-b: 0%;
+}
+
+:global(:root[data-style='minimal']) .block:not(.now) {
+  border-color: var(--color-border);
+}
+
+:global(:root[data-style='minimal']) .liveDot {
+  animation: none;
+}

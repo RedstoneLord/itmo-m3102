@@ -68,3 +68,12 @@
 .action {
   margin-top: var(--space-4);
 }
+
+/* Minimalism: пустое состояние без «света сверху» и без свечения значка */
+:global(:root[data-style='minimal']) .empty {
+  background: none;
+}
+
+:global(:root[data-style='minimal']) .icon {
+  box-shadow: none;
+}
