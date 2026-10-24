@@ -521,8 +521,7 @@ function parseFlow(text) {
   const model = markup(text, (m, line, at) => {
     m.nodes ||= new Map(); m.edges ||= [];
     if (line === 'diagram') return;
-    const edge = /^([^\s]+)\s*->\s*([^\s:]+)(?:\s*:\s*(.+))?$/.exec(line);
-        const chain = edgeLine(line);
+    const chain = edgeLine(line);
     if (chain) { chain.ids.slice(0, -1).forEach((from, i) => m.edges.push({ from, to: chain.ids[i + 1], label: chain.weight })); return; }
     const head = /^([^\s:@"{]+)\s*(?::\s*(box|round|diamond|circle|db|note)\b)?\s*(.*)$/.exec(line), a = head && attrs(head[3]);
     if (a) {
@@ -532,6 +531,7 @@ function parseFlow(text) {
       return;
     }
     lineError(at, 'ожидался узел «A: box "Текст" @ x, y» или стрелка «A -> B»');
+  });
   model.nodes ||= new Map(); model.edges ||= [];
   if (model.nodes.size + model.edges.length > 500) throw new Error('Слишком большая схема');
   for (const edge of model.edges) if (!model.nodes.has(edge.from) || !model.nodes.has(edge.to)) throw new Error('Стрелка указывает на неизвестный узел');
@@ -685,7 +685,7 @@ function drawFlow(model) {
     else if (node.shape === 'db') { const top = format(p.y - h / 2 + 12), bottom = format(p.y + h / 2 - 12); shape = `<path d="M${left} ${top} A${format(w / 2)} 12 0 0 1 ${right} ${top} V${bottom} A${format(w / 2)} 12 0 0 1 ${left} ${bottom} Z"/><ellipse cx="${x}" cy="${top}" rx="${format(w / 2)}" ry="12"/>`; textY += 5; }
     else if (node.shape === 'note') shape = `<path d="M${left} ${format(p.y - h / 2)} H${format(p.x + w / 2 - 22)} L${right} ${format(p.y - h / 2 + 22)} V${format(p.y + h / 2)} H${left} Z M${format(p.x + w / 2 - 22)} ${format(p.y - h / 2)} V${format(p.y - h / 2 + 22)} H${right}"/>`;
     else shape = `<rect x="${left}" y="${format(p.y - h / 2)}" width="${w}" height="${h}" rx="${node.shape === 'round' ? Math.min(25, h / 2) : 9}"/>`;
-    return `<g data-dgm-node="${escape(node.id)}"><g fill="var(--card)" stroke="${node.color || 'var(--accent)'}" stroke-width="2">${shape}</g>${shape}</g>${renderFit(p.x, textY, fit, node.label, {})}</g>`;
+    return `<g data-dgm-node="${escape(node.id)}"><g fill="var(--card)" stroke="${node.color || 'var(--accent)'}" stroke-width="2">${shape}</g>${renderFit(p.x, textY, fit, node.label, {})}</g>`;
   }).join('');
   const fitted = fitView(model, arrows + shapes, bounds, width, wantedH);
   return svg(model, fitted.inner, width, wantedH, defs, fitted.view);
