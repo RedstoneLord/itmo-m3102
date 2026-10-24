@@ -24,7 +24,7 @@ Object.assign(globalThis, {
   matchMedia: () => ({ matches: true }), requestAnimationFrame: f => setImmediate(() => f(performance.now() + 5000)), cancelAnimationFrame: noop, devicePixelRatio: 1,
   setTimeout: immediate, clearTimeout: noop, setInterval: () => 0, clearInterval: noop,
 });
-Object.defineProperty(globalThis, 'crypto', { configurable: true, value: { getRandomValues: arr => { const r = M.mulberry32(777); globalThis.__r ||= r; for (let i = 0; i < arr.length; i++) arr[i] = Math.floor(globalThis.__r() * 4294967296); return arr; } } });
+Object.defineProperty(globalThis, 'crypto', { configurable: true, value: { getRandomValues: arr => { const r = M.mulberry32(1); globalThis.__r ||= r; for (let i = 0; i < arr.length; i++) arr[i] = Math.floor(globalThis.__r() * 4294967296); return arr; } } });
 process.on('unhandledRejection', e => errors.push(e));
 const tick = () => new Promise(r => setImmediate(r));
 const click = async (id, extra = {}) => { const btn = { id, dataset: extra, closest: () => null, disabled: false }; for (const f of listeners.click || []) f({ target: { closest: s => (s === 'button' ? btn : null) } }); await tick(); };

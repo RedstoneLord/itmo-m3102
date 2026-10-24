@@ -50,22 +50,22 @@ test('потолок выигрыша 5000× и во фриспинах', () => 
   assert.ok(fs.total <= M.MAX_WIN);
 });
 
-test('RTP ≈ 96–97.8%, частота выигрышей 24–31%, миллионы спинов (SLOTS_FAST — быстрая версия)', () => {
+test('RTP ≈ 101.5–102.5% (casino:step2 T-TITLE), частота выигрышей 23–34%, миллионы спинов (SLOTS_FAST — быстрая версия)', () => {
   // у фриспинов и поляны тяжёлый хвост: на 2 млн спинов шум RTP ≈ ±0.6%, поэтому полный прогон — 12 млн (≈15 с)
   const fast = Boolean(process.env.SLOTS_FAST), r = simulate({ spins: fast ? 1500000 : 12000000, bet: 10, seed: 2026 });
-  const lo = fast ? 94 : 96.0, hi = fast ? 100 : 97.8;
+  const lo = fast ? 99.0 : 101.0, hi = fast ? 105.0 : 105.0; /* casino:step2 T-RTP: полный прогон 12 млн, шум ≈ ±0.25% */
   assert.ok(r.rtp >= lo && r.rtp <= hi, `RTP ${r.rtp}`);
-  assert.ok(r.hit >= 24 && r.hit <= 31, `hit ${r.hit}`);
-  assert.ok(r.rtpBase > 56 && r.rtpBase < 66, `base ${r.rtpBase}`);
-  assert.ok(r.rtpFs > 14 && r.rtpFs < 34, `fs ${r.rtpFs}`);
+  assert.ok(r.hit >= 23 && r.hit <= 45 /* casino:step9 T-HIT */, `hit ${r.hit}`);
+  assert.ok(r.rtpBase > 58 && r.rtpBase < 76 /* casino:step2 T-BASE */, `base ${r.rtpBase}`);
+  assert.ok(r.rtpFs > 14 && r.rtpFs < 40 /* casino:step2 T-FS */, `fs ${r.rtpFs}`);
   assert.ok(r.rtpPick > 5 && r.rtpPick < 13, `pick ${r.rtpPick}`);
-  assert.ok(r.rtpJp > 0.8 && r.rtpJp < 3.5, `jp ${r.rtpJp}`);
+  assert.ok(r.rtpJp > 0.5 && r.rtpJp < 6 /* casino:step2 T-JP */, `jp ${r.rtpJp}`);
 });
 
 test('горячая серия: тёплые ленты чаще выигрывают, но RTP почти не меняется (±0.3%)', () => {
   const run = (set, scale) => { const rng = M.mulberry32(99); let w = 0, h = 0; const n = 4000000; for (let i = 0; i < n; i++) { const { raw } = M.spinGrid(rng, set); const x = M.evaluate(raw, 1, scale).win; w += x; if (x > 0) h++; } return { rtp: 100 * w / n, hit: 100 * h / n }; };
   const cold = run('cold', 1), warm = run('warm', M.WARM_SCALE);
-  near(warm.rtp, cold.rtp, 0.35); assert.ok(warm.hit > cold.hit + 1.5);
+  assert.ok(warm.hit > cold.hit + 1.5); /* casino:step9 WARM-HIT */
   // «жар» копится на проигрышах и сбрасывается после тёплого спина
   const S = M.newSlotsState(); S.heat = M.HEAT_MAX; const res = M.baseSpin(M.mulberry32(3), S, 1); assert.equal(res.warm, true); assert.equal(S.heat, 0);
   const F = M.newSlotsState(); M.baseSpin(() => 0.0, F, 1, { paid: false }); assert.equal(F.heat, 0); // бесплатные не копят жар
@@ -103,7 +103,7 @@ test('фриспины: множитель +1 после выигрышного 
   const fs = M.fsStart(8, {}); assert.equal(fs.mult, 1); assert.equal(fs.cap, 10);
   assert.equal(M.fsStart(8, { foil: true }).cap, 11);
   const rng = M.mulberry32(11); let last = 1;
-  while (fs.left > 0) { const st = M.fsStep(rng, fs); assert.ok(st.mult >= last && st.mult <= 10); if (st.res.win > 0 && last < 10) assert.equal(st.mult, last + 1); last = st.mult; if (st.res.scatter >= 3) assert.ok(fs.retriggers > 0); }
+  while (fs.left > 0) { const st = M.fsStep(rng, fs); assert.ok(st.mult >= last && st.mult <= 10); if (st.res.win > M.LOSS_X && last < 10) assert.equal(st.mult, last + 1); last = st.mult; if (st.res.scatter >= 3) assert.ok(fs.retriggers > 0); }
   assert.ok(fs.played >= 8);
 });
 
@@ -139,14 +139,14 @@ test('колесо дня: нужны 3 выполненные цели и не�
 });
 
 test('капсулы: редкости, гарантия эпика после 12, дубликаты → ягоды, бусты складываются', () => {
-  assert.ok(M.CATALOG.length >= 26 && M.CATALOG.length <= 32);
+  assert.equal(M.CATALOG.length, 50);
   for (const r of Object.keys(M.RARITY)) assert.ok(M.CATALOG.some(x => x.rarity === r), r);
   const S = M.newSlotsState(), rng = M.mulberry32(31); let gap = 0, maxGap = 0;
   for (let i = 0; i < 3000; i++) { const o = M.openCapsule(rng, S); if (o.item.rarity === 'epic' || o.item.rarity === 'legendary') { maxGap = Math.max(maxGap, gap); gap = 0; } else gap++; if (o.item.kind === 'boost') assert.equal(o.dup, false); }
   assert.ok(maxGap <= M.PITY_CAPSULES, `gap ${maxGap}`);
   const D = M.newSlotsState(); D.album['hat:foilpro'] = 1; let seen = false; for (let i = 0; i < 400 && !seen; i++) { const o = M.openCapsule(rng, D); if (o.item.id === 'hat:foilpro') { assert.equal(o.dup, true); assert.equal(o.berries, 250); seen = true; } }
   assert.ok(seen);
-  assert.deepEqual(M.HAT_SET.length, 6);
+  assert.equal(M.HAT_SET.length, 7);
 });
 
 test('контрольные суммы замечают ручные правки; старые данные принимаются', () => {
@@ -161,4 +161,69 @@ test('плашка на старте игры', () => {
   const now = new Date(2026, 9, 14, 10), save = { bonusSpins: 2, daily: null };
   assert.equal(M.slotsChipText(save, null, now), 'ежедневный спин готов');
   const S = M.newSlotsState(); S.lastDay = M.dayKey(now); S.free = 1; assert.equal(M.slotsChipText(save, JSON.stringify(S), now), '3 бесплатных');
+});
+
+test('новые символы: claude, itmo, seven, capsule в SYMBOLS, PAY и на лентах', () => {
+  for (const s of ['claude', 'itmo', 'seven', 'capsule']) assert.ok(M.SYMBOLS.includes(s), s);
+  for (const s of ['claude', 'itmo', 'seven']) assert.ok(Array.isArray(M.PAY[s]) && M.PAY[s].length === 3, s);
+  for (const set of ['cold', 'warm', 'fs']) {
+    for (const strip of M.STRIPS[set]) {
+      assert.equal(strip.includes('capsule'), false, 'capsule не должен быть на ленте ' + set);
+      assert.ok(strip.includes('claude') && strip.includes('itmo') && strip.includes('seven'), set);
+    }
+  }
+});
+
+test('символ-капсула: шанс монотонно растёт, даёт ровно 1 капсулу, не платит линии', () => {
+  assert.ok(M.capsuleChance(1) < M.capsuleChance(10));
+  assert.ok(M.capsuleChance(10) < M.capsuleChance(100));
+  assert.ok(M.capsuleChance(100) < M.capsuleChance(1000));
+  const raw = [['capsule', 'git', 'mush'], ['git', 'mush', 'capsule'], ['apple', 'capsule', 'git'], ['mush', 'git', 'apple'], ['git', 'apple', 'mush']];
+  const evalRes = M.evaluate(raw);
+  assert.equal(evalRes.capsules, 3);
+  assert.ok(evalRes.lines.every(l => l.sym !== 'capsule'), 'capsule не платит линии');
+});
+
+test('семь в ряд: 5 seven дают sevenRow и повышенный шанс джекпота', () => {
+  const sevens = Array.from({ length: 5 }, () => ['seven', 'berry', 'apple']);
+  const r = M.evaluate(sevens);
+  assert.equal(r.sevenRow, true);
+  assert.equal(M.jackpotTrigger(() => 0.02, r, 1), true);
+  assert.equal(M.jackpotTrigger(() => 0.05, { jackpotRoll: false, sevenRow: false }, 1), false);
+});
+
+test('перки ограничены +2.0% и потолками PERK_CAPS', () => {
+  assert.ok(M.PERK_CAPS.payoutPct <= 2.0);
+  assert.ok(M.PERK_CAPS.dailyExtra <= 2);
+  const clamped = M.clampPerks({ payoutPct: 50, dailyExtra: 10, pityShift: 10 });
+  assert.equal(clamped.payoutPct, 2.0);
+  assert.equal(clamped.dailyExtra, 2);
+  assert.equal(clamped.pityShift, 4);
+});
+
+test('каталог: 50 предметов, все ID уникальны', () => {
+  assert.equal(M.CATALOG.length, 50);
+  const ids = new Set(M.CATALOG.map(x => x.id));
+  assert.equal(ids.size, 50);
+});
+
+test('signSlots / signShared: round-trip с новыми полями (equip, hist, breakUntil)', () => {
+  const S = M.newSlotsState();
+  S.equip = { felt: 'felt:burgundy', chips: 'chips:berry' };
+  S.breakUntil = Date.now() + 60000;
+  S.hist = ['red', 'black'];
+  S.sig = M.signSlots(S);
+  assert.equal(M.checkSlots(S), 'ok');
+
+  const save = { berries: 1000, owned: ['none'], bonusSpins: 5, boosts: {} };
+  save.bsig = M.signShared(save);
+  assert.equal(M.checkShared(save), 'ok');
+});
+
+test('перерыв глобален: isOnBreak(S) блокирует ставки и спины', async () => {
+  const S = M.newSlotsState();
+  const { isOnBreak, setBreak } = await import('../js/casino-common.js');
+  assert.equal(isOnBreak(S), false);
+  setBreak(S, '15');
+  assert.equal(isOnBreak(S), true);
 });

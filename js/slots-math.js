@@ -3,10 +3,10 @@
   Числа RTP/частоты существуют только здесь, в тестах и в tools/slots-tune.mjs — в интерфейсе их нет.
   Допуск по перкам шляп (≤ +0.3% RTP суммарно) проверяется в tests/slots.mjs.
 */
-export const SEED_POOL = 500, POOL_RATE = 0.15, MAX_WIN = 5000, HEAT_MAX = 10, DAILY_BET = 5;
-export const BETS = [1, 2, 3, 4, 5, 10, 25, 50, 100, 250, 500, 1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 10000000, 100000000];
+export const SEED_POOL = 500, POOL_RATE = 0.015, /* casino:step9 POOL_RATE 1.5% */ MAX_WIN = 5000, HEAT_MAX = 10, DAILY_BET = 5;
+export const BETS = [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 10000000, 100000000];
 export const ROWS = 3, REELS = 5;
-export const SYMBOLS = ['berry', 'apple', 'mush', 'git', 'orange', 'cpp', 'rust', 'pi', 'hog', 'king', 'wild', 'scatter', 'bonus'];
+export const SYMBOLS = ['berry', 'apple', 'claude', 'mush', 'git', 'orange', 'itmo', 'cpp', 'rust', 'pi', 'hog', 'seven', 'king', 'wild', 'scatter', 'bonus', 'capsule']; /* casino:step2 SYMBOLS — capsule на ленты не ставится: его вставляет injectCapsule */
 export const LINES = [
   [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2], [0, 1, 2, 1, 0], [2, 1, 0, 1, 2],
   [0, 0, 1, 2, 2], [2, 2, 1, 0, 0], [1, 0, 0, 0, 1], [1, 2, 2, 2, 1], [0, 1, 1, 1, 0],
@@ -19,12 +19,13 @@ export const PAY = {
   berry: [1, 3, 10], apple: [1, 3, 10], mush: [1.5, 5, 15], git: [1.5, 5, 15],
   orange: [4, 14, 55], cpp: [4, 14, 55], rust: [6, 20, 80], pi: [6, 20, 80],
   hog: [12, 45, 220], king: [30, 150, 800],
+  claude: [1.2, 4, 12], itmo: [4.5, 16, 60], seven: [20, 80, 400], /* casino:step2 PAY — провизорно */
 };
-export const LINE_SCALE = 1; // калибровка линейных выплат (см. tools/slots-tune.mjs)
+export const LINE_SCALE = 1.02; /* casino:step9 LINE_SCALE откалиброван под 101–105% */
 export const COLUMN_SCALE = 1; // выплата за 3 одинаковых символа в одном барабане = PAY[символ][0] × COLUMN_SCALE (по вертикали)
 export const SCATTER_PAY = { 3: 2, 4: 10, 5: 50 };
 export const FS_SPINS = { 3: 8, 4: 12, 5: 20 }, FS_RETRIGGER = 5, FS_CAP = 10;
-export const WARM_SCALE = 1.2; // множитель тёплых выигрышей; после изменения символов RTP нужно перекалибровать
+export const WARM_SCALE = 1.08; /* casino:step9 WARM_SCALE откалиброван для коридора 101–105% и стратегии smart player */ // множитель тёплых выигрышей; после изменения символов RTP нужно перекалибровать
 export const JP_COEF = 0.008; // шанс розыгрыша джекпота при 3 расширенных Wild = min(1, JP_COEF × ставка)
 export const LOSS_X = 1; // выигрыш ≤ LOSS_X × ставки считается проигрышем (жар, множитель фриспинов, уровень празднования)
 
@@ -75,53 +76,12 @@ const COUNTS = {
   ],
 };
 
-// «Тёплые» ленты: только высокооплачиваемые обычные символы (orange и выше).
-// Wild/Scatter/Bonus сохраняются в исходных количествах, а общая длина каждой ленты не меняется.
-// Символа `scroll` в текущем SYMBOLS/PAY нет, поэтому порог здесь — orange, первый высокооплачиваемый символ.
-const WARM_LOW_SYMBOLS = ['berry', 'apple', 'mush', 'git'];
-const WARM_HIGH_SYMBOLS = ['orange', 'cpp', 'rust', 'pi', 'hog', 'king'];
-
-COUNTS.warm = COUNTS.cold.map(c => {
-  const warm = { ...c };
-  const removed = WARM_LOW_SYMBOLS.reduce(
-    (sum, sym) => sum + (warm[sym] || 0),
-    0
-  );
-
-  for (const sym of WARM_LOW_SYMBOLS) warm[sym] = 0;
-
-  // Перераспределяем удалённые позиции пропорционально прежним частотам дорогих символов.
-  // Метод наибольших остатков сохраняет точную длину ленты.
-  const highTotal = WARM_HIGH_SYMBOLS.reduce(
-    (sum, sym) => sum + (c[sym] || 0),
-    0
-  );
-
-  const allocations = WARM_HIGH_SYMBOLS.map(sym => {
-    const exact = removed * (c[sym] || 0) / highTotal;
-    const whole = Math.floor(exact);
-    return { sym, whole, remainder: exact - whole };
-  });
-
-  for (const item of allocations) {
-    warm[item.sym] = (warm[item.sym] || 0) + item.whole;
-  }
-
-  let remaining = removed - allocations.reduce(
-    (sum, item) => sum + item.whole,
-    0
-  );
-
-  allocations.sort((a, b) => b.remainder - a.remainder);
-
-  for (let i = 0; i < remaining; i++) {
-    warm[allocations[i].sym]++;
-  }
-
-  return warm;
-});
-
-COUNTS.fs = COUNTS.cold.map((c, i) => ({
+/* casino:step2 COUNTS — провизорно */
+// Новые символы: claude (низкий ярус), itmo (средний), seven (между ёжиком и королём). Длина каждой холодной ленты +2.
+const NEW_SYMBOL_DELTA = { claude: 3, itmo: 2, seven: 2, berry: -1, apple: -1, git: -1, orange: -1, hog: -1 };
+COUNTS.cold = COUNTS.cold.map(c => { const n = { ...c }; for (const [k, d] of Object.entries(NEW_SYMBOL_DELTA)) n[k] = (n[k] || 0) + d; return n; });
+// «тёплые» ленты: та же длина и те же Scatter/Bonus/Wild, но меньше крупных символов (seven, rust, pi) — выигрыши чаще и мельче
+COUNTS.warm = COUNTS.cold.map(c => ({ ...c, seven: c.seven - 1, rust: c.rust - 1, pi: c.pi - 1, berry: c.berry + 1, apple: c.apple + 1, mush: c.mush + 1 }));COUNTS.fs = COUNTS.cold.map((c, i) => ({
   ...c,
   wild: (c.wild || 0) + (i >= 1 && i <= 3 ? 2 : 0),
   bonus: 0
@@ -185,7 +145,10 @@ export function spinGrid(rng, set = 'cold') {
   return { stops, raw };
 }
 
-const isLine = s => s !== 'scatter' && s !== 'bonus';
+const isLine = s => s !== 'scatter' && s !== 'bonus' && s !== 'capsule'; /* casino:step2 ISLINE */
+const countCapsules = raw => raw.reduce((n, col) => n + col.filter(s => s === 'capsule').length, 0);
+// пять seven в одном горизонтальном ряду; Wild (в том числе расширенные) засчитываются, но хотя бы один seven обязателен
+const sevenRowOf = grid => [0, 1, 2].some(row => grid.every(col => col[row] === 'seven' || col[row] === 'wild') && grid.some(col => col[row] === 'seven'));
 
 // raw: 5×3 символов; mult0 — глобальный множитель (в фриспинах), расширенные Wild добавляют +1 каждый
 export function evaluate(raw, mult0 = 1, scale = 1) {
@@ -307,13 +270,32 @@ export function evaluate(raw, mult0 = 1, scale = 1) {
     mult,
     win: total,
     fsSpins: scatter >= 3 ? FS_SPINS[Math.min(scatter, 5)] : 0,
-    bonus: [0, 2, 4].every(r => bonusReels.includes(r)),
-    jackpotRoll: expanded.length >= 3
-  };
+    bonus: [0, 2, 4].every(r => bonusReels.includes(r)), jackpotRoll: expanded.length >= 3, sevenRow: sevenRowOf(grid), capsules: countCapsules(raw) }; /* casino:step2 EVALRET */
 }
 
 // розыгрыш джекпота при 3 расширенных Wild: шанс растёт со ставкой
-export const jackpotHit = (rng, bet) => rng() < Math.min(1, JP_COEF * bet);
+/* casino:step2 JPHIT */
+export const JP_SEVEN_COEF = 0.03; // шанс джекпота при пяти seven в ряд = min(1, JP_SEVEN_COEF × ставка); провизорно
+export const jackpotHit = (rng, bet, coef = JP_COEF) => rng() < Math.min(1, coef * bet);
+// Один бросок на спин: при ряде из seven берётся больший коэффициент, иначе действует старое правило трёх расширенных Wild
+export const jackpotTrigger = (rng, res, bet) => Boolean(res.jackpotRoll || res.sevenRow) && jackpotHit(rng, bet, res.sevenRow ? Math.max(JP_SEVEN_COEF, JP_COEF) : JP_COEF);
+
+/* ---------- capsule: бонусный символ-капсула (не лента, а вставка поверх готового экрана) ---------- */
+export const CAPSULE_MIN = 0.0013, CAPSULE_MAX = 0.008, CAPSULE_CAP = 0.01, CAPSULE_PERK_CAP = 0.012;
+// Шанс на спин: логарифмический рост от ≈0.13% (ставка 1) до ≈0.8% (ставка 1000 и выше); ≤ 1%
+export function capsuleChance(bet) {
+  const b = Number(bet); if (!(b > 1)) return CAPSULE_MIN;
+  return Math.min(CAPSULE_CAP, CAPSULE_MIN + (CAPSULE_MAX - CAPSULE_MIN) * Math.min(1, Math.log10(b) / 3));
+}
+// Возвращает { raw, capsules, at }: raw — копия с одной перезаписанной обычной ячейкой (не wild/scatter/bonus) либо исходный массив
+export function injectCapsule(rng, raw, bet, perks = {}) {
+  const mult = Number(perks.capsuleChanceMult) > 0 ? Number(perks.capsuleChanceMult) : 1;
+  if (!(rng() < Math.min(CAPSULE_PERK_CAP, capsuleChance(bet) * mult))) return { raw, capsules: 0, at: null };
+  const cells = []; raw.forEach((col, r) => col.forEach((s, row) => { if (!SPECIAL.has(s) && s !== 'capsule') cells.push([r, row]); }));
+  if (!cells.length) return { raw, capsules: 0, at: null };
+  const [r, row] = cells[Math.floor(rng() * cells.length)], out = raw.map(col => col.slice()); out[r][row] = 'capsule';
+  return { raw: out, capsules: 1, at: [r, row] };
+}
 
 /* ---------- фриспины ---------- */
 export const fsStart = (n, perks = {}) => ({
@@ -449,32 +431,28 @@ export function newSlotsState() {
       jackpots: 0,
       gambles: 0,
       gambleWins: 0,
-      poked: 0
+      poked: 0, capsuleSyms: 0 /* casino:step2 STATS */
     },
     breakUntil: 0,
     wheelDay: '',
     title: '',
     theme: 'forest',
-    hist: []
+    hist: [], equip: {} /* casino:step3 EQUIP */
   };
 }
 
 // Базовый спин. S: {heat, pool}; paid=false для бесплатных (не питает пул и не копит «жар»)
-export function baseSpin(rng, S, bet, { paid = true } = {}) {
+export function baseSpin(rng, S, bet, { paid = true, perks = {} } = {}) { /* casino:step2 BASESIG */
   const warm = paid && S.heat >= HEAT_MAX;
   if (paid) S.pool += POOL_RATE * bet;
 
-  const { stops, raw } = spinGrid(rng, warm ? 'warm' : 'cold');
-  const res = evaluate(raw, 1, warm ? WARM_SCALE : 1);
+  const spun = spinGrid(rng, warm ? 'warm' : 'cold'), stops = spun.stops, inj = injectCapsule(rng, spun.raw, bet, perks), res = evaluate(inj.raw, 1, warm ? WARM_SCALE : 1); res.capsuleAt = inj.at; /* casino:step2 BASESPIN */
 
   res.stops = stops;
   res.warm = warm;
   res.jackpot = 0;
 
-  if (res.jackpotRoll && jackpotHit(rng, bet)) {
-    res.jackpot = S.pool;
-    S.pool = SEED_POOL;
-  }
+  if (jackpotTrigger(rng, res, bet)) { res.jackpot = S.pool; S.pool = SEED_POOL; } /* casino:step2 BASEJP */
 
   if (paid) S.heat = warm ? 0 : (res.win > LOSS_X ? 0 : S.heat + 1);
   return res;
@@ -483,15 +461,7 @@ export function baseSpin(rng, S, bet, { paid = true } = {}) {
 // Полный раунд: база + фриспины + поляна + джекпот. Возвращает выигрыш в ягодах и трассу для анимации
 // (интерфейс получает весь результат заранее, поэтому обновление страницы посреди бонуса ничего не отнимает).
 export function rollRound(rng, S, bet, perks = {}, opts = {}) {
-  const res = baseSpin(rng, S, bet, opts);
-  const parts = {
-    base: res.win * bet,
-    fs: 0,
-    pick: 0,
-    jp: res.jackpot,
-    fsN: 0
-  };
-  const trace = { res, fsSteps: [], fs: null, pick: null, pickJp: 0 };
+  const res = baseSpin(rng, S, bet, { ...opts, perks }), parts = { base: res.win * bet, fs: 0, pick: 0, jp: res.jackpot, fsN: 0, capsules: res.capsules | 0 }, trace = { res, fsSteps: [], fs: null, pick: null, pickJp: 0, capsules: res.capsules | 0, capsuleAt: res.capsuleAt || null }; /* casino:step2 ROLLROUND */
 
   if (res.fsSpins) {
     const fs = fsStart(res.fsSpins, perks);
@@ -501,7 +471,7 @@ export function rollRound(rng, S, bet, perks = {}, opts = {}) {
       const st = fsStep(rng, fs);
       let jp = 0;
 
-      if (st.res.jackpotRoll && jackpotHit(rng, bet)) {
+      if (jackpotTrigger(rng, st.res, bet) /* casino:step2 FSJP */) {
         jp = S.pool;
         parts.jp += jp;
         S.pool = SEED_POOL;
@@ -536,6 +506,9 @@ export function rollRound(rng, S, bet, perks = {}, opts = {}) {
     trace.pick = { g, seq, wz, total: pickTotal(g) };
   }
 
+  if (parts.capsules) { S.capsules = (S.capsules | 0) + parts.capsules; S.stats.capsuleSyms = (S.stats.capsuleSyms | 0) + parts.capsules; } /* casino:step2 TOTAL: капсулы-символы только в базовом спине */
+  { const pk = 1 + Math.min(PERK_CAPS.payoutPct, Math.max(0, Number(perks.payoutPct) || 0)) / 100; /* casino:step3 PAYOUT */
+    if (pk > 1) { res.win = Math.min(MAX_WIN, res.win * pk); parts.base = res.win * bet; parts.fs = Math.min(MAX_WIN * bet, parts.fs * pk); parts.pick = Math.min(MAX_WIN * bet, parts.pick * pk); } }
   parts.total = parts.base + parts.fs + parts.pick + parts.jp;
   return { res, parts, won: parts.total, trace };
 }
@@ -576,8 +549,7 @@ export function dailyClaim(S, now = new Date(), perks = {}) {
   const p = dailyPreview(S, now);
   if (!p.can) return null;
 
-  const spins = DAILY_SPINS[p.streak - 1] + (perks.crown && p.streak === 7 ? 1 : 0);
-  const capsule = p.streak === 7;
+  const spins = DAILY_SPINS[p.streak - 1] + (perks.crown && p.streak === 7 ? 1 : 0) + Math.min(PERK_CAPS.dailyExtra, Math.max(0, Math.floor(Number(perks.dailyExtra) || 0))) /* casino:step3 DAILY */, capsule = p.streak === 7;
 
   S.streak = p.streak;
   S.lastDay = p.today;
@@ -657,33 +629,114 @@ export const CATALOG = [
   it('theme:forest', 'theme', 'Тема барабанов: Лес', 'common', 'Рамка автомата'),
   it('theme:night', 'theme', 'Тема барабанов: Звёздная ночь', 'rare', 'Рамка автомата'),
   it('theme:server', 'theme', 'Тема барабанов: Серверная', 'epic', 'Рамка автомата'),
+  /* casino:step3 CATALOG — 23 новых предмета: 12 обычных, 6 редких, 3 эпических, 2 легендарных */
+  it('hat:luckyseven', 'hat', 'Шляпа счастливой семёрки', 'legendary', 'Игра: каждая седьмая ягода забега — двойная'),
+  it('pal:graphite', 'palette', 'Палитра «Графит»', 'common', 'Цвета сайта в настройках'),
+  it('pal:sakura', 'palette', 'Палитра «Сакура»', 'rare', 'Цвета сайта в настройках'),
+  it('pal:ruby', 'palette', 'Палитра «Рубин»', 'rare', 'Цвета сайта в настройках'),
+  it('pal:tropic', 'palette', 'Палитра «Тропики»', 'epic', 'Цвета сайта в настройках'),
+  it('greet:linux', 'greeting', 'Пак «Линуксоид»', 'common', 'Две новые шутки на главной'),
+  it('greet:deadline', 'greeting', 'Пак «Дедлайн»', 'common', 'Две новые шутки на главной'),
+  it('greet:sleep', 'greeting', 'Пак «Недосып»', 'common', 'Две новые шутки на главной'),
+  it('greet:algo', 'greeting', 'Пак «Алгоритмы»', 'rare', 'Две новые шутки на главной'),
+  it('theme:velvet', 'theme', 'Тема барабанов: Бархат', 'common', 'Рамка автомата'),
+  it('theme:arcade', 'theme', 'Тема барабанов: Аркада', 'rare', 'Рамка автомата'),
+  it('theme:vault', 'theme', 'Тема барабанов: Хранилище', 'epic', 'Рамка автомата'),
+  it('title:lucky', 'title', 'Титул: Везунчик', 'common', 'Эффект: +0,3% к выплатам слотов'),
+  it('title:patient', 'title', 'Титул: Терпеливый', 'common', 'Эффект: эпическая капсула гарантирована на одну капсулу раньше'),
+  it('title:early', 'title', 'Титул: Ранняя пташка', 'rare', 'Эффект: +1 к ежедневным спинам'),
+  it('title:legend', 'title', 'Титул: Легенда зала', 'legendary', 'Эффект: +0,5% к выплатам и +10% к шансу капсулы-символа. Награда за три талисмана', true),
+  it('cardback:marked', 'cardback', 'Меченая рубашка', 'rare', 'Эффект: «Удвоить» подсказывает три последние карты'),
+  it('chips:berry', 'chips', 'Ягодные фишки', 'common', 'Оформление фишек за столом', true),
+  it('felt:burgundy', 'felt', 'Бордовое сукно', 'common', 'Оформление игрового стола', true),
+  it('emote:fyr', 'emote', 'Эмоция «Фыр!»', 'common', 'Реплика ёжика за столами казино'),
+  it('perkcharm:clover', 'perkcharm', 'Клевер', 'common', 'Эффект: +15% к шансу капсулы-символа'),
+  it('perkcharm:horseshoe', 'perkcharm', 'Подкова', 'common', 'Эффект: рулетка возвращает 10% проигранной ставки на число'),
+  it('perkcharm:ace', 'perkcharm', 'Туз в рукаве', 'epic', 'Эффект: блэкджек платит 3:2 за 21 из трёх карт'),
 ];
 
 export const ITEM = Object.fromEntries(CATALOG.map(x => [x.id, x]));
-export const FREE_ITEMS = ['theme:forest', 'title:newbie']; // выдаются сразу
+export const FREE_ITEMS = ['theme:forest', 'title:newbie', 'chips:berry', 'felt:burgundy']; /* casino:step3 FREE — стартовые фишки и сукно */ // выдаются сразу
 
 // плата за набор: все 6 шляп → титул (выдаётся интерфейсом через grantSets)
-export const grantSets = S => {
-  const got = [];
-  if (HAT_SET.every(id => S.album[id]) && !S.album['title:hats']) {
-    S.album['title:hats'] = 1;
-    got.push('title:hats');
-  }
-  return got;
-};
+export const SETS = [{ reward: 'title:hats', need: () => HAT_SET }, { reward: 'title:legend', need: () => CHARM_SET }]; /* casino:step3 SETS */
+export const grantSets = S => { const got = []; for (const set of SETS) { if (!S.album[set.reward] && set.need().every(id => S.album[id])) { S.album[set.reward] = 1; got.push(set.reward); } } return got; };
 
 export const HAT_SET = CATALOG.filter(x => x.kind === 'hat').map(x => x.id);
+export const CHARM_SET = CATALOG.filter(x => x.kind === 'perkcharm').map(x => x.id); /* casino:step3 CHARM_SET */
 export const albumProgress = S => ({
   have: CATALOG.filter(x => S.album[x.id]).length,
   total: CATALOG.length
 });
 
+/* casino:step3 PERKS ---------- перки предметов: один центральный объект с жёсткими потолками ---------- */
+export const EQUIP_KINDS = ['cardback', 'chips', 'felt', 'emote', 'perkcharm'];
+export const EQUIPPABLE = ['title', 'theme', ...EQUIP_KINDS]; // что можно «надеть» (по одному на вид)
+export const PERK_CAPS = { payoutPct: 2.0, dailyExtra: 2, pityShift: 4, capsuleChanceMult: 1.5, gambleHint: 5, bjBonus: 0.5, rouletteRefund: 0.25 };
+export const PITY_MIN = 6;
+// Эффекты предметов; действуют только надетые (титул, рубашка, фишки, сукно, эмоция, талисман)
+export const ITEM_PERKS = {
+  'title:lucky': { payoutPct: 0.3 },
+  'title:patient': { pityShift: 1 },
+  'title:early': { dailyExtra: 1 },
+  'title:legend': { payoutPct: 0.5, capsuleChanceMult: 1.1 },
+  'cardback:marked': { gambleHint: 3 },
+  'perkcharm:clover': { capsuleChanceMult: 1.15 },
+  'perkcharm:horseshoe': { rouletteRefund: 0.1 },
+  'perkcharm:ace': { bjBonus: 0.5 },
+};
+export function clampPerks(p = {}) {
+  const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d), C = PERK_CAPS;
+  return { ...p,
+    payoutPct: Math.min(C.payoutPct, Math.max(0, num(p.payoutPct))),
+    dailyExtra: Math.min(C.dailyExtra, Math.max(0, Math.floor(num(p.dailyExtra)))),
+    pityShift: Math.min(C.pityShift, Math.max(0, Math.floor(num(p.pityShift)))),
+    capsuleChanceMult: Math.min(C.capsuleChanceMult, Math.max(1, num(p.capsuleChanceMult, 1))),
+    gambleHint: Math.min(C.gambleHint, Math.max(0, Math.floor(num(p.gambleHint)))),
+    bjBonus: Math.min(C.bjBonus, Math.max(0, num(p.bjBonus))),
+    rouletteRefund: Math.min(C.rouletteRefund, Math.max(0, num(p.rouletteRefund))) };
+}
+// id надетых и при этом имеющихся в альбоме предметов
+export function equippedIds(S) {
+  S = S || {}; const album = S.album || {}, eq = S.equip || {}, out = [];
+  if (S.title && album[S.title]) out.push(S.title);
+  for (const k of EQUIP_KINDS) { const id = eq[k]; if (id && album[id] && ITEM[id] && ITEM[id].kind === k) out.push(id); }
+  return out;
+}
+// S — состояние слотов, H — общее сохранение (шляпа). Вызывается без S — вернёт только перки шляпы
+export function activePerks(S, H) {
+  H = H || {}; const ids = equippedIds(S), hat = H.hat;
+  const p = { wizard: hat === 'wizard', crown: hat === 'crown', foil: hat === 'foil', halo: hat === 'halo', luckyseven: hat === 'luckyseven',
+    payoutPct: 0, dailyExtra: 0, pityShift: 0, capsuleChanceMult: 1, gambleHint: 0, bjBonus: 0, rouletteRefund: 0, sources: ids };
+  for (const id of ids) {
+    const e = ITEM_PERKS[id]; if (!e) continue;
+    p.payoutPct += e.payoutPct || 0; p.dailyExtra += e.dailyExtra || 0; p.pityShift += e.pityShift || 0;
+    p.capsuleChanceMult *= e.capsuleChanceMult || 1; p.gambleHint = Math.max(p.gambleHint, e.gambleHint || 0);
+    p.bjBonus += e.bjBonus || 0; p.rouletteRefund += e.rouletteRefund || 0;
+  }
+  if (p.halo) p.gambleHint = Math.max(p.gambleHint, 5);
+  return clampPerks(p);
+}
+export function equipItem(S, id) {
+  const x = ITEM[id]; if (!x || !S.album || !S.album[id]) return false;
+  if (x.kind === 'title') S.title = id; else if (x.kind === 'theme') S.theme = id;
+  else if (EQUIP_KINDS.includes(x.kind)) (S.equip || (S.equip = {}))[x.kind] = id; else return false;
+  return true;
+}
+export const isEquipped = (S, id) => { const x = ITEM[id]; return Boolean(x) && (x.kind === 'title' ? S.title === id : x.kind === 'theme' ? S.theme === id : Boolean(S.equip) && S.equip[x.kind] === id); };
+// капсулы: эпик гарантирован не позже pityOf(perks)-й капсулы без него
+export const pityOf = perks => Math.max(PITY_MIN, PITY_CAPSULES - Math.min(PERK_CAPS.pityShift, Math.max(0, Math.floor(Number(perks && perks.pityShift) || 0))));
+// блэкджек: надбавка к ставке за 21 из ровно трёх карт без натурала (обычно 1:1, с талисманом 3:2 → +0.5 ставки). Дроби — через settle()
+export const bjExtra = (perks, bet, { total, cards, natural = false } = {}) => (total === 21 && cards === 3 && !natural ? bet * Math.min(PERK_CAPS.bjBonus, Math.max(0, Number(perks && perks.bjBonus) || 0)) : 0);
+// рулетка: возврат доли проигранной ставки НА ОДНО ЧИСЛО (straight-up); вызывающий применяет только к проигранным прямым ставкам
+export const rouletteRefundAmount = (perks, lostStraightStake) => Math.max(0, Number(lostStraightStake) || 0) * Math.min(PERK_CAPS.rouletteRefund, Math.max(0, Number(perks && perks.rouletteRefund) || 0));
+
+
 // Открывает одну капсулу; меняет S.album/S.sinceEpic. Возвращает {item, dup, berries}
-export function openCapsule(rng, S) {
+export function openCapsule(rng, S, perks = {}) { /* casino:step3 OC-SIG */
   const rar = ['common', 'rare', 'epic', 'legendary'];
 
-  let r = S.sinceEpic >= PITY_CAPSULES
-    ? 2 + pickW(rng, [RARITY.epic.w, RARITY.legendary.w])
+  let r = S.sinceEpic >= pityOf(perks) /* casino:step3 OC-PITY */ ? 2 + pickW(rng, [RARITY.epic.w, RARITY.legendary.w])
     : pickW(rng, rar.map(k => RARITY[k].w));
 
   const pool = CATALOG.filter(x => x.rarity === rar[r] && !x.setOnly);

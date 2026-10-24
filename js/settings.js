@@ -18,6 +18,10 @@ const PALETTES = [
   { id: 'gold', name: 'Золото' },
   { id: 'neon', name: 'Неон' },
   { id: 'aurora', name: 'Аврора' },
+  { id: 'graphite', name: 'Графит' },
+  { id: 'sakura', name: 'Сакура' },
+  { id: 'ruby', name: 'Рубин' },
+  { id: 'tropic', name: 'Тропики' },
 ];
 const DEFAULT_PALETTE = 'purple';
 const BASE_PALETTES = ['purple', 'orange', 'green', 'blue', 'cyan'];

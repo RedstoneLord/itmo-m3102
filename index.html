@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400..800;1,400..800&family=Ubuntu+Sans:ital,wght@0,100..800;1,100..800&family=Arimo:ital,wght@0,400..700;1,400..700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500..700&family=Exo+2:wght@500..800&family=IBM+Plex+Mono:wght@500;700&family=Playfair+Display:wght@600..800&family=Press+Start+2P&family=Oswald:wght@500..700&display=swap"> <!-- casino:step6 fonts тем казино: офлайн остаются системные шрифты -->
     <script>try{var s=JSON.parse(localStorage.getItem('m3102-settings-v1'))||{},r=document.documentElement;if(s.font)r.setAttribute('data-font',s.font);if(s.palette&&s.palette!=='purple')r.setAttribute('data-palette',s.palette);if(s.theme==='light'||s.theme==='dark')r.setAttribute('data-theme',s.theme);if(/^(bubbly|soft|firm|strict)$/.test(s.radius))r.setAttribute('data-radius',s.radius)}catch(e){}</script>
     <link rel="icon" type="image/png" sizes="32x32" href="img/icons/favicon-32.png">
     <link rel="icon" type="image/png" sizes="48x48" href="img/icons/favicon-48.png">
@@ -327,6 +328,8 @@
     <link rel="stylesheet" href="./css/settings.css">
     <link rel="stylesheet" href="./css/appearance.css">
     <link rel="stylesheet" href="./css/slots.css">
+    <link rel="stylesheet" href="./css/casino.css">
+    <link rel="stylesheet" href="./css/casino-themes.css">
     <link rel="stylesheet" href="./css/palettes-special.css">
     </head>
 
@@ -389,6 +392,11 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     import { installBackdrop } from './js/backdrop.js';
     import { trackReading } from './js/rewards.js';
     import { renderSlotsPage, installSlots } from './js/slots.js';
+    import { renderCasinoPage } from './js/casino.js'; /* casino:step5 */
+    import { renderCollectionPage } from './js/casino-collection.js';
+    import { installCasinoThemes, decorateCasinoPage } from './js/casino-themes.js'; /* casino:step6 */
+    import { renderBlackjackPage } from './js/blackjack.js';
+    import { renderRoulettePage } from './js/roulette.js';
     import { signShared, slotsChipText } from './js/slots-math.js';
     import { installSettings, renderSettingsPage } from './js/settings.js';
 
@@ -1392,7 +1400,8 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
           <a class="card" data-go="diagrams"><div class="ic">${ic('diagram',22)}</div><div class="meta"><div class="name">Диаграммы</div><div class="desc">Конструктор диаграмм для конспектов</div></div></a>
           <a class="card" data-go="memes"><div class="ic">${ic('smile',22)}</div><div class="meta"><div class="name">Мемы</div><div class="desc">Мемы группы</div></div></a>
           <a class="card" data-go="hedgehog"><div class="ic">🦔</div><div class="meta"><div class="name">Ёжик-кувырок</div><div class="desc">Мини-игра: катись с холмов, делай кувырки, не засыпай</div></div></a>
-          <a class="card" data-go="slots"><div class="ic">${ic('sparkles',22)}</div><div class="meta"><div class="name">Колючий куш</div><div class="desc">Слоты на ягоды ёжика, капсулы и альбом</div></div></a>
+          <a class="card" data-go="casino"><div class="ic">${ic('sparkles',22)}</div><div class="meta"><div class="name">Казино</div><div class="desc">Слоты, блэкджек и рулетка на ягоды ёжика</div></div></a>
+          <a class="card" data-go="collection"><div class="ic">${ic('trophy',22)}</div><div class="meta"><div class="name">Коллекция</div><div class="desc">Капсулы, альбом, ежедневные спины и достижения</div></div></a>
           <a class="card" data-go="settings"><div class="ic">${ic('settings',22)}</div><div class="meta"><div class="name">Настройки</div><div class="desc">Цвета, шрифт и внешний вид сайта</div></div></a>
         </div><div id="offline-panel" style="margin-top:18px"></div>`;
       c.querySelectorAll('[data-go]').forEach(el=>el.onclick=e=>{e.preventDefault();location.hash='#/'+el.dataset.go;});
@@ -1804,7 +1813,7 @@ const HATS=[
   {id:'cap',name:'Грибная шапка',cost:250},
   {id:'glasses',name:'Очки',cost:350},
   {id:'chef',name:'Поварской колпак',cost:130,perk:'Яблоки бодрят сильнее'},{id:'helmet',name:'Каска',cost:220,perk:'Старт со щитом'},{id:'wizard',name:'Колпак мага',cost:280,perk:'Ягоды сами подлетают'},{id:'propeller',name:'Пропеллер',cost:400,perk:'Дольше в воздухе'},{id:'halo',name:'Нимб',cost:450,perk:'Бодрость копится медленнее'},{id:'foil',name:'Шапочка из фольги',cost:0,secret:true,perk:'Бонусы действуют дольше'},{id:'crown',name:'Корона',cost:600},
-  {id:'itmocap',name:'Кепка студента ИТМО',cost:0,secret:true,perk:'Сонливость растёт медленнее'},{id:'goldtop',name:'Золотой цилиндр',cost:0,secret:true,perk:'Ягоды дают больше очков'},{id:'crabgear',name:'Шлем краба-шестерёнки',cost:0,secret:true,perk:'Старт со щитом и неуязвимостью'},{id:'orangepeel',name:'Апельсиновая кожура',cost:0,secret:true,perk:'Яблоки бодрят сильнее'},{id:'cpphelm',name:'Шлем C++',cost:0,secret:true,perk:'Быстрый старт'},{id:'foilpro',name:'Фольга-ПРО',cost:0,secret:true,perk:'Бонусы действуют вдвое дольше'}
+  {id:'itmocap',name:'Кепка студента ИТМО',cost:0,secret:true,perk:'Сонливость растёт медленнее'},{id:'goldtop',name:'Золотой цилиндр',cost:0,secret:true,perk:'Ягоды дают больше очков'},{id:'crabgear',name:'Шлем краба-шестерёнки',cost:0,secret:true,perk:'Старт со щитом и неуязвимостью'},{id:'orangepeel',name:'Апельсиновая кожура',cost:0,secret:true,perk:'Яблоки бодрят сильнее'},{id:'cpphelm',name:'Шлем C++',cost:0,secret:true,perk:'Быстрый старт'},{id:'foilpro',name:'Фольга-ПРО',cost:0,secret:true,perk:'Бонусы действуют вдвое дольше'},{id:'luckyseven',name:'Шляпа счастливой семёрки',cost:0,secret:true,perk:'Каждая седьмая ягода забега — двойная'}
 ];
 
 const GOAL_DEFS=[
@@ -2102,6 +2111,8 @@ function drawHat(ctx,id,R){
     ctx.fillStyle='#2a6fd0';ctx.beginPath();for(let i=0;i<6;i++){const a=-Math.PI/2+i*Math.PI/3;ctx[i?'lineTo':'moveTo'](Math.cos(a)*0.46*R,-0.3*R+Math.sin(a)*0.4*R);}ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.font='800 '+(0.24*R)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('C++',0,-0.3*R);ctx.textBaseline='alphabetic';
   }else if(id==='foilpro'){
     ctx.fillStyle='#e6eaf2';ctx.beginPath();ctx.moveTo(-0.38*R,0);ctx.lineTo(-0.26*R,-0.55*R);ctx.lineTo(-0.05*R,-0.38*R);ctx.lineTo(0.16*R,-0.7*R);ctx.lineTo(0.38*R,0);ctx.closePath();ctx.fill();ctx.fillStyle='#8fe3ff';starPath(ctx,0.2*R,-0.5*R,0.08*R);ctx.fill();ctx.fillStyle='#ffe27a';starPath(ctx,-0.2*R,-0.3*R,0.06*R);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=0.04*R;ctx.beginPath();ctx.moveTo(-0.26*R,-0.55*R);ctx.lineTo(-0.12*R,-0.08*R);ctx.stroke();
+  }else if(id==='luckyseven'){
+    ctx.fillStyle='#d62f4b';ctx.beginPath();ctx.arc(0,0,0.5*R,Math.PI,0);ctx.closePath();ctx.fill();ctx.fillStyle='#b41f38';ell(ctx,0,0,0.6*R,0.08*R,0);ctx.fillStyle='#fff';ctx.font='900 '+(0.46*R)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('7',0,-0.22*R);ctx.textBaseline='alphabetic';ctx.fillStyle='#ffe066';starPath(ctx,0.34*R,-0.5*R,0.1*R);ctx.fill();
   }else if(id==='crown'){
     ctx.fillStyle='#ffcf40';ctx.strokeStyle='#d99a1f';ctx.lineWidth=0.04*R;
     ctx.beginPath();ctx.moveTo(-0.36*R,0);ctx.lineTo(-0.36*R,-0.42*R);ctx.lineTo(-0.18*R,-0.2*R);ctx.lineTo(0,-0.5*R);ctx.lineTo(0.18*R,-0.2*R);ctx.lineTo(0.36*R,-0.42*R);ctx.lineTo(0.36*R,0);ctx.closePath();ctx.fill();ctx.stroke();
@@ -2109,55 +2120,94 @@ function drawHat(ctx,id,R){
   }
   ctx.restore();
 }
+/* casino:step4 hedgehog — ёжик по эмодзи-референсу (профиль). Геометрия HOG одна на SVG (js/slots-art.js) и canvas (index.html, drawHog).
+   Координаты — в системе референса 512×512 (ёжик смотрит влево); и SVG, и canvas зеркалят её (scale(-k, k)), поэтому в игре ёжик смотрит вправо. */
+/* casino:step4 hedgehog — геометрия HOG совпадает с js/slots-art.js (там SVG, здесь canvas). */
+var HOG = {
+  body: 'M48 207L92 226L101 158L122 203L156 132L186 168L206 137L224 160L262 126L293 117L300 139L357 121L352 150L392 152L428 152L412 174L468 200L444 224L493 248L458 266L486 290L452 312L470 332L440 352L452 394L440 430C420 436 395 440 372 440L250 384L196 380L150 372L124 330L110 250Z',
+  under: 'M190 296C240 330 290 385 372 440L440 430L441 418C400 424 350 410 310 380C270 350 235 320 190 296Z',
+  fringe: 'M50 214L92 226C130 222 170 232 196 252L208 304C190 272 150 256 104 262C80 252 62 240 50 214Z',
+  farLeg: 'M114 350C134 344 158 344 166 350C172 392 170 425 160 446C150 454 120 454 106 448C104 430 106 392 114 350Z',
+  belly: 'M160 366C195 352 245 362 285 386L345 414L366 426C372 440 352 448 320 446L190 446C168 436 156 396 160 366Z',
+  neck: 'M176 285C200 300 210 340 192 374C176 382 156 384 140 380C170 362 182 322 176 285Z',
+  head: 'M18 312C28 276 80 246 138 246C186 248 206 290 204 332C202 372 150 390 92 380C48 372 18 342 18 312Z',
+  nose: 'M20 306C24 297 40 295 52 300C56 311 52 324 39 326C28 324 20 318 20 306Z',
+  mouth: 'M36 332C48 348 66 354 77 343',
+  ear: [198, 281, 28, 36, 16], earIn: [194, 286, 15, 23, 16], eye: [136, 299, 12, 17], eyeShine: [133, 291, 3.5],
+  pawNear: [166, 450, 36, 15], pawRear: [320, 446, 44, 17],
+  toes: { far: [[113, 441, 7]], near: [[154, 447, 8], [170, 454, 7]], rear: [[301, 450, 8], [316, 456, 7]] },
+  stripes: [[150, 212, 172, 168, 13, 'l'], [198, 238, 235, 190, 15, 'l'], [258, 205, 310, 165, 16, 'l'], [250, 265, 305, 222, 15, 'l'], [280, 303, 383, 242, 14, 'l'], [335, 232, 386, 205, 10, 'l'], [330, 328, 402, 298, 14, 'l'], [366, 358, 426, 346, 14, 'l'], [386, 389, 416, 392, 10, 'l'], [420, 316, 450, 304, 9, 'l'], [242, 174, 272, 156, 12, 'd'], [326, 190, 368, 160, 14, 'd'], [400, 264, 430, 254, 10, 'd']],
+  c: { quill: '#85594f', dark: '#6c473d', fringe: '#6f4639', stripeL: '#b97d69', stripeD: '#6f4a43', peach: '#ffd3b6', peachD: '#f7c291', pink: '#f27ab0', nose: '#3d3f43', eye: '#161616' },
+};
+var HOG_PATHS = null;
+function hogPaths() {
+  if (!HOG_PATHS) { HOG_PATHS = {}; for (var key of ['body', 'under', 'fringe', 'farLeg', 'belly', 'neck', 'head', 'nose', 'mouth']) HOG_PATHS[key] = new Path2D(HOG[key]); }
+  return HOG_PATHS;
+}
+function hogEllipse(ctx, e, fill, dx, dy) {
+  ctx.fillStyle = fill; ctx.beginPath(); ctx.ellipse(e[0] + (dx || 0), e[1] + (dy || 0), e[2], e[3], (e[4] || 0) * Math.PI / 180, 0, TAU); ctx.fill();
+}
+function hogToes(ctx, list, dx, dy) {
+  ctx.fillStyle = HOG.c.pink;
+  for (var t of list) { ctx.beginPath(); ctx.arc(t[0] + dx, t[1] + dy, t[2], 0, TAU); ctx.fill(); }
+}
 /* o: curl, leg, run, roll, hat, blink, sleepy, dizzy, t */
-function drawHog(ctx,R,o){
-  const curl=o.curl||0,face=1-clamp(curl*1.7,0,1),hat=o.hat||'none';
-  if(face>0.02){
-    ctx.save();ctx.globalAlpha=face;
-    const run=o.run===undefined?1:o.run,ph=o.leg||0;
-    for(let i=0;i<2;i++){
-      const s=Math.sin(ph+i*Math.PI),c=Math.cos(ph+i*Math.PI);
-      const fx=(i?0.5:-0.12)*R+s*0.26*R*run,fy=0.9*R-Math.max(0,c)*0.2*R*run;
-      ctx.fillStyle='#b98a5d';ell(ctx,fx,fy+0.02*R,0.22*R,0.14*R,0);
-      ctx.fillStyle='#efc99a';ell(ctx,fx,fy,0.2*R,0.12*R,0);
+function drawHog(ctx, R, o) {
+  var curl = o.curl || 0, prof = 1 - clamp(curl * 1.7, 0, 1), hat = o.hat || 'none', c = HOG.c, k = R * 0.0057;
+  if (prof > 0.02) {
+    var P = hogPaths(), run = o.run === undefined ? 1 : o.run, ph = o.leg || 0, amp = 26 * run;
+    var sw = i => Math.sin(ph + i * Math.PI) * amp, lift = i => Math.max(0, Math.cos(ph + i * Math.PI)) * 20 * run;
+    ctx.save(); ctx.globalAlpha = prof;
+    ctx.translate(256 * k, -115 * k - R); ctx.scale(-k, k);
+    // дальняя передняя лапа
+    var fx = sw(1), fy = -lift(1);
+    ctx.fillStyle = c.peachD; ctx.save(); ctx.translate(fx, fy); ctx.fill(P.farLeg); ctx.restore(); hogToes(ctx, HOG.toes.far, fx, fy);
+    // спина, низ, полосы
+    ctx.fillStyle = c.quill; ctx.fill(P.body);
+    ctx.fillStyle = c.dark; ctx.fill(P.under);
+    ctx.lineCap = 'round';
+    for (var s of HOG.stripes) { ctx.strokeStyle = s[5] === 'd' ? c.stripeD : c.stripeL; ctx.lineWidth = s[4]; ctx.beginPath(); ctx.moveTo(s[0], s[1]); ctx.lineTo(s[2], s[3]); ctx.stroke(); }
+    // брюшко и ближние лапы
+    ctx.fillStyle = c.peach; ctx.fill(P.belly);
+    var nx = sw(0), ny = -lift(0), rx = sw(1), ry = -lift(1);
+    hogEllipse(ctx, HOG.pawNear, c.peach, nx, ny); hogEllipse(ctx, HOG.pawRear, c.peach, rx, ry);
+    hogToes(ctx, HOG.toes.near, nx, ny); hogToes(ctx, HOG.toes.rear, rx, ry);
+    // шея, чёлка, голова, ухо
+    ctx.fillStyle = c.peachD; ctx.fill(P.neck);
+    ctx.fillStyle = c.fringe; ctx.fill(P.fringe);
+    ctx.fillStyle = c.peach; ctx.fill(P.head);
+    hogEllipse(ctx, HOG.ear, c.peach); hogEllipse(ctx, HOG.earIn, c.pink);
+    // глаз
+    var e = HOG.eye, bl = o.sleepy ? 0.25 : 1 - (o.blink || 0);
+    if (o.sleepy >= 1 || bl < 0.15) { ctx.strokeStyle = c.eye; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(e[0], e[1] + 4, 11, 0.15, Math.PI - 0.15); ctx.stroke(); }
+    else { hogEllipse(ctx, [e[0], e[1], e[2], e[3] * bl], c.eye); if (bl > 0.5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(HOG.eyeShine[0], HOG.eyeShine[1], HOG.eyeShine[2], 0, TAU); ctx.fill(); } }
+    ctx.fillStyle = c.nose; ctx.fill(P.nose);
+    ctx.strokeStyle = c.nose; ctx.lineWidth = 5; ctx.stroke(P.mouth);
+    ctx.restore();
+    // очки, шляпа, звёздочки — уже в координатах игры (центр ёжика в 0,0; голова справа)
+    ctx.save(); ctx.globalAlpha = prof;
+    if (hat === 'glasses') {
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 0.05 * R; ctx.beginPath(); ctx.moveTo(0.45 * R, 0.02 * R); ctx.lineTo(0.2 * R, -0.12 * R); ctx.stroke();
+      ctx.fillStyle = '#1d1d26'; ell(ctx, 0.64 * R, 0.03 * R, 0.21 * R, 0.19 * R, 0.1); ctx.fillStyle = 'rgba(255,255,255,0.55)'; ell(ctx, 0.58 * R, -0.03 * R, 0.07 * R, 0.04 * R, -0.4);
+    } else if (hat !== 'none') {
+      ctx.translate(0.62 * R, -0.3 * R); ctx.rotate(0.2); ctx.scale(0.72, 0.72); drawHat(ctx, hat, R);
     }
     ctx.restore();
+    if (o.dizzy) {
+      ctx.save(); ctx.globalAlpha = prof; ctx.fillStyle = '#ffe066';
+      for (var i = 0; i < 3; i++) { var a = (o.t || 0) * 4 + i * TAU / 3; starPath(ctx, 0.4 * R + Math.cos(a) * 0.55 * R, -1.3 * R + Math.sin(a) * 0.15 * R, 0.14 * R); ctx.fill(); }
+      ctx.restore();
+    }
   }
-  const n=Math.round(lerp(15,26,curl)),span=lerp(3.5,TAU,curl),center=Math.PI+0.3*(1-curl),rot=(o.roll||0)*curl;
-  spikeRow(ctx,n,span,center,0.86*R,0.38*R,'#5b3d2b',rot,0);
-  spikeRow(ctx,n,span,center+(span>=TAU-0.01?TAU/n/2:span/(n-1)/2),0.84*R,0.27*R,'#8b6240',rot,5);
-  const g=ctx.createRadialGradient(-0.3*R,-0.4*R,0.1*R,0,0,R);
-  g.addColorStop(0,'#a37850');g.addColorStop(1,'#6e4a31');
-  ctx.fillStyle=g;circ(ctx,0,0,0.93*R);
-  if(curl>0.3){
-    ctx.save();ctx.globalAlpha=clamp((curl-0.3)*1.4,0,1);ctx.rotate(rot);
-    ctx.strokeStyle='rgba(255,220,170,0.35)';ctx.lineWidth=0.06*R;ctx.lineCap='round';
-    for(let i=0;i<5;i++){const a=i*1.26;ctx.beginPath();ctx.arc(0,0,0.62*R,a,a+0.55);ctx.stroke();}
-    ctx.restore();
-  }
-  if(face>0.02){
-    ctx.save();ctx.globalAlpha=face;
-    ctx.save();ctx.beginPath();ctx.arc(0,0,0.93*R,0,TAU);ctx.clip();
-    ctx.fillStyle='#f0cfa1';ell(ctx,0.35*R,0.62*R,0.95*R,0.55*R,-0.15);ctx.restore();
-    ctx.fillStyle='#f6d9b0';ell(ctx,0.62*R,0.12*R,0.52*R,0.46*R,0.12);
-    ctx.fillStyle='#e8bf8d';circ(ctx,0.12*R,-0.42*R,0.2*R);ctx.fillStyle='#f3a7a0';circ(ctx,0.14*R,-0.4*R,0.11*R);
-    const ex=0.58*R,ey=-0.06*R,bl=o.sleepy?0.25:(1-(o.blink||0));
-    if(o.sleepy>=1||bl<0.15){ctx.strokeStyle='#2a1c16';ctx.lineWidth=0.06*R;ctx.lineCap='round';ctx.beginPath();ctx.arc(ex,ey+0.02*R,0.1*R,0.15,Math.PI-0.15);ctx.stroke();}
-    else{ctx.fillStyle='#1f1612';ell(ctx,ex,ey,0.1*R,0.11*R*bl,0);if(bl>0.5){ctx.fillStyle='#fff';circ(ctx,ex+0.035*R,ey-0.04*R,0.035*R);}}
-    ctx.fillStyle='rgba(255,130,150,0.5)';ell(ctx,0.62*R,0.3*R,0.14*R,0.09*R,0);
-    ctx.fillStyle='#2b1d18';circ(ctx,1.08*R,0.14*R,0.14*R);ctx.fillStyle='rgba(255,255,255,0.7)';circ(ctx,1.04*R,0.09*R,0.04*R);
-    ctx.strokeStyle='#7a4a30';ctx.lineWidth=0.035*R;ctx.lineCap='round';ctx.beginPath();ctx.arc(0.9*R,0.2*R,0.14*R,0.5,1.9);ctx.stroke();
-    if(hat==='glasses'){
-      ctx.strokeStyle='#222';ctx.lineWidth=0.05*R;ctx.beginPath();ctx.moveTo(0.4*R,-0.12*R);ctx.lineTo(0.05*R,-0.26*R);ctx.stroke();
-      ctx.fillStyle='#1d1d26';ell(ctx,0.58*R,-0.05*R,0.22*R,0.17*R,0.1);ctx.fillStyle='rgba(255,255,255,0.55)';ell(ctx,0.52*R,-0.1*R,0.07*R,0.04*R,-0.4);
-    }else if(hat!=='none'){
-      ctx.save();ctx.translate(0.36*R,-0.8*R);ctx.rotate(0.22);drawHat(ctx,hat,R);ctx.restore();
-    }
-    if(o.dizzy){
-      ctx.fillStyle='#ffe066';
-      for(let i=0;i<3;i++){const a=(o.t||0)*4+i*TAU/3;starPath(ctx,0.3*R+Math.cos(a)*0.5*R,-1.2*R+Math.sin(a)*0.15*R,0.14*R);ctx.fill();}
-    }
-    ctx.restore();
+  if (curl > 0.02) { // клубок: колючки того же рисунка (две тональности и светлые штрихи)
+    var ball = clamp(curl * 1.7, 0, 1), rot = o.roll || 0;
+    ctx.save(); ctx.globalAlpha = ball;
+    spikeRow(ctx, 24, TAU, 0, 0.86 * R, 0.36 * R, c.dark, rot, 0);
+    spikeRow(ctx, 24, TAU, TAU / 48, 0.84 * R, 0.27 * R, c.quill, rot, 5);
+    ctx.fillStyle = c.quill; circ(ctx, 0, 0, 0.93 * R);
+    ctx.save(); ctx.rotate(rot); ctx.lineCap = 'round'; ctx.lineWidth = 0.1 * R;
+    for (var j = 0; j < 5; j++) { var b = j * 1.26; ctx.strokeStyle = j % 2 ? c.stripeD : c.stripeL; ctx.beginPath(); ctx.arc(0, 0, 0.6 * R, b, b + 0.55); ctx.stroke(); }
+    ctx.restore(); ctx.restore();
   }
 }
 
@@ -2547,7 +2597,7 @@ class Game{
   collect(k,c){
     const h=this.hog,m=this.mult();k.got=true;if(POWER_KINDS.includes(k.kind)){this.power(k);return;}
     if(k.kind==='berry'){
-      h.berryStreak++;h.berryT=0.9;const bb=(this.hog.stm>0?2:1)+(this.bst&&Math.random()<0.25?1:0);this.save.berries+=bb;this.run.berries+=bb;this.dayAdd('berries',1);this.trick+=5*m*(this.save.hat==='goldtop'?2:1);
+      h.berryStreak++;h.berryT=0.9;const bb=(this.hog.stm>0?2:1)+(this.bst&&Math.random()<0.25?1:0)+(this.save.hat==='luckyseven'&&this.run.berries%7===6?1:0);this.save.berries+=bb;this.run.berries+=bb;this.dayAdd('berries',1);this.trick+=5*m*(this.save.hat==='goldtop'?2:1);
       this.audio.sfx('berry',h.berryStreak-1);this.burst(k.x,k.y,5,{col:'#ff7fae',size:3,sp:100,life:0.4,g:0});
     }else if(k.kind==='apple'){
       this.sleep=Math.max(0,this.sleep-(this.save.hat==='chef'?0.4:this.save.hat==='orangepeel'?0.45:0.25));this.run.apples++;this.dayAdd('apples',1);this.trick+=50*m;
@@ -3014,7 +3064,7 @@ function mount(container,opts){
       '<canvas class="hh-prev"></canvas>'+
       '<h2 class="hh-h">Ёжик-кувырок</h2>'+
       '<p class="hh-sub">Катись с холмов, взлетай и крути кувырки.<br>Главное — не дать ёжику уснуть 💤</p>'+
-      '<div class="hh-row"><button class="btn2 btn-primary hh-big" data-act="play" type="button">▶ Играть</button><button class="btn2 hh-big" data-act="hats" type="button">🎩 Шляпы</button><a class="btn2 hh-big" href="#/slots">🎰 Слоты</a></div>'+
+      '<div class="hh-row"><button class="btn2 btn-primary hh-big" data-act="play" type="button">▶ Играть</button><button class="btn2 hh-big" data-act="hats" type="button">🎩 Шляпы</button><a class="btn2 hh-big" href="#/casino">🎰 Казино</a></div>'+
       '<div class="hh-chips"><span class="hh-chip">🍓 '+fmt(save.berries)+'</span>'+slotsChip()+'<span class="hh-chip">🏁 '+fmt(b.dist)+' м</span><span class="hh-chip">⭐ '+fmt(b.score)+'</span><span class="hh-chip">🔥 ×'+fmt(b.combo)+'</span></div>'+
       '<div class="hh-sec">Цели дня</div><ul class="hh-goals">'+goalsHtml()+'</ul>'+
       '<ul class="hh-help">'+
@@ -3169,6 +3219,10 @@ global.HedgehogGame={mount,_test:{Game,World,Terrain,loadSave}};
       if(h==='memes')return{mode:'memes',path:''};
       if(h==='hedgehog')return{mode:'hedgehog',path:''};
       if(h==='slots')return{mode:'slots',path:''};
+      if(h==='casino')return{mode:'casino',path:''};
+      if(h==='blackjack')return{mode:'blackjack',path:''};
+      if(h==='roulette')return{mode:'roulette',path:''};
+      if(h==='collection'||h.startsWith('collection/'))return{mode:'collection',path:h.slice(11)};
       if(h==='links')return{mode:'links',path:''};
       if(h==='students')return{mode:'students',path:''};
       if(h==='other')return{mode:'other',path:''};
@@ -3185,7 +3239,7 @@ global.HedgehogGame={mount,_test:{Game,World,Terrain,loadSave}};
       if(mode==='home')key='home';
       else if(mode==='schedule')key='schedule';
       else if(['homework','hw-deadlines','deadlines'].includes(mode))key='homework';
-      else if(['diagrams','memes','hedgehog','slots','other','students','settings'].includes(mode))key='other';
+      else if(['diagrams','memes','hedgehog','slots','casino','blackjack','roulette','collection','other','students','settings'].includes(mode))key='other';
       document.querySelectorAll(`#tab-${key},#bn-${key}`).forEach(el=>{el.classList.add('active');el.setAttribute('aria-current','page');});
     }
     function breadcrumbs(path){
@@ -3395,7 +3449,7 @@ function renderPdfView(path){
     });
     }
 
-const TAB_ORDER={home:0,browse:1,note:1,view:1,links:1,schedule:2,homework:3,'hw-deadlines':3,deadlines:3,other:4,students:4,diagrams:4,memes:4,hedgehog:4,settings:4,slots:4};
+const TAB_ORDER={home:0,browse:1,note:1,view:1,links:1,schedule:2,homework:3,'hw-deadlines':3,deadlines:3,other:4,students:4,diagrams:4,memes:4,hedgehog:4,settings:4,slots:4,casino:4,blackjack:4,roulette:4,collection:4};
 let currentMode=null,currentHash=null,transitionToken=0;
 const reducedMotion=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -3417,8 +3471,13 @@ function renderRoute(){
   else if(mode==='other')renderOtherPage();
   else if(mode==='hedgehog')renderHedgehogPage();
   else if(mode==='slots')renderSlotsPage();
+  else if(mode==='casino')renderCasinoPage();
+  else if(mode==='blackjack')renderBlackjackPage();
+  else if(mode==='roulette')renderRoulettePage();
+  else if(mode==='collection')renderCollectionPage(path);
   else if(mode==='settings')renderSettingsPage();
   else renderBrowse(path);
+  decorateCasinoPage(); /* casino:step6 */
 }
 
 function route(){
@@ -3468,6 +3527,7 @@ function route(){
     installDiagramEditor();
     installMemes();
     installSlots();
+    installCasinoThemes(); /* casino:step6 */
     mountSiteSearch(document.getElementById('site-search'));
     hydrateIcons();
     installGlyphIcons();

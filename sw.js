@@ -15,7 +15,7 @@
     и пометка «показана сохранённая версия».
   При изменении списка SHELL или после крупных правок можно поднять номер в CACHE.
 */
-const CACHE = 'm3102-shell-v13';
+const CACHE = 'm3102-shell-v14';
 const CONTENT = 'm3102-content-v1'; // не начинается с m3102-shell-, поэтому activate его не удаляет; то же имя в js/offline.js
 const SHELL = [
   './', './index.html', './site.css', './manifest.webmanifest',
@@ -34,7 +34,10 @@ const SHELL = [
   './js/backdrop.js', './css/glass.css',
   './js/settings.js', './css/settings.css', './css/appearance.css', './js/appearance.js',
   './fonts/URWGothic-Book.woff2', './fonts/URWGothic-Demi.woff2',
-  './js/slots.js', './js/slots-math.js', './js/slots-art.js', './js/slots-audio.js', './css/slots.css', './js/rewards.js'
+  './js/slots.js', './js/slots-math.js', './js/slots-art.js', './js/slots-audio.js', './css/slots.css', './js/rewards.js',
+  './css/casino-themes.css', './css/casino.css', './js/blackjack-math.js', './js/blackjack.js',
+  './js/casino-collection.js', './js/casino-common.js', './js/casino-themes.js', './js/casino.js',
+  './js/roulette-math.js', './js/roulette.js',
 ];
 const CDN = 'cdnjs.cloudflare.com';
 const RAW = 'raw.githubusercontent.com';

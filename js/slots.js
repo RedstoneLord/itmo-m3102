@@ -7,66 +7,16 @@ import * as M from './slots-math.js';
 import { ensureSprite, sym, icon, LABELS } from './slots-art.js';
 import { makeSlotsAudio } from './slots-audio.js';
 
-const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const KEY = 'm3102-slots-v1', SNAP = 'm3102-slots-snap-v1', HHK = 'hh_save_v1';
-const CANCEL = Symbol('cancel');
-const reduce = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-const fmt = n => Math.round(n).toLocaleString('ru-RU');
-const readJson = key => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } };
-const writeJson = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; } };
+import { ic } from './icons.js';
+import { esc, KEY, SNAP, HHK, CANCEL, reduce, fmt, readJson, writeJson, KIND_EMOJI, KIND_NAME, THEME_CLASS, ACH, loadAll, saveAll, applyItem, perksOf, clock, isOnBreak, setBreak, makeAwards } from './casino-common.js';
+export { ACH, loadAll, saveAll, applyItem, perksOf }; /* casino:step5 SPLIT: общие помощники теперь в casino-common.js */
 const FILL = ['berry', 'apple', 'mush', 'git', 'orange', 'cpp', 'rust', 'pi', 'hog', 'king', 'scatter', 'wild', 'bonus', 'berry', 'apple', 'mush'];
-const KIND_EMOJI = { hat: '🎩', palette: '🎨', greeting: '💬', boost: '🎁', title: '🏅', theme: '🖼' };
-const KIND_NAME = { hat: 'Шляпы', palette: 'Палитры', greeting: 'Шутки на главной', boost: 'Бонусы в забег', title: 'Титулы', theme: 'Темы барабанов' };
-const THEME_CLASS = { 'theme:forest': 'th-forest', 'theme:night': 'th-night', 'theme:server': 'th-server' };
+/* casino:step5 moved: KIND_EMOJI, KIND_NAME, THEME_CLASS → casino-common.js */
 const QUIPS = ['Фыр!', 'Эй! Колется.', 'Не тыкай ёжика.', 'Сегфолт (core dumped)', 'Я при исполнении.', 'Мяу. (Это не я.)', 'Очевидно, что… ай!'];
 
-export const ACH = [
-  { id: 'five_hogs', name: '5 ёжиков в линию', desc: 'Собери пять ёжиков (или королей) на одной линии' },
-  { id: 'segfault', name: 'Сегфолт', desc: 'Попади на Сегфолт с первой попытки в «Ягодной поляне»' },
-  { id: 'orange_king', name: 'Апельсиновый король', desc: 'Пять апельсинов на одной линии. Вы Апельсин?' },
-  { id: 'dont_poke', name: 'Не тыкай ёжика', desc: 'Потыкай ёжика на шапке страницы 25 раз' },
-  { id: 'exact42', name: 'Ровно 42', desc: 'Выиграй за раунд ровно 42 🍓' },
-  { id: 'heat', name: 'Горячая серия', desc: 'Дождись «тёплого» спина после череды неудач' },
-  { id: 'foil', name: 'Фольга спасла', desc: 'Выиграй от 10× ставки в шапочке из фольги' },
-  { id: 'meow', name: 'Мяу', desc: 'Забери ежедневный спин 7 дней подряд' },
-  { id: 'jackpot', name: 'Первый джекпот', desc: 'Сорви джекпот. Теорема Кантора одобряет' },
-  { id: 'collector', name: 'Коллекционер', desc: 'Собери половину альбома' },
-  { id: 'full', name: 'Целый альбом', desc: 'Собери все предметы альбома' },
-  { id: 'first_fs', name: 'Фриспины!', desc: 'Запусти бесплатные вращения' },
-  { id: 'big100', name: 'Эпический куш', desc: 'Выиграй за раунд от 100× ставки' },
-  { id: 'picker', name: 'Ягодный сборщик', desc: 'Набери в поляне от 20× ставки' },
-];
-
-/* ---------- загрузка и сохранение (с лёгкой защитой от случайных правок) ---------- */
-export function loadAll() {
-  const notes = [], snap = readJson(SNAP) || {};
-  const rawH = readJson(HHK) || {};
-  const H = Object.assign({ berries: 0, owned: ['none'], hat: 'none', bonusSpins: 0, boosts: {} }, rawH);
-  if (rawH.bsig && M.checkShared(rawH) === 'bad' && snap.shared) { Object.assign(H, snap.shared); notes.push('Мы бережно вернули ягоды и шляпы к последнему сохранению — похоже, данные поменялись «сами». Всё в порядке!'); }
-  let rawS = readJson(KEY);
-  if (rawS && M.checkSlots(rawS) === 'bad') { rawS = snap.slots || null; notes.push('Состояние автомата вернулось к последнему сохранению. Ничего страшного!'); }
-  const base = M.newSlotsState(), S = Object.assign(base, rawS || {});
-  S.stats = Object.assign(M.newSlotsState().stats, S.stats || {}); S.album = S.album || {}; S.ach = S.ach || {}; S.hist = Array.isArray(S.hist) ? S.hist : [];
-  H.owned = Array.isArray(H.owned) ? H.owned : ['none']; if (!H.owned.includes('none')) H.owned.unshift('none');
-  H.boosts = H.boosts && typeof H.boosts === 'object' ? H.boosts : {};
-  for (const id of M.FREE_ITEMS) if (!S.album[id]) S.album[id] = 1;
-  if (!S.title) S.title = 'title:newbie';
-  return { S, H, notes };
-}
-export function saveAll(S, H) {
-  delete S.sig; S.sig = M.signSlots(S); delete H.bsig; H.bsig = M.signShared(H);
-  writeJson(KEY, S); writeJson(HHK, H);
-  writeJson(SNAP, { slots: S, shared: { berries: H.berries, owned: H.owned, bonusSpins: H.bonusSpins | 0, boosts: H.boosts } });
-}
-// эффекты предмета в общем сохранении игры
-export function applyItem(H, item) {
-  if (item.kind === 'hat') { const id = item.id.slice(4); if (!H.owned.includes(id)) H.owned.push(id); }
-  if (item.kind === 'boost') { const k = item.id.slice(6); H.boosts[k] = (H.boosts[k] | 0) + 1; }
-}
-export const perksOf = H => ({ wizard: H.hat === 'wizard', crown: H.hat === 'crown', foil: H.hat === 'foil', halo: H.hat === 'halo' });
+/* casino:step5 moved: ACH, loadAll, saveAll, applyItem, perksOf → casino-common.js */
 const cardHtml = (c, s = 'x') => `<span class="sl-card sl-card-${c}" aria-label="${c === 'red' ? 'красная' : 'чёрная'} карта">${c === 'red' ? '♥' : '♠'}</span>`;
-const nextMidnight = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(); };
-const clock = ts => new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+/* casino:step5 moved: nextMidnight, clock → casino-common.js */
 export function installSlots() { ensureSprite(); }
 
 export function renderSlotsPage() {
@@ -93,7 +43,7 @@ export function renderSlotsPage() {
   save();
 
   content.innerHTML = `<section class="slots-page" data-no-icons>
-    <div class="intro sl-intro"><div><span class="sched-eyebrow">ВИРТУАЛЬНЫЙ ЗАЛ · М3102</span><h1>Колючий куш</h1><p class="sub">Три ряда, двадцать линий, один ёжик и ни одной настоящей копейки.</p><p class="sl-notice" role="note">Виртуальные ягоды без реальной ценности. Просто весёлая игра.</p></div>
+    <div class="intro sl-intro"><div><a class="cs-back" href="#/casino">${ic('arrowLeft', 16)}<span>Казино</span></a><span class="sched-eyebrow">ВИРТУАЛЬНЫЙ ЗАЛ · М3102</span><h1>Колючий куш</h1><p class="sub">Три ряда, двадцать линий, один ёжик и ни одной настоящей копейки.</p><p class="sl-notice" role="note">Виртуальные ягоды без реальной ценности. Просто весёлая игра.</p></div>
       <button class="sl-poke" id="sl-poke" type="button" aria-label="Ёжик (не тыкать)">${sym('hog', 76)}<span class="sl-quip" id="sl-quip" aria-hidden="true"></span></button></div>
     <div id="sl-note" class="sl-note" role="status" hidden></div>
     <div class="sl-hud">
@@ -161,14 +111,7 @@ export function renderSlotsPage() {
       <p class="sl-sess" id="sl-sess" aria-live="off"></p>
       <p class="sl-breakmsg" id="sl-breakmsg" role="status" hidden></p>
     </div>
-    <div class="sl-nudge" id="sl-nudge"><span id="sl-nudgetxt"></span><a class="btn2" href="#/hedgehog">🦔 Покатать ёжика за ягодами</a></div>
-    <div class="sl-panels">
-      <section class="dash-panel" id="sl-daily" aria-label="Ежедневные спины"></section>
-      <section class="dash-panel" id="sl-wheel" aria-label="Колесо дня"></section>
-      <section class="dash-panel sl-wide" id="sl-album" aria-label="Альбом"></section>
-      <section class="dash-panel" id="sl-ach" aria-label="Достижения"></section>
-      <section class="dash-panel" id="sl-stats" aria-label="Статистика"></section>
-    </div>
+    <!-- casino:step5 панели: #/collection -->
     <dialog id="sl-dlg" class="app-dialog sl-dlg"></dialog>
     <div id="sl-toasts" class="sl-toasts"></div><p class="sr-only" id="sl-live" role="status" aria-live="polite"></p></section>`;
 
@@ -182,7 +125,7 @@ export function renderSlotsPage() {
   const say = text => { const el = $('#sl-live'); if (el) el.textContent = text; };
   const toast = text => { const el = document.createElement('div'); el.className = 'sl-toast'; el.textContent = text; $('#sl-toasts').append(el); later(() => el.remove(), 4600); say(text); };
   const setNote = text => { const el = $('#sl-note'); el.hidden = !text; el.textContent = text || ''; };
-  const onBreak = () => S.breakUntil > Date.now();
+  const onBreak = () => isOnBreak(S);
   const freeLeft = () => S.free + (H.bonusSpins | 0);
   const itemName = id => (M.ITEM[id] ? M.ITEM[id].name : id);
 
@@ -218,48 +161,12 @@ export function renderSlotsPage() {
     $('#sl-bet-dn').disabled = busy || bet <= M.BETS[0]; $('#sl-bet-up').disabled = busy || bet >= M.BETS.at(-1); $('#sl-bet-max').disabled = busy;
     $('#sl-stop').hidden = !auto; $('#sl-turbo').setAttribute('aria-pressed', String(turbo)); $('#sl-sound').setAttribute('aria-pressed', String(audio.on)); $('#sl-sound').textContent = audio.on ? 'Звук: вкл' : 'Звук: выкл';
     $('#sl-sess').textContent = `Сессия: ${sess.spins} спин. · ${sess.net >= 0 ? '+' : '−'}${fmt(Math.abs(sess.net))} 🍓`;
-    const low = H.berries < bet * 5; $('#sl-nudge').classList.toggle('is-low', low);
-    $('#sl-nudgetxt').textContent = low ? 'Ягоды на исходе. Ёжик уже разминает лапки на холмах.' : 'Ягод маловато? Холмы, кувырки и яблоки ждут в игре «Ёжик».';
+    /* casino:step5: подсказка про ёжика перенесена на хаб */
     const th = THEME_CLASS[S.theme] || 'th-forest'; $('#sl-machine').className = `sl-machine ${th}`;
   }
-  const award = id => {
-    if (S.ach[id]) return; const a = ACH.find(x => x.id === id); S.ach[id] = Date.now(); S.capsules++; toast(`🏆 «${a.name}» · +1 капсула`); audio.win('good'); renderAch(); renderAlbum();
-  };
-  function checkAlbum() {
-    for (const id of M.grantSets(S)) { toast(`🎩 Все шляпы собраны! Титул «${itemName(id)}»`); }
-    const p = M.albumProgress(S); if (p.have * 2 >= p.total) award('collector'); if (p.have >= p.total) award('full');
-  }
-  function renderAch() {
-    const el = $('#sl-ach'); if (!el) return; const n = Object.keys(S.ach).length;
-    el.innerHTML = `<div class="panel-head"><h2>Достижения</h2><span class="sl-count">${n} из ${ACH.length}</span></div><ul class="sl-achlist">${ACH.map(a => `<li class="${S.ach[a.id] ? 'is-done' : ''}"><span aria-hidden="true">${S.ach[a.id] ? '🏆' : '🔒'}</span><div><strong>${esc(a.name)}</strong><small>${esc(a.desc)}</small></div></li>`).join('')}</ul><p class="plan-hint">За каждое достижение — капсула.</p>`;
-  }
-  function renderStats() {
-    const st = S.stats;
-    $('#sl-stats').innerHTML = `<div class="panel-head"><h2>Статистика</h2></div><dl class="sl-statlist"><div><dt>Спинов</dt><dd>${fmt(st.spins)}</dd></div><div><dt>Поставлено</dt><dd>${fmt(st.wagered)} 🍓</dd></div><div><dt>Выиграно</dt><dd>${fmt(st.won)} 🍓</dd></div><div><dt>Лучший выигрыш</dt><dd>${fmt(st.biggest)} 🍓</dd></div><div><dt>Фриспинов</dt><dd>${fmt(st.fs)}</dd></div><div><dt>Полян</dt><dd>${fmt(st.picks)}</dd></div><div><dt>Джекпотов</dt><dd>${fmt(st.jackpots)}</dd></div><div><dt>«Удвоить»: побед</dt><dd>${st.gambleWins}/${st.gambles}</dd></div></dl>`;
-  }
-  function renderDaily() {
-    const p = M.dailyPreview(S), today = M.dayKey(), yest = M.dayKey(M.addDay(new Date(), -1)), chain = S.lastDay === today || S.lastDay === yest ? S.streak : 0;
-    $('#sl-daily').innerHTML = `<div class="panel-head"><h2>Ежедневные спины</h2><span class="sl-count">серия: ${chain}</span></div>
-      <ol class="sl-cal">${M.DAILY_SPINS.map((n, i) => `<li class="${i < chain ? 'is-done' : ''}${p.can && i + 1 === p.streak ? ' is-next' : ''}"><span>День ${i + 1}</span><b>${i === 6 ? '🎁' : '🎰'} ${n}${perksOf(H).crown && i === 6 ? '+1' : ''}</b></li>`).join('')}</ol>
-      <div class="sl-row"><button class="btn2 btn-primary" id="sl-claim" type="button" ${p.can ? '' : 'disabled'}>${p.can ? `Забрать спины (день ${p.streak})` : 'Сегодня уже забрано'}</button></div>
-      <p class="plan-hint">Пропустишь день — серия начнётся заново. На 7-й день — капсула. Бесплатные спины идут на ставке ${M.DAILY_BET} и не копят джекпот.</p>`;
-  }
-  const wheelSvg = () => { const cols = ['#7c5cff', '#ff7fae', '#33b5a5', '#f0a53a', '#4d87bf'], R = 100, lab = s => (s.k === 'b' ? `${s.v}` : s.k === 'cap' ? '🎁' : '🎰');
-    return `<svg viewBox="0 0 220 220" class="sl-wheelsvg" role="img" aria-label="Колесо дня"><g id="sl-wheelg" style="transform-origin:110px 110px">${M.WHEEL.map((s, i) => { const a0 = (i * 36 - 18 - 90) * Math.PI / 180, a1 = ((i + 1) * 36 - 18 - 90) * Math.PI / 180, x0 = 110 + R * Math.cos(a0), y0 = 110 + R * Math.sin(a0), x1 = 110 + R * Math.cos(a1), y1 = 110 + R * Math.sin(a1), am = (i * 36 - 90) * Math.PI / 180;
-      return `<path d="M110 110L${x0.toFixed(1)} ${y0.toFixed(1)}A${R} ${R} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}Z" fill="${cols[i % 5]}" stroke="#fff" stroke-width="2"/><text x="${(110 + 70 * Math.cos(am)).toFixed(1)}" y="${(110 + 70 * Math.sin(am) + 5).toFixed(1)}" text-anchor="middle" font-size="15" font-weight="800" fill="#fff" transform="rotate(${i * 36} ${(110 + 70 * Math.cos(am)).toFixed(1)} ${(110 + 70 * Math.sin(am)).toFixed(1)})">${lab(s)}</text>`; }).join('')}<circle cx="110" cy="110" r="14" fill="#fff" stroke="#2a2540" stroke-width="3"/></g></svg><div class="sl-pointer">${icon('pointer', 30)}</div>`; };
-  function renderWheel() {
-    const ready = M.wheelReady(S, H), d = H.daily, got = d && d.date === M.dayKey() ? d.goals.filter(g => g.done).length : 0;
-    $('#sl-wheel').innerHTML = `<div class="panel-head"><h2>Колесо дня</h2><span class="sl-count">${ready ? 'заряжено' : `цели: ${got}/3`}</span></div><div class="sl-wheelwrap">${wheelSvg()}</div><div class="sl-row"><button class="btn2 btn-primary" id="sl-wheelgo" type="button" ${ready && !busy ? '' : 'disabled'}>${S.wheelDay === M.dayKey() ? 'Сегодня уже крутили' : 'Крутить колесо'}</button></div><p class="plan-hint">Выполни все три цели дня в игре «Ёжик» — колесо заряжается раз в сутки.</p>`;
-  }
-  function renderAlbum() {
-    const p = M.albumProgress(S), kinds = ['hat', 'palette', 'greeting', 'boost', 'title', 'theme'];
-    $('#sl-album').innerHTML = `<div class="panel-head"><h2>Альбом и капсулы</h2><span class="sl-count">${p.have} из ${p.total}</span></div>
-      <div class="sl-shelf"><div class="sl-caps">${icon('cap-common', 44)}${icon('cap-rare', 44)}${icon('cap-epic', 44)}${icon('cap-legendary', 44)}</div><div><b>Капсул: ${S.capsules}</b><small>Эпик гарантирован не позже ${M.PITY_CAPSULES}-й капсулы без него</small></div><button class="btn2 btn-primary" id="sl-opencap" type="button" ${S.capsules > 0 && !busy ? '' : 'disabled'}>Открыть капсулу</button></div>
-      <div class="sl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${p.total}" aria-valuenow="${p.have}"><span style="width:${(100 * p.have / p.total).toFixed(1)}%"></span></div>
-      ${kinds.map(k => `<h3 class="sl-kindh">${KIND_NAME[k]}</h3><div class="sl-items">${M.CATALOG.filter(x => x.kind === k).map(x => { const n = S.album[x.id] | 0, eq = S.title === x.id || S.theme === x.id; return `<div class="sl-item r-${x.rarity}${n ? ' is-own' : ''}"><span class="sl-itemic" aria-hidden="true">${n ? KIND_EMOJI[k] : '❔'}</span><strong>${n ? esc(x.name) : 'Ещё не найдено'}</strong><small>${n ? esc(x.desc) : esc(M.RARITY[x.rarity].name)}${n > 1 ? ` · ×${n}` : ''}</small>${n && (x.kind === 'title' || x.kind === 'theme') ? `<button class="btn2" type="button" data-equip="${x.id}" ${eq ? 'disabled' : ''}>${eq ? 'Выбрано' : 'Выбрать'}</button>` : ''}${n && x.kind === 'palette' ? '<a class="btn2" href="#/settings">В настройки</a>' : ''}</div>`; }).join('')}</div>`).join('')}`;
-  }
-  function renderPanels() { renderDaily(); renderWheel(); renderAlbum(); renderAch(); renderStats(); }
-  const refresh = () => { hud(); renderDaily(); renderWheel(); renderAlbum(); renderStats(); };
+  const { award, checkAlbum } = makeAwards({ S, toast, audio, itemName }); /* casino:step5 AWARDS */
+  /* casino:step5 moved → js/casino-collection.js: renderAch, renderStats, renderDaily, wheelSvg, renderWheel, renderAlbum */
+  const refresh = () => { hud(); }; /* casino:step5 refresh */
   setNote(notes.join(' '));
 
   /* ---------- барабаны ---------- */
@@ -378,7 +285,7 @@ export function renderSlotsPage() {
   }
   function renderGamble(msg) {
     const box = $('#sl-gamble'); box.hidden = false;
-    box.innerHTML = `<div class="sl-gtxt"><b>Удвоить или ничего?</b><span>На кону ${fmt(pending)} 🍓 · раунд ${gambleRounds + 1} из ${M.GAMBLE_MAX_ROUNDS}</span>${msg ? `<em>${msg}</em>` : ''}</div>${perksOf(H).halo && S.hist.length ? `<div class="sl-hist" aria-label="Последние карты">Нимб подсказывает прошлые карты: ${S.hist.slice(-5).map(cardHtml).join('')}</div>` : ''}<div class="sl-gbtns"><button class="btn2 sl-red" type="button" data-gamble="red">♥ Красное</button><button class="btn2 sl-black" type="button" data-gamble="black">♠ Чёрное</button><button class="btn2 btn-primary" type="button" data-gamble="collect">Забрать</button></div>`;
+    box.innerHTML = `<div class="sl-gtxt"><b>Удвоить или ничего?</b><span>На кону ${fmt(pending)} 🍓 · раунд ${gambleRounds + 1} из ${M.GAMBLE_MAX_ROUNDS}</span>${msg ? `<em>${msg}</em>` : ''}</div>${perksOf(H, S).gambleHint > 0 && S.hist.length ? `<div class="sl-hist" aria-label="Последние карты">Подсказка — прошлые карты: ${S.hist.slice(-perksOf(H, S).gambleHint).map(cardHtml).join('')}</div>` : ''}<div class="sl-gbtns"><button class="btn2 sl-red" type="button" data-gamble="red">♥ Красное</button><button class="btn2 sl-black" type="button" data-gamble="black">♠ Чёрное</button><button class="btn2 btn-primary" type="button" data-gamble="collect">Забрать</button></div>`;
   }
   async function gambleChoose(choice) {
     if (pending <= 0 || gambleBusy || busy) return; gambleBusy = true;
@@ -399,7 +306,7 @@ export function renderSlotsPage() {
     const betEff = free ? M.DAILY_BET : bet; gambleBet = betEff; busy = true; skip = false; pullLever(); clearWin(); closeGamble(); $('#sl-win').textContent = '0'; $('#sl-winlabel').textContent = 'Выигрыш'; hideOver();
     if (free) { if (S.free > 0) S.free--; else H.bonusSpins--; } else { H.berries -= bet; S.stats.wagered += bet; sess.net -= bet; }
     S.stats.spins++; sess.spins++; S.bet = bet; shownBal = H.berries;
-    const R = M.rollRound(rng, S, betEff, perksOf(H), { paid: !free }), res = R.res, tr = R.trace, x = R.won / betEff, set = M.settle(S.frac, R.won); S.frac = set.frac;
+    const R = M.rollRound(rng, S, betEff, perksOf(H, S), { paid: !free }), res = R.res, tr = R.trace, x = R.won / betEff, set = M.settle(S.frac, R.won); S.frac = set.frac;
     let credit = set.whole; const gambleable = !res.fsSpins && !res.bonus && !R.parts.jp && credit > 0 && M.gambleAllowed(credit, betEff, 0);
     if (gambleable) { pending = credit; S.pending = credit; credit = 0; }
     H.berries += credit; sess.net += credit; S.stats.won += credit; S.stats.biggest = Math.max(S.stats.biggest, set.whole);
@@ -412,6 +319,10 @@ export function renderSlotsPage() {
       if (res.win > 0) { await countUp(res.win * betEff); if (!tr.fs && !tr.pick) await celebrate(res.win); }
       if (res.lines.some(l => l.count === 5 && (l.sym === 'hog' || l.sym === 'king'))) award('five_hogs');
       if (res.lines.some(l => l.count === 5 && l.sym === 'orange')) award('orange_king');
+      if (res.lines.some(l => l.count === 5 && l.sym === 'claude')) award('five_claude'); /* casino:step3 AWARDS */
+      if (res.lines.some(l => l.count === 5 && l.sym === 'itmo')) award('five_itmo');
+      if (res.sevenRow) award('seven_row');
+      if (res.capsules) award('capsule_sym');
       if (res.jackpot) await jackpotShow(res.jackpot);
       if (res.fsSpins) { await runFS(R, betEff); }
       if (res.bonus) { await runPick(R, betEff); }
@@ -432,32 +343,7 @@ export function renderSlotsPage() {
     }
   }
 
-  /* ---------- колесо, капсулы, ежедневные спины ---------- */
-  async function runWheel() {
-    if (busy || !M.wheelReady(S, H)) return; busy = true; hud(); const idx = M.wheelPick(rng), seg = M.WHEEL[idx]; S.wheelDay = M.dayKey();
-    if (seg.k === 'b') H.berries += seg.v; else if (seg.k === 'cap') S.capsules++; else H.bonusSpins = (H.bonusSpins | 0) + 1; save();
-    const g = $('#sl-wheelg'), turns = 360 * 5 + (360 - idx * 36);
-    try {
-      if (reduce()) { g.style.transform = `rotate(${turns}deg)`; await wait(200); }
-      else { g.style.transition = 'transform 4.6s cubic-bezier(.12,.7,.15,1)'; g.getBoundingClientRect(); g.style.transform = `rotate(${turns}deg)`; let t = 0, d = 60; while (t < 4300) { later(() => audio.wheelTick(), t); t += d; d *= 1.08; } await wait(4800); }
-      const what = seg.k === 'b' ? `+${seg.v} 🍓` : seg.k === 'cap' ? 'капсула 🎁' : '+1 бесплатный спин 🎰'; toast(`Колесо: ${what}`); audio.win('good'); burst(50);
-    } catch (e) { if (e !== CANCEL) console.error(e); } finally { busy = false; if (!dead) { refresh(); renderWheel(); } }
-  }
-  async function openCapsuleUi() {
-    if (busy || S.capsules < 1) return; busy = true; S.capsules--; const out = M.openCapsule(rng, S); applyItem(H, out.item); if (out.berries) H.berries += out.berries; save(); hud();
-    dlg.innerHTML = `<div class="sl-capdlg"><div class="sl-capbig" id="sl-capbig">${icon('cap-common', 150)}</div><p id="sl-captxt" aria-live="polite">Трясём капсулу…</p><div id="sl-capcard"></div><div class="dialog-actions"><button class="btn2 btn-primary" type="button" data-close-dialog id="sl-capok" disabled>Класс!</button></div></div>`; dlg.showModal();
-    try {
-      const big = $('#sl-capbig'); for (let i = 0; i < 3; i++) { audio.shake(); big.classList.add('shaking'); await wait(430); big.classList.remove('shaking'); await wait(90); }
-      audio.crack(out.item.rarity); big.innerHTML = icon(`cap-${out.item.rarity}`, 150); big.classList.add('crack'); await wait(420); $('#sl-captxt').textContent = M.RARITY[out.item.rarity].name;
-      $('#sl-capcard').innerHTML = `<div class="sl-revealcard r-${out.item.rarity}"><span class="sl-itemic" aria-hidden="true">${KIND_EMOJI[out.item.kind]}</span><strong>${esc(out.item.name)}</strong><small>${esc(out.item.desc)}</small><em>${out.dup ? `Уже есть — обмен на ${out.berries} 🍓` : out.item.kind === 'boost' ? 'Применится в следующем забеге ёжика' : 'Новинка в альбоме!'}</em></div>`;
-      if (out.item.rarity !== 'common') burst(out.item.rarity === 'legendary' ? 160 : 70);
-    } catch (e) { if (e !== CANCEL) console.error(e); } finally { if (!dead) { busy = false; checkAlbum(); save(); refresh(); const ok = $('#sl-capok'); if (ok) ok.disabled = false; } }
-  }
-  function claimDaily() {
-    const c = M.dailyClaim(S, new Date(), perksOf(H)); if (!c) return; audio.win('good');
-    toast(`🎰 +${c.spins} ${c.spins === 1 ? 'бесплатный спин' : 'бесплатных спина'}${c.capsule ? ' и капсула 🎁' : ''}`);
-    if (c.streak === 7) { award('meow'); toast('Мяу. 🐈 Семь дней подряд — кот одобряет.'); } save(); refresh();
-  }
+  /* casino:step5 moved → js/casino-collection.js: runWheel, openCapsuleUi, claimDaily */
 
   /* ---------- диалоги ---------- */
   function openPay() {
@@ -479,8 +365,9 @@ export function renderSlotsPage() {
   const quip = () => { const q = $('#sl-quip'); q.textContent = QUIPS[Math.floor(Math.random() * QUIPS.length)]; q.classList.remove('show'); void q.offsetWidth; q.classList.add('show'); };
 
   /* ---------- события ---------- */
+  const ac = new AbortController(), listen = (type, fn) => content.addEventListener(type, fn, { signal: ac.signal }); /* casino:step5 */
   const setBet = v => { bet = v; S.bet = v; hud(); };
-  content.addEventListener('click', e => {
+  listen('click', e => {
     const t = e.target, btn = t.closest('button'), id = btn && btn.id;
     if (t.closest('#sl-over') && btn) {
       if (btn.dataset.bush !== undefined && overEl._reveal) guard(overEl._reveal(btn));
@@ -497,13 +384,13 @@ export function renderSlotsPage() {
     else if (id === 'sl-bet-max') { audio.click(); setBet([...M.BETS].reverse().find(b => b <= H.berries) || M.BETS[0]); }
     else if (id === 'sl-turbo') { turbo = !turbo; audio.click(); hud(); } else if (id === 'sl-stop') { auto = null; audio.click(); hud(); }
     else if (id === 'sl-pay') { audio.click(); openPay(); } else if (id === 'sl-break') { audio.click(); openBreak(); }
-    else if (id === 'sl-sound') { audio.set(!audio.on); hud(); } else if (id === 'sl-claim') claimDaily(); else if (id === 'sl-wheelgo') guard(runWheel()); else if (id === 'sl-opencap') guard(openCapsuleUi());
+    else if (id === 'sl-sound') { audio.set(!audio.on); hud(); } /* casino:step5 collection actions moved */
     else if (id === 'sl-poke') { S.stats.poked++; quip(); audio.click(); if (S.stats.poked >= 25) award('dont_poke'); save(); }
     else if (btn.dataset.gamble) { if (btn.dataset.gamble === 'collect') collectPending(); else guard(gambleChoose(btn.dataset.gamble)); }
-    else if (btn.dataset.equip) { const it = M.ITEM[btn.dataset.equip]; if (it.kind === 'title') S.title = it.id; else S.theme = it.id; save(); refresh(); }
-    else if (btn.dataset.break) { S.breakUntil = btn.dataset.break === 'day' ? nextMidnight() : Date.now() + 15 * 60000; auto = null; save(); if (dlg.open) dlg.close(); refresh(); }
+    /* casino:step5 equip → collection */
+    else if (btn.dataset.break) { setBreak(S, btn.dataset.break); auto = null; save(); if (dlg.open) dlg.close(); refresh(); }
   });
-  content.addEventListener('change', e => {
+  listen('change', e => {
     const t = e.target;
     if (t.id === 'sl-auto-n') { const n = Number(t.value); t.value = '0'; if (n > 0 && !busy) { autoOpts.stopBig = $('#sl-st-big').checked; autoOpts.stopFeature = $('#sl-st-feat').checked; autoOpts.below = Math.max(0, Number($('#sl-st-below').value) || 0); auto = { left: n }; hud(); guard(doSpin('paid')); } }
   });
@@ -513,9 +400,9 @@ export function renderSlotsPage() {
     e.preventDefault(); if (e.repeat) return; if (!busy) guard(doSpin('paid'));
   };
   let leverY = null, leverDragged = false;
-  content.addEventListener('pointerdown', e => { const l = e.target.closest('#sl-spin'); if (l && !l.disabled) { leverY = e.clientY; leverDragged = false; try { l.setPointerCapture(e.pointerId); } catch { /* не страшно */ } } });
-  content.addEventListener('pointermove', e => { if (leverY === null) return; const dy = Math.max(0, Math.min(70, e.clientY - leverY)); if (dy > 8) leverDragged = true; $('#sl-spin').style.setProperty('--pull', dy / 70); });
-  content.addEventListener('pointerup', e => { if (leverY === null) return; const dy = e.clientY - leverY; leverY = null; $('#sl-spin').style.removeProperty('--pull'); if (dy > 40) { audio.click(); guard(doSpin('paid')); } });
+  listen('pointerdown', e => { const l = e.target.closest('#sl-spin'); if (l && !l.disabled) { leverY = e.clientY; leverDragged = false; try { l.setPointerCapture(e.pointerId); } catch { /* не страшно */ } } });
+  listen('pointermove', e => { if (leverY === null) return; const dy = Math.max(0, Math.min(70, e.clientY - leverY)); if (dy > 8) leverDragged = true; $('#sl-spin').style.setProperty('--pull', dy / 70); });
+  listen('pointerup', e => { if (leverY === null) return; const dy = e.clientY - leverY; leverY = null; $('#sl-spin').style.removeProperty('--pull'); if (dy > 40) { audio.click(); guard(doSpin('paid')); } });
   window.addEventListener('keydown', onKey);
   breakTimer = setInterval(() => { if (dead) return; if (S.breakUntil && !onBreak()) { S.breakUntil = 0; save(); } if (S.breakUntil) hud(); }, 1000);
 
@@ -523,8 +410,8 @@ export function renderSlotsPage() {
     if (dead) return; try { collectPending(); } catch { /* без паники */ }
     dead = true; auto = null; try { if (dlg.open) dlg.close(); } catch { /* уже закрыт */ }
     aborts.forEach(f => f()); aborts.clear(); timers.forEach(clearTimeout); timers.clear(); anims.forEach(a => { try { a.cancel(); } catch { /* снята */ } }); anims.clear();
-    cancelAnimationFrame(fxRaf); cancelAnimationFrame(rafId); clearInterval(breakTimer); window.removeEventListener('keydown', onKey); audio.destroy(); try { save(); } catch { /* квота */ }
+    cancelAnimationFrame(fxRaf); cancelAnimationFrame(rafId); clearInterval(breakTimer); ac.abort(); window.removeEventListener('keydown', onKey); audio.destroy(); try { save(); } catch { /* квота */ }
   }
   window.__hhDestroy = destroy;
-  hud(); renderPanels(); checkAlbum(); save();
+  hud(); checkAlbum(); save(); /* casino:step5 */
 }
