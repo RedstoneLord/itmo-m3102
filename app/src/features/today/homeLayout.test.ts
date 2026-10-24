@@ -16,7 +16,7 @@ describe('раскладка главной', () => {
   it('крупные блоки и плитки — группами подряд, порядок из настроек не теряется', () => {
     expect(groupBlocks(arrangeBlocks([]))).toEqual([
       { feature: true, ids: ['next', 'deadlines', 'review'] },
-      { feature: false, ids: ['schedule', 'homework', 'notes', 'materials', 'plan', 'subjects', 'bookmarks'] },
+      { feature: false, ids: ['schedule', 'homework', 'queues', 'notes', 'materials', 'plan', 'subjects', 'bookmarks'] },
     ]);
     expect(groupBlocks(['schedule', 'next', 'homework']).map((group) => group.ids)).toEqual([['schedule'], ['next'], ['homework']]);
     expect(groupBlocks([])).toEqual([]);

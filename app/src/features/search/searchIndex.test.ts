@@ -15,6 +15,20 @@ import {
 } from './searchIndex';
 
 describe('поиск по тексту', () => {
+  it('формат конспекта — отдельная метка: обычный — MD, PDF — PDF', () => {
+    useLectureNotesStore.setState({
+      lectureNotes: [
+        note('md', 'Графы', '## Степени'),
+        note('pdf', 'Графы', 'data:application/pdf;base64,', { contentType: 'pdf', sourceRef: 'x.pdf' }),
+      ],
+    });
+    expect(
+      inNotes('графы')
+        .map((row) => row.format)
+        .sort(),
+    ).toEqual(['MD', 'PDF']);
+  });
+
   it('markdown → простой текст', () => {
     expect(plainText('## Предикат $P(x)$\n> [!info] Важно\n**жирный** [[Дискретная математика|ДМ]] [ссылка](https://x.y)')).toBe(
       'Предикат P(x) Важно жирный ДМ ссылка',
@@ -167,7 +181,7 @@ describe('текст PDF', () => {
     });
     const rows = inNotes('остовное');
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ title: 'Деревья', section: 'Стр. 2' });
+    expect(rows[0]).toMatchObject({ title: 'Деревья', section: 'Стр. 2', format: 'PDF' });
     expect(rows[0]?.snippet).toContain('Остовное дерево');
   });
 });

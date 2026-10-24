@@ -45,6 +45,17 @@
   background: var(--color-accent-soft);
 }
 
+/* Тихая точка у названия: в разделе есть новое */
+.dot {
+  position: relative;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
 .label {
   position: relative;
   overflow: hidden;

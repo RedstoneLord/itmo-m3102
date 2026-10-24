@@ -3,8 +3,7 @@ import type { ComponentType, CSSProperties } from 'react';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { onRovingKeyDown } from '../../lib/rovingKeys';
-import { useMeStore } from '../group/meStore';
-import { studentOptions } from '../group/studentOptions';
+import { useMeChoice } from '../group/studentOptions';
 import { accentColor } from '../settings/appearance';
 import { useSettingsStore, type AppStyle } from '../settings/settingsStore';
 import { STYLE_OPTIONS, THEME_OPTIONS } from '../settings/themeOptions';
@@ -89,8 +88,7 @@ function PaletteStep() {
 }
 
 function WhoStep() {
-  const me = useMeStore((state) => state.login);
-  const setMe = useMeStore((state) => state.setMe);
+  const choice = useMeChoice();
   return (
     <>
       <Dropdown
@@ -99,12 +97,13 @@ function WhoStep() {
         searchPlaceholder="Фамилия или ник на GitHub"
         searchable
         menuWidth={320}
-        options={studentOptions(Boolean(me))}
-        value={me ?? ''}
-        onChange={(login) => setMe(login || null)}
+        options={choice.options}
+        value={choice.value}
+        onChange={choice.onChange}
       />
       <p className={styles.hint}>
-        Ваши записи в очередях сдачи будут подсвечены, а в карточке — «Вы №3 из 7». Без регистрации; выбор хранится только в этом браузере.
+        Ваши записи в очередях сдачи будут подсвечены, а в карточке — «Вы №3 из 7». Не из группы — выберите «Я гость». Без регистрации; выбор хранится
+        только в этом браузере.
       </p>
     </>
   );

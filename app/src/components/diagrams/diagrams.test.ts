@@ -3,6 +3,7 @@ import { parseCanvas } from './Canvas';
 import { parseGraph } from './Graph';
 import { niceStep, parsePlot } from './Plot';
 import { splitLines, takeOptions } from './parse';
+import { wrapLabel } from './TreeArrayChart';
 import { parseArray, parseChart, parseTree } from './TreeArrayChart';
 
 describe('диаграммы DSL группы', () => {
@@ -98,5 +99,15 @@ describe('canvas — холст с фигурами', () => {
     expect(model.shapes[1]).toMatchObject({ dx: 10, dy: 5 });
     expect(() => parseCanvas(splitLines('canvas\nstar 1 2', 'canvas'))).toThrow('неизвестная фигура');
     expect(() => parseCanvas(splitLines('canvas\ngroup 1 1\nrect 0 0 1 1', 'canvas'))).toThrow('Не закрыта группа');
+  });
+});
+
+describe('подписи столбцов диаграммы', () => {
+  it('длинная подпись переносится по словам в ширину столбца, не больше трёх строк', () => {
+    expect(wrapLabel('Тесты', 110)).toEqual(['Тесты']);
+    expect(wrapLabel('Командный коллоквиум', 110)).toEqual(['Командный', 'коллоквиум']);
+    const lines = wrapLabel('очень длинная подпись из многих слов подряд для столбца', 70);
+    expect(lines).toHaveLength(3);
+    expect(lines[2]!.endsWith('…')).toBe(true);
   });
 });

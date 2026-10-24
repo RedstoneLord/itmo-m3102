@@ -393,3 +393,52 @@ html {
     margin-top: 0;
   }
 }
+
+/* Ряд, который листается пальцем вбок (вкладки, переключатели, полоса дней): край, за которым есть ещё, гаснет — видно, что дальше
+   что-то есть, а не обрезано. Гаснет только та сторона, куда ещё можно листать (scroll-driven animation); где её нет — как раньше.
+   Включается атрибутом data-fade-x на самом прокручиваемом элементе */
+@property --fade-start {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes fade-x {
+  0% {
+    --fade-start: 0px;
+    --fade-end: 24px;
+  }
+
+  10%,
+  90% {
+    --fade-start: 24px;
+    --fade-end: 24px;
+  }
+
+  100% {
+    --fade-start: 24px;
+    --fade-end: 0px;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  [data-fade-x] {
+    animation: fade-x linear both;
+    animation-timeline: scroll(self inline);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+  }
+
+  /* «Уменьшить движение» гасит длительности всех анимаций; у привязанной к прокрутке она должна остаться автоматической */
+  @media (prefers-reduced-motion: reduce) {
+    [data-fade-x] {
+      animation-duration: auto !important;
+    }
+  }
+}

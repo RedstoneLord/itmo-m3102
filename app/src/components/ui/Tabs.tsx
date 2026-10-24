@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { cn } from '../../lib/cn';
 import { onRovingKeyDown } from '../../lib/rovingKeys';
+import { revealInRow } from '../../lib/revealInRow';
 import { SPRING_SNAPPY } from '../../lib/motion';
 import styles from './Tabs.module.css';
 
@@ -10,6 +11,8 @@ export interface TabItem<T extends string> {
   label: string;
   /** Число справа от названия, например количество задач */
   count?: number;
+  /** Тихая точка рядом с названием: во вкладке есть то, что человек ещё не видел */
+  dot?: boolean;
 }
 
 interface TabsProps<T extends string> {
@@ -24,10 +27,14 @@ interface TabsProps<T extends string> {
 /** Вкладки с тонким подчёркиванием активной. Содержимое вкладок рисует сама страница. */
 export function Tabs<T extends string>({ items, value, onChange, label, className }: TabsProps<T>) {
   const indicatorId = useId();
+  const rowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => revealInRow(rowRef.current), [value]);
 
   return (
     <div
+      ref={rowRef}
       role="tablist"
+      data-fade-x
       aria-label={label}
       className={cn(styles.list, className)}
       onKeyDown={(event) =>
@@ -54,6 +61,7 @@ export function Tabs<T extends string>({ items, value, onChange, label, classNam
           >
             {item.label}
             {item.count !== undefined && <span className={styles.count}>{item.count}</span>}
+            {item.dot && <span className={styles.dot} role="img" aria-label="есть новое" />}
             {/* Один и тот же layoutId переезжает между вкладками — отсюда «проезд» подчёркивания */}
             {isActive && <motion.span layoutId={`tabs-indicator-${indicatorId}`} className={styles.indicator} transition={SPRING_SNAPPY} />}
           </button>

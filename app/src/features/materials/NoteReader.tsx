@@ -205,7 +205,13 @@ export function NoteSidebar({ note, siblings, toc, contentRef }: NoteSidebarProp
           </div>
         ) : (
           <nav className={styles.section} aria-label="Содержание">
-            {toc.items.length === 0 && <p className={styles.empty}>В этом конспекте нет разделов</p>}
+            {toc.items.length === 0 && (
+              <p className={styles.empty}>
+                {note.contentType === 'pdf'
+                  ? 'Оглавление PDF пока недоступно в боковой панели — оно есть внутри самого документа.'
+                  : 'В этом конспекте нет разделов'}
+              </p>
+            )}
             {toc.items.map((item) => (
               <button
                 key={item.id}

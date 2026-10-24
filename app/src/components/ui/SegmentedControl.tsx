@@ -1,8 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { cn } from '../../lib/cn';
 import { onRovingKeyDown } from '../../lib/rovingKeys';
+import { revealInRow } from '../../lib/revealInRow';
 import { SPRING_SNAPPY } from '../../lib/motion';
 import styles from './SegmentedControl.module.css';
 
@@ -23,10 +24,14 @@ interface SegmentedControlProps<T extends string> {
 /** Выбор одного варианта из нескольких: Light / Dark / System, Day / Week / Month. */
 export function SegmentedControl<T extends string>({ options, value, onChange, label }: SegmentedControlProps<T>) {
   const thumbId = useId();
+  const rowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => revealInRow(rowRef.current), [value]);
 
   return (
     <div
+      ref={rowRef}
       role="radiogroup"
+      data-fade-x
       aria-label={label}
       className={styles.root}
       onKeyDown={(event) =>

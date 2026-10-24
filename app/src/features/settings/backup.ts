@@ -23,6 +23,7 @@ const EXCLUDED = [
   'contributors',
   'dynamic-accent',
   'chunk-reload',
+  'changelog-seen',
 ].map(storageKey);
 
 export const isBackupKey = (key: string) => key.startsWith(`${STORAGE_PREFIX}:`) && !EXCLUDED.includes(key);

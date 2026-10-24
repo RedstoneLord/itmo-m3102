@@ -240,7 +240,7 @@ export function PdfViewer({ file }: PdfViewerProps) {
         </div>
         <div className={styles.group}>
           <IconButton icon={Minus} label="Уменьшить" size="sm" disabled={zoomIndex === 0} onClick={() => setZoomIndex((index) => index - 1)} />
-          <span className={styles.pageLabel}>{Math.round(zoom * 100)}%</span>
+          <span className={cn(styles.pageLabel, styles.zoomLabel)}>{Math.round(zoom * 100)}%</span>
           <IconButton
             icon={Plus}
             label="Увеличить"

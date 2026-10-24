@@ -206,6 +206,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
                     >
                       <Icon size={16} strokeWidth={1.75} className={styles.muted} aria-hidden />
                       <span className={styles.resultTitle}>
+                        {result.format && <span className={cn(styles.format, result.format === 'PDF' && styles.formatPdf)}>{result.format}</span>}
                         <Marked text={result.title} words={words} />
                       </span>
                       {result.meta && <span className={styles.resultMeta}>{result.meta}</span>}

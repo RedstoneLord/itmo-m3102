@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
+import { useChangelogStore } from '../changelog/changelogStore';
 import { useSettingsStore } from '../settings/settingsStore';
 import { STEPS } from './steps';
 import styles from './FirstRun.module.css';
@@ -14,7 +15,11 @@ export function FirstRun() {
   const onboarded = useSettingsStore((state) => state.onboarded);
   const setAppearance = useSettingsStore((state) => state.setAppearance);
   const base = useId();
-  const finish = () => setAppearance({ onboarded: true });
+  // Новому посетителю «догонять» выпуски не нужно: всё, что было до его первого входа, считается увиденным
+  const finish = () => {
+    setAppearance({ onboarded: true });
+    useChangelogStore.getState().markSeen();
+  };
 
   return (
     <Modal

@@ -134,10 +134,35 @@
   }
 }
 
+/* Название — до двух строк (по одной обрезанной строке два похожих конспекта не различить); метка формата стоит в начале и не пропадает */
 .resultTitle {
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+  /* Отступ — margin, а не padding: у обрезанного line-clamp третья строка иначе выглядывала бы в padding */
+  margin-block: var(--space-1-5);
+}
+
+/* Метка формата: MD — тихая, PDF — акцентная; отдельным словом, не частью названия */
+.format {
+  display: inline-block;
+  margin-right: var(--space-2);
+  padding: 0 var(--space-1-5);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.02em;
+  vertical-align: 1px;
+}
+
+.formatPdf {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
 }
 
 .resultMeta {
@@ -213,6 +238,20 @@
   gap: var(--space-1);
   font-size: var(--text-xs);
   color: var(--color-text-muted);
+}
+
+/* Узко: подпись предмета уходит под название — иначе она занимает полэкрана, а название сжимается до двух слов */
+@media (max-width: 560px) {
+  .result {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .resultMeta {
+    grid-column: 2;
+    padding-left: 0;
+    margin-bottom: var(--space-1-5);
+    white-space: normal;
+  }
 }
 
 @media (max-width: 479px) {

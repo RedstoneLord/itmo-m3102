@@ -245,9 +245,11 @@
     padding: var(--space-5) var(--space-5) var(--space-4) var(--space-6);
   }
 
+  /* Полоска на телефоне ближе к краю: отступ слева у карточки меньше, при 16px она упиралась в текст и шкалу дня */
   .block::before {
     top: var(--space-5);
     bottom: var(--space-5);
+    left: var(--space-2-5);
   }
 
   .main {

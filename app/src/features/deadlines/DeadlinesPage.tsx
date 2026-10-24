@@ -11,8 +11,7 @@ import { cn } from '../../lib/cn';
 import { repoEditUrl } from '../../services/github';
 import { useSyncReady, useSyncStamp } from '../../services/syncStore';
 import { useGroupStore, type GroupDeadline } from '../group/groupStore';
-import { useMeStore } from '../group/meStore';
-import { studentOptions } from '../group/studentOptions';
+import { useMeChoice } from '../group/studentOptions';
 import { HomeworkPage } from '../homework/HomeworkPage';
 import { useSubjectsStore } from '../subjects/subjectsStore';
 import { orderDeadlines } from './deadlineInfo';
@@ -65,8 +64,8 @@ function DeadlinesList({ tabs }: { tabs: ReactNode }) {
   const [filters, setFilters] = useState(DEFAULT_DEADLINE_FILTERS);
   const view = useSettingsStore((state) => state.deadlinesView);
   const setAppearance = useSettingsStore((state) => state.setAppearance);
-  const me = useMeStore((state) => state.login);
-  const setMe = useMeStore((state) => state.setMe);
+  const choice = useMeChoice();
+  const me = choice.login;
   const subjectNames = useSubjectsStore((state) => state.subjects);
 
   useEffect(() => {
@@ -162,9 +161,9 @@ function DeadlinesList({ tabs }: { tabs: ReactNode }) {
                 searchPlaceholder="Фамилия или ник на GitHub"
                 searchable
                 menuWidth={320}
-                options={studentOptions(Boolean(me))}
-                value={me ?? ''}
-                onChange={(login) => setMe(login || null)}
+                options={choice.options}
+                value={choice.value}
+                onChange={choice.onChange}
               />
             </div>
           </div>
@@ -178,6 +177,11 @@ function DeadlinesList({ tabs }: { tabs: ReactNode }) {
       ) : (
         <>
           {me && queueKnown && <p className={styles.meNote}>Вы стоите в очередях: {myQueues}</p>}
+          {!me && !choice.guest && (
+            <p className={styles.meNote}>
+              Кто вы? Выберите себя в списке «Найти себя» — подсветим ваши записи в очередях. Не из группы — выберите «Я гость».
+            </p>
+          )}
           {view === 'list' ? (
             <DeadlineList
               upcoming={upcoming}

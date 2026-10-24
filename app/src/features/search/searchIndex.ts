@@ -29,6 +29,8 @@ export interface SearchResult {
   /** Нашлось в тексте: раздел или страница, где именно, и кусок текста вокруг совпадения — в выдаче под названием */
   section?: string;
   snippet?: string;
+  /** Формат конспекта — отдельной меткой в выдаче: по обрезанному названию обычный конспект и PDF не отличить */
+  format?: 'MD' | 'PDF';
 }
 
 /** Фильтры поиска: группа результатов (по её названию) и предмет */
@@ -376,6 +378,7 @@ function buildGroups(): SearchGroup[] {
           meta: subjectName(note.subjectId),
           subjectId: note.subjectId,
           icon: note.contentType === 'markdown' ? NotebookText : FileText,
+          format: note.contentType === 'markdown' ? ('MD' as const) : note.contentType === 'pdf' ? ('PDF' as const) : undefined,
           path: `/materials/notes/${note.id}`,
           sections: note.contentType === 'markdown' ? markdownSections(note.content) : note.sourceRef ? pdfPages.get(note.sourceRef) : undefined,
         })),

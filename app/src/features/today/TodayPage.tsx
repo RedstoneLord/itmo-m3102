@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ConfirmDeleteModal } from '../../components/ui/ConfirmDeleteModal';
 import { cn } from '../../lib/cn';
+import { useMeStore } from '../group/meStore';
 import { useSettingsStore } from '../settings/settingsStore';
 import { HomeCustomizeDialog } from './HomeCustomizeDialog';
 import { arrangeBlocks, groupBlocks, type HomeBlockId } from './homeLayout';
@@ -15,6 +16,7 @@ import { useScheduleDialogs } from '../schedule/useScheduleDialogs';
 import { getClassStatus } from './classStatus';
 import { BookmarksPanel, DeadlinesPanel, HomeworkPanel, MaterialsPanel, RecentNotesPanel, StudyPlanPanel } from './HomePanels';
 import { NextClassBlock } from './NextClassBlock';
+import { QueuesPanel } from './QueuesPanel';
 import { ReviewBanner, SubjectsPanel } from './SubjectsPanel';
 import { TodayHeader } from './TodayHeader';
 import { TodaySchedule } from './TodaySchedule';
@@ -46,7 +48,9 @@ export function TodayPage() {
   const railDate = classStatus.kind === 'finished' && classStatus.next ? classStatus.next.occurrence.date : today;
   const railOccurrences = railDate === today ? todayOccurrences : getOccurrencesForDate(railDate, scheduleData);
 
-  const visible = arrangeBlocks(homeOrder).filter((id) => !homeHidden.includes(id));
+  // Гостю очереди не нужны: блока у него нет
+  const guest = useMeStore((state) => state.guest);
+  const visible = arrangeBlocks(homeOrder).filter((id) => !homeHidden.includes(id) && !(id === 'queues' && guest));
 
   const renderBlock = (id: HomeBlockId) => {
     switch (id) {
@@ -60,6 +64,8 @@ export function TodayPage() {
         return <DeadlinesPanel />;
       case 'homework':
         return <HomeworkPanel today={today} />;
+      case 'queues':
+        return <QueuesPanel />;
       case 'materials':
         return <MaterialsPanel />;
       case 'plan':

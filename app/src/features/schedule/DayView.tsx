@@ -31,6 +31,7 @@ export function DayView({ days, selectedDate, today, time, onSelectDate, onActio
     <div>
       <div
         className={styles.strip}
+        data-fade-x
         role="tablist"
         aria-label="День недели"
         onKeyDown={(event) =>

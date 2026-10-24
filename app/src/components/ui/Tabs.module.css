@@ -55,6 +55,17 @@
   background: var(--accent-gradient);
 }
 
+/* Тихая точка: во вкладке есть то, что человек ещё не видел */
+.dot {
+  width: 6px;
+  height: 6px;
+  margin-left: var(--space-1-5);
+  border-radius: 50%;
+  background: var(--color-accent);
+  vertical-align: 2px;
+  display: inline-block;
+}
+
 .count {
   font-size: var(--text-2xs);
   color: var(--color-text-muted);

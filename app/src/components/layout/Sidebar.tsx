@@ -1,6 +1,7 @@
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useEffect, useLayoutEffect } from 'react';
 import { SECTIONS, SIDEBAR_PRIMARY, SIDEBAR_SECONDARY, type Section } from '../../app/navigation';
+import { useChangelogUnseen } from '../../features/changelog/changelogStore';
 import { useSettingsStore } from '../../features/settings/settingsStore';
 import { cn } from '../../lib/cn';
 import { IconButton } from '../ui/IconButton';
@@ -17,6 +18,7 @@ const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
  * или Ctrl+B; колонка плавно сужается до 0, а меню фиксированной ширины уезжает влево вместе с ней.
  */
 export function Sidebar() {
+  const changelogUnseen = useChangelogUnseen();
   // inert и видимость кнопок ставит useSidebarAttribute без React — см. там же
   return (
     <aside id="sidebar" className={styles.sidebar}>
@@ -34,7 +36,7 @@ export function Sidebar() {
 
         <div className={styles.footer}>
           <div className={styles.footerLink}>
-            <NavItem section={SECTIONS.settings} />
+            <NavItem section={SECTIONS.settings} dot={changelogUnseen} />
           </div>
           <AppearanceMenu />
         </div>

@@ -7,10 +7,12 @@ import styles from './NavItem.module.css';
 
 interface NavItemProps {
   section: Section;
+  /** Тихая точка у названия: в разделе есть новое */
+  dot?: boolean;
 }
 
 /** Пункт бокового меню. Подсветка активного пункта — одна на всё меню и плавно переезжает между пунктами. */
-export function NavItem({ section }: NavItemProps) {
+export function NavItem({ section, dot }: NavItemProps) {
   const Icon = section.icon;
 
   return (
@@ -20,6 +22,7 @@ export function NavItem({ section }: NavItemProps) {
           {isActive && <motion.span layoutId="sidebar-active" className={styles.pill} transition={SPRING_SNAPPY} />}
           <Icon size={16} strokeWidth={1.75} className={styles.icon} aria-hidden />
           <span className={styles.label}>{section.label}</span>
+          {dot && <span className={styles.dot} role="img" aria-label="есть новое" />}
         </>
       )}
     </NavLink>

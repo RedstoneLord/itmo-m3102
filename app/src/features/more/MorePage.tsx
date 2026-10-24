@@ -1,12 +1,14 @@
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router';
-import { MORE_PAGE_SECTIONS } from '../../app/navigation';
+import { MORE_PAGE_SECTIONS, SECTIONS } from '../../app/navigation';
 import { AppearanceMenu } from '../../components/layout/AppearanceMenu';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { useChangelogUnseen } from '../changelog/changelogStore';
 import styles from './MorePage.module.css';
 
 /** Страница «More» для телефона: разделы, не поместившиеся в нижнюю панель, и смена темы. */
 export function MorePage() {
+  const changelogUnseen = useChangelogUnseen();
   return (
     <>
       <PageHeader title="Ещё" />
@@ -20,6 +22,7 @@ export function MorePage() {
               <Link to={section.path} className={styles.row}>
                 <Icon size={18} strokeWidth={1.75} className={styles.muted} aria-hidden />
                 <span className={styles.label}>{section.label}</span>
+                {changelogUnseen && section.path === SECTIONS.settings.path && <span className={styles.dot} role="img" aria-label="есть новое" />}
                 <ChevronRight size={16} strokeWidth={1.75} className={styles.muted} aria-hidden />
               </Link>
             </li>

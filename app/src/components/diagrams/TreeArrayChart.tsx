@@ -302,12 +302,23 @@ export function parseChart({ header, body }: DiagramLines): ChartModel {
   return model;
 }
 
+/** Подпись столбца по словам в ширину слота, не больше трёх строк (лишнее — многоточием) */
+export function wrapLabel(label: string, maxWidth: number): string[] {
+  // 14px ≈ 7,8 единицы на символ (как в textWidth)
+  const lines = wrapText(label, Math.max(4, Math.floor(maxWidth / (14 * 0.56))));
+  return lines.length > 3 ? [lines[0]!, lines[1]!, `${lines[2]}…`] : lines;
+}
+
 export function ChartView({ model }: { model: ChartModel }) {
   const width = 640;
   const height = 300;
   const legend = model.series.length > 1;
+  // Подписи по оси X переносятся по словам в ширину своего столбца (до трёх строк): длинные («Командный коллоквиум») налезали друг на друга
+  const slot = (width - 44 - 16) / model.rows.length;
+  const labelLines = model.rows.map((row) => wrapLabel(row.label, slot - 6));
+  const maxLines = Math.max(1, ...labelLines.map((lines) => lines.length));
   // Легенда — отдельной строкой над графиком, чтобы не налезать на столбцы
-  const margin = { top: legend ? 40 : 16, right: 16, bottom: 34, left: 44 };
+  const margin = { top: legend ? 40 : 16, right: 16, bottom: 18 + 17 * maxLines, left: 44 };
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
   const values = model.rows.flatMap((row) => row.values);
@@ -366,8 +377,12 @@ export function ChartView({ model }: { model: ChartModel }) {
         </g>
       ))}
       {model.rows.map((row, index) => (
-        <text key={row.label + index} className={styles.tick} x={sx(index)} y={height - 12} textAnchor="middle">
-          {row.label}
+        <text key={row.label + index} className={styles.tick} x={sx(index)} y={height - 12 - 17 * (maxLines - 1)} textAnchor="middle">
+          {labelLines[index]!.map((line, lineIndex) => (
+            <tspan key={lineIndex} x={sx(index)} dy={lineIndex === 0 ? 0 : 17}>
+              {line}
+            </tspan>
+          ))}
         </text>
       ))}
       {model.series.map((_, seriesIndex) => {

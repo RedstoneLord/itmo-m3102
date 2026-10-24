@@ -12,7 +12,7 @@ import styles from './Dropdown.module.css';
 export interface DropdownOption {
   value: string;
   label: string;
-  /** Фото слева (адрес картинки) — для списков людей; пока не загрузилось, видна первая буква имени */
+  /** Фото слева (адрес картинки) — для списков людей; пока не загрузилось, видна первая буква имени. Пустая строка — только буква, без фото */
   avatar?: string;
   /** Вторая строка мелким шрифтом, например @логин; по ней тоже ищется */
   hint?: string;
@@ -47,7 +47,7 @@ function Avatar({ src, name, small }: { src: string; name: string; small?: boole
   return (
     <span className={cn(styles.avatar, small && styles.avatarSmall)} aria-hidden>
       {name.charAt(0)}
-      <img src={src} alt="" loading="lazy" onError={(event) => (event.currentTarget.hidden = true)} />
+      {src && <img src={src} alt="" loading="lazy" onError={(event) => (event.currentTarget.hidden = true)} />}
     </span>
   );
 }
@@ -95,8 +95,9 @@ export function Dropdown({
   // Поле поиска и список монтируются не сразу (ждут первого измерения позиции), поэтому
   // фокус при открытии ставим через callback ref — он срабатывает точно в момент появления
   // узла в DOM, а не по эффекту, который может отработать до монтирования.
+  // На телефоне поле не фокусируем само: клавиатура сразу занимала пол-экрана, меняла размер окна и закрывала список (набирать начнёте по касанию)
   function attachSearchRef(el: HTMLInputElement | null) {
-    if (el) el.focus();
+    if (el && !isMobile) el.focus();
   }
 
   function attachListRef(el: HTMLDivElement | null) {
@@ -200,6 +201,8 @@ export function Dropdown({
     }
     // Прокрутка модалки/страницы делает координаты меню неактуальными — проще закрыть, чем гоняться за позицией
     function handleScrollOrResize(event: Event) {
+      // Нижний лист на телефоне привязан к краю экрана, а не к кнопке: прокрутка и смена размера (экранная клавиатура, адресная строка) его не сдвигают
+      if (isMobile) return;
       // Прокрутка самого списка (длинный список, колесо мыши) меню не закрывает
       if (event.target instanceof Node && menuRef.current?.contains(event.target)) return;
       closeMenu();
@@ -216,7 +219,7 @@ export function Dropdown({
       window.removeEventListener('resize', handleScrollOrResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, isMobile]);
 
   function handleListKeyDown(event: KeyboardEvent) {
     if (event.key === 'ArrowDown') {
@@ -264,18 +267,23 @@ export function Dropdown({
               role="option"
               aria-selected={option.value === value}
               tabIndex={-1}
-              className={cn(menuStyles.item, styles.option, option.avatar && styles.person, index === highlighted && styles.highlighted)}
+              className={cn(
+                menuStyles.item,
+                styles.option,
+                option.avatar !== undefined && styles.person,
+                index === highlighted && styles.highlighted,
+              )}
               onPointerMove={() => setHighlighted(index)}
               onClick={() => selectOption(option)}
             >
               {/* Обычный пункт — галочка слева; у человека слева фото, поэтому галочка справа */}
-              {!option.avatar && <span className={styles.checkSlot}>{option.value === value && check}</span>}
-              {option.avatar && <Avatar src={option.avatar} name={option.label} />}
+              {option.avatar === undefined && <span className={styles.checkSlot}>{option.value === value && check}</span>}
+              {option.avatar !== undefined && <Avatar src={option.avatar} name={option.label} />}
               <span className={cn(menuStyles.itemLabel, styles.optionText)}>
                 <span className={styles.optionLabel}>{option.label}</span>
                 {option.hint && <span className={styles.optionHint}>{option.hint}</span>}
               </span>
-              {option.avatar && <span className={styles.checkSlot}>{option.value === value && check}</span>}
+              {option.avatar !== undefined && <span className={styles.checkSlot}>{option.value === value && check}</span>}
             </button>
           ))
         )}
@@ -298,7 +306,7 @@ export function Dropdown({
           disabled={disabled}
           onClick={() => (open ? closeMenu() : openMenu())}
         >
-          {selected?.avatar ? (
+          {selected?.avatar !== undefined ? (
             <Avatar src={selected.avatar} name={selected.label} small />
           ) : (
             Icon && <Icon size={14} strokeWidth={1.75} aria-hidden />
@@ -317,7 +325,7 @@ export function Dropdown({
           disabled={disabled}
           onClick={() => (open ? closeMenu() : openMenu())}
         >
-          {selected?.avatar && <Avatar src={selected.avatar} name={selected.label} small />}
+          {selected?.avatar !== undefined && <Avatar src={selected.avatar} name={selected.label} small />}
           <span className={cn(styles.value, !selected && styles.placeholder)}>{triggerLabel}</span>
           <ChevronDown size={14} strokeWidth={1.75} className={styles.chevron} aria-hidden />
         </button>

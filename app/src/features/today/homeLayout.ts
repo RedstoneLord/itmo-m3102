@@ -5,6 +5,7 @@ export const HOME_BLOCKS = [
   { id: 'review', label: 'Повторение ошибок', feature: true },
   { id: 'schedule', label: 'Пары на сегодня', feature: false },
   { id: 'homework', label: 'Домашнее задание', feature: false },
+  { id: 'queues', label: 'Мои очереди', feature: false },
   { id: 'notes', label: 'Недавние конспекты', feature: false },
   { id: 'materials', label: 'Материалы', feature: false },
   { id: 'plan', label: 'Мой учебный план', feature: false },

@@ -500,8 +500,10 @@
     row-gap: var(--space-1);
   }
 
+  /* Справа — стрелка (position: absolute): текст срока и преподавателя не должен заезжать под неё */
   .rowMain {
     flex-basis: calc(100% - 16px - var(--space-3) - 16px - var(--space-3));
+    padding-right: var(--space-6);
   }
 
   .rowTitle,
@@ -509,9 +511,16 @@
     white-space: normal;
   }
 
+  /* «Вы №11», число в очереди и бейдж не рвутся посреди слова: не помещается — целиком переходит на следующую строку */
   .rowMeta {
     flex-basis: 100%;
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
     padding-left: calc(16px + var(--space-3));
+  }
+
+  .rowMeta > * {
+    white-space: nowrap;
   }
 
   .rowChevron {

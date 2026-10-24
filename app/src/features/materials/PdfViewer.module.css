@@ -120,6 +120,20 @@
   .resumeText {
     display: none;
   }
+
+  /* Панель — одним рядом, а не двумя (две строки забирали ~110px из 812): масштаб без числа, кнопки ближе */
+  .toolbar {
+    gap: var(--space-1);
+    padding: var(--space-1);
+  }
+
+  .pageLabel {
+    min-width: 44px;
+  }
+
+  .zoomLabel {
+    display: none;
+  }
 }
 
 .reason {
