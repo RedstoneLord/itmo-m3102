@@ -37,7 +37,13 @@ interface LocalSettings {
   density: Density;
   /** Боковое меню свёрнуто (кнопка в меню и шапке, Ctrl+B) */
   sidebarCollapsed: boolean;
+  /** Окно «первого входа» уже показывали (features/onboarding); false — покажется, «Настройки → Оформление» вернёт его снова */
+  onboarded: boolean;
+  /** «Дедлайны»: строки списка (по умолчанию) или карточки */
+  deadlinesView: DeadlinesView;
 }
+
+export type DeadlinesView = 'list' | 'cards';
 
 export type DynamicTheme = 'off' | 'launch' | '15' | '60';
 
@@ -68,6 +74,8 @@ interface SettingsStore extends LocalSettings {
         | 'homeHidden'
         | 'startPage'
         | 'density'
+        | 'onboarded'
+        | 'deadlinesView'
       >
     >,
   ) => void;
@@ -91,6 +99,8 @@ const DEFAULT_SETTINGS: LocalSettings = {
   startPage: '/today',
   density: 'comfortable',
   sidebarCollapsed: false,
+  onboarded: false,
+  deadlinesView: 'list',
 };
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -105,13 +115,15 @@ export const useSettingsStore = create<SettingsStore>()(
     {
       name: storageKey('settings'),
       storage: localStore,
-      version: 6,
+      version: 7,
       // v3: вариант «Случайно» убрали (лагал) — заменяем на «15 мин»; v4: pdfDark по умолчанию null (как тема), старое false было значением по умолчанию;
       // v5: «Календарь» стал режимом расписания, а ДЗ — вкладкой «Дедлайнов»: сохранённые стартовые страницы /calendar и /homework ведут туда;
       // v6: появился «Стиль» — у кого сияние и свечение были выключены, это Minimalism; пара «индиго + роза» была значением по умолчанию,
-      // её хозяева (никто не выбирал её сам) переходят на новую по умолчанию — лаванду с пыльной розой
+      // её хозяева (никто не выбирал её сам) переходят на новую по умолчанию — лаванду с пыльной розой;
+      // v7: появилось окно «первого входа» — оно для новых посетителей, у кого стор уже был, его не показываем
       migrate: (stored, version) => {
         const state = stored as Omit<Partial<LocalSettings>, 'dynamicTheme'> & { dynamicTheme?: string };
+        if (version < 7) state.onboarded = true;
         if (version < 6) {
           state.style = state.aurora === false && state.glow === false ? 'minimal' : 'aurora';
           if (state.accent === 'indigo' && state.accent2 === 'rose') {

@@ -24,9 +24,8 @@
     padding-bottom: 0;
     border: 1px solid var(--surface-border);
     border-radius: var(--radius-xl);
-    background: var(--surface-overlay);
-    -webkit-backdrop-filter: var(--surface-filter-overlay);
-    backdrop-filter: var(--surface-filter-overlay);
+    /* Под панелью едет текст страницы: размытие на каждом кадре прокрутки тормозит телефон, поэтому заливка плотная */
+    background: var(--glass-bar);
     box-shadow: var(--surface-shadow);
   }
 }

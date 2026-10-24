@@ -8,15 +8,36 @@ import { SUBJECT_FOLDERS } from '../../data/m3102';
 import { cn } from '../../lib/cn';
 import { useResolvedTheme } from '../settings/theme';
 import { searchActions } from './searchActions';
-import { loadPdfIndex, search, SEARCH_GROUPS, type SearchGroup, type SearchResult } from './searchIndex';
+import {
+  loadPdfIndex,
+  markParts,
+  pdfIndexStatus,
+  queryWords,
+  search,
+  SEARCH_GROUPS,
+  type PdfIndexStatus,
+  type SearchGroup,
+  type SearchResult,
+} from './searchIndex';
 import styles from './SearchDialog.module.css';
 
 /** Короткие подписи фильтров по типу */
 const GROUP_CHIPS: Record<string, string> = { 'Домашнее задание': 'ДЗ', 'Учебный план': 'План' };
 /** Фильтр по предмету — сокращения, как папки в репозитории группы */
 const SUBJECT_CHIPS = Object.entries(SUBJECT_FOLDERS).map(([label, id]) => ({ label, id }));
+/** Пока текст PDF не пришёл, PDF-конспекты находятся только по названию — окно говорит об этом, а не молчит */
+const PDF_NOTES: Partial<Record<PdfIndexStatus, string>> = {
+  idle: 'Загружаем текст PDF-конспектов…',
+  loading: 'Загружаем текст PDF-конспектов…',
+  failed: 'Текст PDF-конспектов недоступен — они находятся только по названию.',
+};
 
 type Choice = SearchResult & { run?: (navigate: (path: string) => void) => void };
+
+/** Текст с выделенными словами запроса */
+function Marked({ text, words }: { text: string; words: string[] }) {
+  return <>{markParts(text, words).map((part, i) => (part.hit ? <mark key={i}>{part.text}</mark> : part.text))}</>;
+}
 
 interface SearchDialogProps {
   open: boolean;
@@ -35,8 +56,9 @@ function withStartIndex<T extends SearchGroup>(groups: T[]): { group: T; startIn
 
 /**
  * Окно поиска (Ctrl / ⌘ + K): всё на сайте по названию и полному тексту (конспекты с PDF, ДЗ, заметки, подписи
- * схем), слова — в любом порядке; фильтр по типу и предмету; быстрые действия (синхронизация, тема, меню,
- * «Перед контрольной»). Пустой запрос — список действий.
+ * схем), слова — в любом порядке; найденное в тексте — с разделом или страницей PDF и выделенным куском текста;
+ * фильтр по типу и предмету; быстрые действия (синхронизация, тема, меню, «Перед контрольной»). Пустой запрос —
+ * список действий.
  */
 export function SearchDialog({ open, onClose }: SearchDialogProps) {
   const [query, setQuery] = useState('');
@@ -62,6 +84,11 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
   const groupsWithIndex = withStartIndex(groups);
   const flatResults = groupsWithIndex.flatMap(({ group }) => group.results);
   const resultCount = flatResults.length;
+  const words = queryWords(query);
+  // Подпись про PDF — только пока ищем по конспектам и есть что искать; пока текст идёт, «Ничего не найдено» было бы неправдой
+  const pdfStatus = pdfIndexStatus();
+  const pdfNote = words.length > 0 && (!groupFilter || groupFilter === 'Конспекты') ? PDF_NOTES[pdfStatus] : undefined;
+  const pdfLoading = pdfNote !== undefined && pdfStatus !== 'failed';
 
   // Новый запрос или фильтр — выделение возвращается на самый первый результат
   useEffect(() => {
@@ -144,42 +171,61 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
       </div>
 
       <div className={styles.results} role="listbox" aria-label="Результаты поиска">
-        {groupsWithIndex.length === 0 ? (
-          <EmptyState
-            compact
-            icon={SearchX}
-            title="Ничего не найдено"
-            description={query.trim() ? `Ничего не найдено по запросу «${query.trim()}».` : 'Под этот фильтр пока ничего нет.'}
-          />
-        ) : (
-          groupsWithIndex.map(({ group, startIndex }) => (
-            <div key={group.label} className={styles.group}>
-              <p className={styles.groupLabel}>{group.label}</p>
-              {group.results.map((result, index) => {
-                const globalIndex = startIndex + index;
-                const isActive = globalIndex === activeIndex;
-                const Icon = result.icon;
-
-                return (
-                  <button
-                    key={result.id}
-                    ref={isActive ? activeResultRef : undefined}
-                    type="button"
-                    role="option"
-                    aria-selected={isActive}
-                    className={cn(styles.result, isActive && styles.active)}
-                    onMouseEnter={() => setActiveIndex(globalIndex)}
-                    onClick={() => handleSelect(result)}
-                  >
-                    <Icon size={16} strokeWidth={1.75} className={styles.muted} aria-hidden />
-                    <span className={styles.resultTitle}>{result.title}</span>
-                    {result.meta && <span className={styles.resultMeta}>{result.meta}</span>}
-                  </button>
-                );
-              })}
-            </div>
-          ))
+        {pdfNote && (
+          <p className={styles.note} aria-live="polite">
+            {pdfNote}
+          </p>
         )}
+        {groupsWithIndex.length === 0
+          ? !pdfLoading && (
+              <EmptyState
+                compact
+                icon={SearchX}
+                title="Ничего не найдено"
+                description={query.trim() ? `Ничего не найдено по запросу «${query.trim()}».` : 'Под этот фильтр пока ничего нет.'}
+              />
+            )
+          : groupsWithIndex.map(({ group, startIndex }) => (
+              <div key={group.label} className={styles.group}>
+                <p className={styles.groupLabel}>{group.label}</p>
+                {group.results.map((result, index) => {
+                  const globalIndex = startIndex + index;
+                  const isActive = globalIndex === activeIndex;
+                  const Icon = result.icon;
+
+                  return (
+                    <button
+                      key={result.id}
+                      ref={isActive ? activeResultRef : undefined}
+                      type="button"
+                      role="option"
+                      aria-selected={isActive}
+                      className={cn(styles.result, result.snippet && styles.hit, isActive && styles.active)}
+                      onMouseEnter={() => setActiveIndex(globalIndex)}
+                      onClick={() => handleSelect(result)}
+                    >
+                      <Icon size={16} strokeWidth={1.75} className={styles.muted} aria-hidden />
+                      <span className={styles.resultTitle}>
+                        <Marked text={result.title} words={words} />
+                      </span>
+                      {result.meta && <span className={styles.resultMeta}>{result.meta}</span>}
+                      {result.snippet && (
+                        <span className={styles.context}>
+                          {result.section && (
+                            <span className={styles.where}>
+                              <Marked text={result.section} words={words} />
+                            </span>
+                          )}
+                          <span className={styles.snippet}>
+                            <Marked text={result.snippet} words={words} />
+                          </span>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
       </div>
 
       {resultCount > 0 && (

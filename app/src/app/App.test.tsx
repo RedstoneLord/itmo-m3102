@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { expect, it } from 'vitest';
+import { beforeEach, expect, it } from 'vitest';
+import { useSettingsStore } from '../features/settings/settingsStore';
 import { App } from './App';
+
+// Хранилище в тестах пустое — без этого поверх страниц встало бы окно «первого входа»
+beforeEach(() => useSettingsStore.setState({ onboarded: true }));
 
 const heading = (name: string | RegExp) => screen.findByRole('heading', { level: 1, name }, { timeout: 10_000 });
 

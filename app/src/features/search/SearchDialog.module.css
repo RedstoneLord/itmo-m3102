@@ -104,12 +104,14 @@
   color: var(--color-text-muted);
 }
 
+/* Значок | название | подпись; найденное в тексте (.hit) добавляет под названием строку со сниппетом */
 .result {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--space-2-5);
+  column-gap: var(--space-2-5);
   width: 100%;
-  height: 36px;
+  min-height: 36px;
   padding: 0 var(--space-2);
   border: 0;
   border-radius: var(--radius-md);
@@ -139,11 +141,61 @@
 }
 
 .resultMeta {
-  margin-left: auto;
   padding-left: var(--space-3);
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   white-space: nowrap;
+}
+
+.hit {
+  align-items: start;
+  padding-block: var(--space-2);
+}
+
+/* Значок — по первой строке, а не по середине двух */
+.hit .muted {
+  margin-top: var(--space-0-5);
+}
+
+/* Под названием: где нашлось (раздел или страница) и кусок текста */
+.context {
+  grid-column: 2 / -1;
+  min-width: 0;
+  font-size: var(--text-xs);
+}
+
+/* Одна строка, длинный заголовок обрезается — иначе на телефоне он вытеснит сам текст */
+.where {
+  display: block;
+  overflow: hidden;
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.snippet {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: var(--color-text-secondary);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* Найденное слово — как маркер по бумаге, тот же цвет, что у пометок в конспекте (global.css) */
+.result mark {
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-warning) 28%, transparent);
+  color: inherit;
+}
+
+/* Подпись над выдачей: текст PDF ещё идёт или не пришёл */
+.note {
+  padding: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .hints {

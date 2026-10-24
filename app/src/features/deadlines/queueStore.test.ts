@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useQueueStore } from './queueStore';
+import { queuePlace, useQueueStore, type QueueEntry } from './queueStore';
 
 const issue = (i: number) => ({
   title: `[dl1] Гость ${i}`,
@@ -67,5 +67,21 @@ describe('очередь сдачи: страницы GitHub', () => {
     const { queues, error } = useQueueStore.getState();
     expect(queues).toEqual(previous);
     expect(error).not.toBe('');
+  });
+});
+
+describe('место в очереди', () => {
+  const entry = (login?: string): QueueEntry => ({ name: login ?? 'чужой', login, url: `https://github.com/issues/${login ?? 'x'}` });
+  const queue = [entry('anna'), entry(), entry('Boris')];
+
+  it('считает с единицы, без учёта регистра логина', () => {
+    expect(queuePlace(queue, 'ANNA')).toBe(1);
+    expect(queuePlace(queue, 'boris')).toBe(3);
+  });
+
+  it('нет в очереди, не выбран или очередь пуста — null', () => {
+    expect(queuePlace(queue, 'clara')).toBeNull();
+    expect(queuePlace(queue, null)).toBeNull();
+    expect(queuePlace([], 'anna')).toBeNull();
   });
 });

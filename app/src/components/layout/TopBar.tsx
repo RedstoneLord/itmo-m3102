@@ -4,6 +4,7 @@ import { findSection } from '../../app/navigation';
 import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import { Brand } from './Brand';
 import { EditModeToggle } from './EditModeToggle';
+import { RadioCapsule } from '../radio/RadioCapsule';
 import { SearchTrigger } from './SearchTrigger';
 import { SidebarToggle } from './Sidebar';
 import { SiteSwitch } from './SiteSwitch';
@@ -62,6 +63,7 @@ export function TopBar({ onOpenSearch }: TopBarProps) {
           <SiteSwitch />
           <SyncButton />
           <EditModeToggle />
+          <RadioCapsule />
           <SearchTrigger onClick={onOpenSearch} />
           <UserMenu />
         </div>

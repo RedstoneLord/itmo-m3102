@@ -14,6 +14,8 @@
 }
 
 .value {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -42,7 +44,7 @@
  */
 .menu {
   display: block;
-  max-width: min(320px, calc(100vw - var(--space-4)));
+  max-width: min(360px, calc(100vw - var(--space-4)));
 }
 
 .searchRow {
@@ -73,9 +75,18 @@
   color: var(--color-text-muted);
 }
 
+/* Поле поиска растянуто на всю строку меню: кольцо вокруг него — лишняя рамка в рамке, фокус показывает линия под строкой */
+.searchInput:focus-visible {
+  outline: none;
+}
+
+.searchRow:focus-within {
+  border-bottom-color: var(--color-accent);
+}
+
 .list {
   overflow-y: auto;
-  max-height: 240px;
+  max-height: min(320px, 50vh);
 }
 
 .option {
@@ -91,6 +102,62 @@
 
 .highlighted {
   background: var(--color-bg-hover);
+}
+
+/* Строка человека: фото, имя и @логин двумя строками, галочка справа. Селекторы удвоены (.menu/.sheet + класс): базовая
+   высота пункта лежит в другом модуле, порядок файлов в сборке не гарантирован */
+.menu .person,
+.sheet .person {
+  height: auto;
+  min-height: 48px;
+  padding-block: var(--space-1-5);
+  gap: var(--space-3);
+}
+
+.optionText {
+  display: grid;
+  min-width: 0;
+}
+
+.optionLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.optionHint {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+}
+
+.avatar {
+  position: relative;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarSmall {
+  width: 22px;
+  height: 22px;
+  font-size: var(--text-2xs);
 }
 
 .empty {
@@ -140,6 +207,12 @@
 
 .sheet .option {
   min-height: 44px;
+}
+
+.sheet .list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
 }
 
 @keyframes backdrop-in {

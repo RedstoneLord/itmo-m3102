@@ -22,6 +22,11 @@
   }
 }
 
+/* Liquid Glass: сетка часов лежит под карточкой — заливка почти плотная, иначе линии просвечивают сквозь пары */
+:global(:root[data-style='glass']) .card:not(.now) {
+  background: var(--glass-bar);
+}
+
 /* Полоска типа пары внутри карточки — не изгибается на скруглённых углах, как border-left */
 .card::before {
   content: '';
@@ -51,7 +56,7 @@
 
 .past > *,
 .past::before {
-  opacity: 0.72;
+  opacity: 0.88;
   transition: opacity var(--duration-fast) var(--ease);
 }
 

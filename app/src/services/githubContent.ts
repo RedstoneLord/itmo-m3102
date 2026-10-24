@@ -369,6 +369,16 @@ export function buildMaterials(paths: string[], previous: Material[], now: strin
 const LAST_SYNC_KEY = storageKey('last-sync');
 const AUTO_SYNC_INTERVAL = 10 * 60 * 1000;
 
+/** Когда последняя удачная синхронизация (мс), либо null — её не было или хранилище недоступно */
+export function readLastSync(): number | null {
+  try {
+    const value = Number(localStorage.getItem(LAST_SYNC_KEY));
+    return value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 /** При открытии приложения — не чаще раза в 10 минут, чтобы перезагрузки не съедали лимит GitHub API */
 export async function autoSyncGithubContent(): Promise<void> {
   let firstVisit = true;

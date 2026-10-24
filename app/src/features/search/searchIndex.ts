@@ -13,7 +13,7 @@ import { deadlineSubjectId } from '../subjects/subjectStats';
 import { useSubjectsStore } from '../subjects/subjectsStore';
 import { formatTaskMeta } from '../tasks/labels';
 import { useTasksStore } from '../tasks/tasksStore';
-import { collectPdfText, type SearchIndexFile } from './pdfText';
+import { collectPdfPages, joinSections, type SearchIndexFile, type TextSection } from './pdfText';
 
 export interface SearchResult {
   id: string;
@@ -22,10 +22,13 @@ export interface SearchResult {
   icon: LucideIcon;
   /** Куда перейти при выборе */
   path: string;
-  /** Длинный текст (конспект, ДЗ) — ищется тоже, в выдаче показывается кусок вокруг совпадения */
-  body?: string;
+  /** Длинный текст по разделам (конспект — по заголовкам, PDF — по страницам, ДЗ и заметка — целиком) — ищется тоже */
+  sections?: TextSection[];
   /** Предмет — для фильтра по предмету */
   subjectId?: string;
+  /** Нашлось в тексте: раздел или страница, где именно, и кусок текста вокруг совпадения — в выдаче под названием */
+  section?: string;
+  snippet?: string;
 }
 
 /** Фильтры поиска: группа результатов (по её названию) и предмет */
@@ -43,7 +46,11 @@ const RESULTS_PER_GROUP = 4;
 const NOTE_RESULTS = 8;
 /** Выбран тип результатов — показываем больше: остальных групп на экране нет */
 const FILTERED_RESULTS = 40;
-const SNIPPET_RADIUS = 48;
+/** Из одного конспекта в выдаче — не больше двух лучших разделов, как на классическом сайте */
+const HITS_PER_NOTE = 2;
+/** Сниппет: сколько знаков до совпадения и сколько всего — в окне он занимает две строки */
+const SNIPPET_BEFORE = 48;
+const SNIPPET_LENGTH = 150;
 
 /** Регистр и «ё» не важны: «ежик» находит «Ёжик» */
 export const normalize = (value: string) => value.toLowerCase().replace(/ё/g, 'е');
@@ -128,18 +135,123 @@ export const queryWords = (query: string) => normalize(query).split(/\s+/).filte
 export const hasAllWords = (text: string, words: string[]) => words.every((word) => text.includes(word));
 
 /**
- * Кусок текста вокруг совпадения: «…предикат P(x) истинен…». normalized — normalize(text), если уже посчитан.
- * Несколько слов — вокруг самого длинного (оно реже всего встречается и точнее показывает место)
+ * Markdown → разделы по заголовкам (как строит индекс группы, tools/build-search-index.mjs): название раздела и простой
+ * текст под ним; текст до первого заголовка — раздел без названия. `#` внутри кода заголовком не считается
  */
-export function snippet(text: string, query: string, normalized = normalize(text)): string | undefined {
-  const words = queryWords(query);
-  if (!hasAllWords(normalized, words)) return undefined;
-  const phrase = normalize(query.trim());
-  const anchor = normalized.includes(phrase) ? phrase : [...words].sort((a, b) => b.length - a.length)[0]!;
-  const index = normalized.indexOf(anchor);
-  const start = Math.max(0, index - SNIPPET_RADIUS);
-  const end = Math.min(text.length, index + anchor.length + SNIPPET_RADIUS);
+export function markdownSections(markdown: string): TextSection[] {
+  const sections: TextSection[] = [];
+  let heading = '';
+  let lines: string[] = [];
+  let fence = '';
+  const flush = () => {
+    const text = plainText(lines.join('\n'));
+    if (text) sections.push({ heading, text });
+    lines = [];
+  };
+  for (const line of markdown.split(/\r?\n/)) {
+    const quote = /^\s*(`{3,}|~{3,})/.exec(line)?.[1]?.[0];
+    if (quote) fence = !fence ? quote : fence === quote ? '' : fence;
+    const title = fence || quote ? null : /^#{1,6}\s+(.+?)\s*#*\s*$/.exec(line)?.[1];
+    if (title) {
+      flush();
+      heading = plainText(title);
+    } else {
+      lines.push(line);
+    }
+  }
+  flush();
+  return sections;
+}
+
+/**
+ * Кусок текста вокруг совпадения: «…предикат P(x) истинен…». normalized — normalize(text), если уже посчитан.
+ * Вокруг фразы целиком, иначе вокруг самого длинного из найденных слов (оно реже всего встречается и точнее
+ * показывает место); слов в тексте нет (совпал заголовок раздела) — начало текста
+ */
+export function snippet(text: string, words: string[], normalized = normalize(text)): string {
+  const phrase = words.join(' ');
+  const found = normalized.includes(phrase) ? phrase : words.filter((word) => normalized.includes(word)).sort((a, b) => b.length - a.length)[0];
+  const at = found ? normalized.indexOf(found) : 0;
+  let start = Math.max(0, at - SNIPPET_BEFORE);
+  if (start > 0) {
+    // Начало — с границы слова, а не с середины
+    const space = text.indexOf(' ', start);
+    if (space >= 0 && space < at) start = space + 1;
+  }
+  const end = Math.min(text.length, start + SNIPPET_LENGTH);
   return `${start > 0 ? '…' : ''}${text.slice(start, end).trim()}${end < text.length ? '…' : ''}`;
+}
+
+/** Текст кусками: совпавшие со словами запроса (hit) интерфейс выделяет; регистр и «ё» не важны */
+export function markParts(text: string, words: string[]): { text: string; hit: boolean }[] {
+  const normalized = normalize(text);
+  const ranges: [number, number][] = [];
+  // Строчные буквы иногда длиннее заглавных — тогда места в normalized не совпадают с text, лучше не выделять, чем выделить не то
+  if (normalized.length === text.length) {
+    for (const word of words) {
+      for (let at = normalized.indexOf(word); at >= 0; at = normalized.indexOf(word, at + word.length)) ranges.push([at, at + word.length]);
+    }
+  }
+  ranges.sort((a, b) => a[0] - b[0]);
+  const parts: { text: string; hit: boolean }[] = [];
+  let done = 0;
+  for (const [start, end] of ranges) {
+    if (end <= done) continue;
+    const from = Math.max(start, done);
+    if (from > done) parts.push({ text: text.slice(done, from), hit: false });
+    parts.push({ text: text.slice(from, end), hit: true });
+    done = end;
+  }
+  if (done < text.length || !parts.length) parts.push({ text: text.slice(done), hit: false });
+  return parts;
+}
+
+/** Раздел текста с приведёнными к поиску строками — чтобы не считать их на каждую букву запроса */
+interface IndexedSection extends TextSection {
+  headingKey: string;
+  textKey: string;
+}
+
+/**
+ * Оценка раздела, как на классическом сайте: вхождения слов в тексте (до 10 на слово), слово в заголовке весомее,
+ * фраза целиком — ещё плюс. Каждое слово должно быть в заголовке или в тексте, иначе -1
+ */
+function scoreSection({ headingKey, textKey }: IndexedSection, words: string[]): number {
+  let score = 0;
+  for (const word of words) {
+    const inHeading = headingKey.includes(word);
+    let count = 0;
+    for (let at = textKey.indexOf(word); at >= 0 && count < 10; at = textKey.indexOf(word, at + word.length)) count++;
+    if (!count && !inHeading) return -1;
+    score += count + (inHeading ? 15 : 0);
+  }
+  return words.length > 1 && textKey.includes(words.join(' ')) ? score + 20 : score;
+}
+
+const rankSections = (sections: IndexedSection[], words: string[]) =>
+  sections
+    .map((section) => ({ section, score: scoreSection(section, words) }))
+    .filter((hit) => hit.score >= 0)
+    .sort((a, b) => b.score - a.score);
+
+/**
+ * Лучшие разделы под запрос — те, где есть все слова. Слова разбросаны по разным разделам (в конспекте они есть) —
+ * показываем место самого длинного слова: конспект не пропадает, как и раньше, когда искали по всему тексту
+ */
+function findHits(sections: IndexedSection[], words: string[]) {
+  let hits = rankSections(sections, words);
+  const inNote = (word: string) => sections.some((section) => section.headingKey.includes(word) || section.textKey.includes(word));
+  if (!hits.length && words.length > 1 && words.every(inNote)) hits = rankSections(sections, [[...words].sort((a, b) => b.length - a.length)[0]!]);
+  return hits.slice(0, HITS_PER_NOTE);
+}
+
+/** Место совпадения в названии, как на классическом сайте: с начала — выше, в названии — выше, чем в подписи (key = «название\nподпись») */
+function titleScore(key: string, words: string[]): number {
+  const titleEnd = key.indexOf('\n');
+  return words.reduce((sum, word) => {
+    const at = key.indexOf(word);
+    return sum + (at === 0 ? 30 : at < titleEnd ? 20 : 5);
+  }, 0);
 }
 
 const PAGES: Section[] = [
@@ -160,32 +272,48 @@ const PAGES: Section[] = [
 
 /**
  * Текст PDF-конспектов группы: его вытаскивает робот репозитория группы (pdftotext) в
- * data/search-index.json — { files: [путь], sections: [[номер файла, заголовок, текст]] }.
- * Файл большой (~1.6 МБ), поэтому грузится при первом открытии поиска и живёт только в памяти.
+ * data/search-index.json — { files: [путь], sections: [[номер файла, заголовок («Стр. 5»), текст]] }.
+ * Файл большой (~3 МБ), поэтому грузится при первом открытии поиска и живёт только в памяти — постранично,
+ * чтобы выдача называла страницу.
  */
-const pdfText = new Map<string, string>();
+const pdfPages = new Map<string, TextSection[]>();
 let pdfIndexLoad: Promise<void> | null = null;
+
+export type PdfIndexStatus = 'idle' | 'loading' | 'ready' | 'failed';
+let pdfStatus: PdfIndexStatus = 'idle';
+/** Как идёт загрузка текста PDF — окно поиска подписывает, что PDF пока ищутся только по названию */
+export const pdfIndexStatus = () => pdfStatus;
 
 /** Тексты PDF-конспектов группы по пути файла — для выгрузки предмета «Для ИИ» */
 export async function loadPdfTexts(): Promise<ReadonlyMap<string, string>> {
   await loadPdfIndex();
-  return pdfText;
+  return new Map([...pdfPages].map(([path, pages]) => [path, joinSections(pages)]));
 }
 
 export function loadPdfIndex(): Promise<void> {
-  pdfIndexLoad ??= fetch(rawUrl('group', 'data/search-index.json'))
-    .then((response) => (response.ok ? response.json() : null))
-    .then((raw: SearchIndexFile | null) => collectPdfText(raw, pdfText))
-    .catch(() => {
-      pdfIndexLoad = null; // попробуем снова при следующем открытии
-    });
+  if (!pdfIndexLoad) {
+    pdfStatus = 'loading';
+    pdfIndexLoad = fetch(rawUrl('group', 'data/search-index.json'))
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json() as Promise<SearchIndexFile>;
+      })
+      .then((raw) => {
+        collectPdfPages(raw, pdfPages);
+        pdfStatus = 'ready';
+      })
+      .catch(() => {
+        pdfIndexLoad = null; // попробуем снова при следующем открытии
+        pdfStatus = 'failed';
+      });
+  }
   return pdfIndexLoad;
 }
 
 interface IndexedResult extends SearchResult {
   /** Заранее приведённые к поиску строки — чтобы не считать их на каждую букву запроса */
   key: string;
-  bodyKey?: string;
+  sections?: IndexedSection[];
 }
 
 let index: { inputs: unknown[]; groups: { label: string; results: IndexedResult[] }[] } | null = null;
@@ -204,7 +332,7 @@ function indexedGroups() {
     useGroupStore.getState().deadlines,
     useGroupStore.getState().links,
     useHomeworkStore.getState().items,
-    pdfText.size,
+    pdfPages.size,
   ];
   if (index?.inputs.every((value, i) => value === inputs[i])) return index.groups;
   const groups = buildGroups().map((group) => ({
@@ -212,7 +340,11 @@ function indexedGroups() {
     results: group.results.map((result) => ({
       ...result,
       key: normalize(`${result.title}\n${result.meta ?? ''}`),
-      bodyKey: result.body && normalize(result.body),
+      sections: result.sections?.map((section) => ({
+        ...section,
+        headingKey: normalize(section.heading),
+        textKey: normalize(section.text),
+      })),
     })),
   }));
   index = { inputs, groups };
@@ -245,7 +377,7 @@ function buildGroups(): SearchGroup[] {
           subjectId: note.subjectId,
           icon: note.contentType === 'markdown' ? NotebookText : FileText,
           path: `/materials/notes/${note.id}`,
-          body: note.contentType === 'markdown' ? plainText(note.content) : note.sourceRef ? pdfText.get(note.sourceRef) : undefined,
+          sections: note.contentType === 'markdown' ? markdownSections(note.content) : note.sourceRef ? pdfPages.get(note.sourceRef) : undefined,
         })),
     },
     {
@@ -257,7 +389,7 @@ function buildGroups(): SearchGroup[] {
         subjectId: resolveSubjectFolder(item.subject),
         icon: SECTIONS.homework.icon,
         path: SECTIONS.homework.path,
-        body: plainText(item.text),
+        sections: markdownSections(item.text),
       })),
     },
     {
@@ -334,7 +466,7 @@ function buildGroups(): SearchGroup[] {
         subjectId: note.subjectId,
         icon: SECTIONS.notes.icon,
         path: SECTIONS.notes.path,
-        body: note.content,
+        sections: markdownSections(note.content),
       })),
     },
   ];
@@ -345,8 +477,9 @@ export const SEARCH_GROUPS = ['Конспекты', 'Домашнее задан
 
 /**
  * Ищет по названию, подписи и полному тексту (конспекты, ДЗ, заметки). Слова запроса — в любом порядке и не
- * обязательно рядом. Совпадения в названии — выше; если нашлось только в тексте, подписью становится кусок
- * текста вокруг совпадения. Фильтр по типу и предмету; с фильтром и пустым запросом — всё, что подходит.
+ * обязательно рядом. Совпадения в названии — выше, лучшие по месту совпадения — первыми. Нашлось только в тексте —
+ * в выдаче раздел или страница, где именно, и кусок текста вокруг совпадения (до двух разделов из одного конспекта,
+ * лучшие по числу совпадений первыми). Фильтр по типу и предмету; с фильтром и пустым запросом — всё, что подходит.
  */
 export function search(query: string, filter: SearchFilter = {}): SearchGroup[] {
   const words = queryWords(query);
@@ -357,19 +490,26 @@ export function search(query: string, filter: SearchFilter = {}): SearchGroup[] 
     .filter((group) => !filter.group || group.label === filter.group)
     .filter((group) => !filter.subjectId || group.label !== 'Разделы')
     .map((group) => {
-      const byTitle: SearchResult[] = [];
-      const byBody: SearchResult[] = [];
-      for (const { key, bodyKey, ...result } of group.results) {
+      const byTitle: { rows: SearchResult[]; score: number }[] = [];
+      const byBody: { rows: SearchResult[]; score: number }[] = [];
+      for (const { key, sections, ...result } of group.results) {
         if (filter.subjectId && result.subjectId !== filter.subjectId) continue;
         if (hasAllWords(key, words)) {
-          byTitle.push(result);
-        } else if (result.body && bodyKey) {
-          const found = snippet(result.body, query, bodyKey);
-          if (found) byBody.push({ ...result, meta: found });
+          byTitle.push({ rows: [result], score: titleScore(key, words) });
+        } else if (sections) {
+          const hits = findHits(sections, words);
+          const rows = hits.map(({ section }, i) => ({
+            ...result,
+            id: `${result.id}#${i}`,
+            section: section.heading || undefined,
+            snippet: snippet(section.text, words, section.textKey),
+          }));
+          if (rows.length) byBody.push({ rows, score: hits[0]!.score });
         }
       }
       const limit = filter.group ? FILTERED_RESULTS : group.label === 'Конспекты' ? NOTE_RESULTS : RESULTS_PER_GROUP;
-      return { label: group.label, results: [...byTitle, ...byBody].slice(0, limit) };
+      const best = (a: { score: number }, b: { score: number }) => b.score - a.score;
+      return { label: group.label, results: [...byTitle.sort(best), ...byBody.sort(best)].flatMap((hit) => hit.rows).slice(0, limit) };
     })
     .filter((group) => group.results.length > 0);
 }

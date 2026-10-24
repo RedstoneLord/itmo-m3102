@@ -5,6 +5,7 @@ import { buttonClass } from '../../components/ui/Button';
 import { Section } from '../../components/ui/Section';
 import { addDays, formatDayLabel, getShortWeekdayName } from '../../lib/dates';
 import { pluralize } from '../../lib/pluralize';
+import { useSyncReady } from '../../services/syncStore';
 import type { ISODate, Subject } from '../../types/models';
 import { QuizProgressBar, useSubjectQuizProgress } from '../quizzes/QuizProgress';
 import { dueCards, useQuizStore } from '../quizzes/quizStore';
@@ -17,6 +18,7 @@ import styles from './SubjectsPanel.module.css';
 function SubjectLine({ subject, today, time, schedule }: { subject: Subject; today: ISODate; time: string; schedule: ScheduleData }) {
   const next = nextOccurrence(subject.id, today, time, schedule);
   const progress = useSubjectQuizProgress(subject.id);
+  const ready = useSyncReady();
   const day = next && (next.date <= addDays(today, 1) ? formatDayLabel(next.date, today) : getShortWeekdayName(next.date));
 
   return (
@@ -26,7 +28,7 @@ function SubjectLine({ subject, today, time, schedule }: { subject: Subject; tod
           {subject.name}
         </span>
         <span className={styles.next}>{next ? `${day}, ${next.details.startTime}` : '—'}</span>
-        {progress.total > 0 && (
+        {ready && progress.total > 0 && (
           <span className={styles.progress} title={`Тесты: пройдено ${progress.passed} из ${progress.total}`}>
             <QuizProgressBar passed={progress.passed} total={progress.total} />
             <small>

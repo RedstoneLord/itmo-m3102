@@ -101,7 +101,7 @@
   margin-top: -3px;
   border-radius: 50%;
   background: currentColor;
-  opacity: 0.55;
+  opacity: 0.88;
 }
 
 .break::after {
@@ -119,6 +119,40 @@
 
 .window::after {
   border-top-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+/* Линия «сейчас»: время, тонкая линия и акцентная точка на линии времени слева (как у перерывов, только заметнее) */
+.now {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0 var(--space-1) var(--space-3);
+  list-style: none;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-accent-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.now::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -22px;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.now::after {
+  content: '';
+  flex: 1;
+  border-top: 2px solid var(--color-accent);
+  border-radius: 2px;
 }
 
 /* Свайп по дням — в пустом дне тоже: место под пальцем не схлопывается */

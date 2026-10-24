@@ -54,6 +54,16 @@ export function isHappeningNow(occurrence: ClassOccurrence, today: ISODate, time
   return takesPlace(occurrence) && occurrence.date === today && occurrence.details.startTime <= time && time < occurrence.details.endTime;
 }
 
+/**
+ * Перед какой парой списка сегодняшнего дня стоит линия «сейчас» (длина списка — после последней).
+ * Пока пара идёт, линии нет: «сейчас» показывает сама её строка (подсветка и полоска прогресса).
+ */
+export function nowMarkerIndex(occurrences: ClassOccurrence[], time: string): number | undefined {
+  if (occurrences.some((item) => isHappeningNow(item, item.date, time))) return undefined;
+  const next = occurrences.findIndex((item) => item.details.startTime > time);
+  return next === -1 ? occurrences.length : next;
+}
+
 /** Дата, которую меняет исключение. Для перенесённого занятия — исходная, а не новая. */
 export function getChangeDate(occurrence: ClassOccurrence): ISODate {
   const { exception } = occurrence;

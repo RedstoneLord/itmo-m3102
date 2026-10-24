@@ -4,8 +4,10 @@ import { Link } from 'react-router';
 import { SECTIONS } from '../../app/navigation';
 import { Button, buttonClass } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { LinesSkeleton } from '../../components/ui/LinesSkeleton';
 import { List } from '../../components/ui/List';
 import { Section } from '../../components/ui/Section';
+import { useSyncReady } from '../../services/syncStore';
 import { LinkCards } from '../group/LinksPage';
 import type { GroupLink } from '../group/groupStore';
 import { MaterialRow } from '../materials/MaterialRow';
@@ -58,6 +60,7 @@ export function SubjectOverview({
   onEditTask,
   onEditMaterial,
 }: SubjectOverviewProps) {
+  const ready = useSyncReady();
   const plan = sortTasks(tasks.filter(isOpenTask), 'deadline').slice(0, PLAN_LIMIT);
   // Конспекты последних занятий — свежие сверху (Лекция 5, Практика 4…)
   // Только папки занятий («Лекция 4», «Практика 3»): «Доп Материалы» и «Тесты» — во вкладке «Материалы»
@@ -93,7 +96,9 @@ export function SubjectOverview({
           </Link>
         }
       >
-        {lastNotes.length === 0 ? (
+        {!ready ? (
+          <LinesSkeleton label="Загружаем конспекты" />
+        ) : lastNotes.length === 0 ? (
           <EmptyState compact icon={NotebookText} title="Конспектов пока нет" />
         ) : (
           <List>
@@ -106,7 +111,9 @@ export function SubjectOverview({
 
       <Section title="Быстрые ссылки" action={seeAll('links')}>
         {groupLinks.length > 0 && <LinkCards links={groupLinks} />}
-        {quickLinks.length === 0 ? (
+        {!ready ? (
+          <LinesSkeleton label="Загружаем ссылки" />
+        ) : quickLinks.length === 0 ? (
           groupLinks.length === 0 && <EmptyState compact icon={Link2} title="Пока нет ссылок" />
         ) : (
           <List>
@@ -130,7 +137,9 @@ export function SubjectOverview({
       </Section>
 
       <Section title="Недавние материалы" action={seeAll('materials')}>
-        {recentMaterials.length === 0 ? (
+        {!ready ? (
+          <LinesSkeleton label="Загружаем материалы" />
+        ) : recentMaterials.length === 0 ? (
           <EmptyState compact icon={FolderOpen} title="Пока нет материалов" />
         ) : (
           <List>

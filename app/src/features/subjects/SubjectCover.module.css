@@ -37,6 +37,10 @@
   letter-spacing: -0.02em;
 }
 
+.overdue {
+  color: var(--color-danger);
+}
+
 .muted {
   font-family: var(--font-sans);
   font-weight: var(--weight-medium);

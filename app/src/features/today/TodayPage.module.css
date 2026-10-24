@@ -71,9 +71,3 @@
     margin-bottom: var(--space-3);
   }
 }
-
-.customize {
-  display: flex;
-  justify-content: center;
-  margin-top: var(--space-10);
-}

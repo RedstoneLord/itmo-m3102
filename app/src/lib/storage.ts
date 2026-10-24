@@ -17,7 +17,31 @@ export function storageKey(name: string): string {
 
 /** Кеш контента из GitHub: при нехватке места его можно выбросить — следующая синхронизация скачает заново */
 const DISPOSABLE = ['lecture-notes', 'subject-info'].map(storageKey);
+const LECTURE_NOTES = storageKey('lecture-notes');
 let warned = false;
+
+/**
+ * Освобождает место. В `lecture-notes` вперемешку с кешем GitHub лежат конспекты, добавленные руками (`source: 'manual'`):
+ * скачать их заново неоткуда, поэтому они остаются, а всё остальное уходит.
+ */
+function freeRoom(except: string) {
+  for (const key of DISPOSABLE) {
+    if (key === except) continue;
+    if (key === LECTURE_NOTES) {
+      try {
+        const stored = JSON.parse(localStorage.getItem(key) ?? 'null');
+        const manual: unknown[] = (stored?.state?.lectureNotes ?? []).filter((note: { source?: string }) => note?.source === 'manual');
+        if (manual.length > 0) {
+          localStorage.setItem(key, JSON.stringify({ ...stored, state: { ...stored.state, lectureNotes: manual } }));
+          continue;
+        }
+      } catch {
+        // не разобрали — ниже уберём целиком, как раньше
+      }
+    }
+    localStorage.removeItem(key);
+  }
+}
 
 /**
  * localStorage для persist личных данных. Место кончилось (квота ~5 МБ) — сначала освобождаем кеш конспектов
@@ -29,7 +53,7 @@ function saveWithRoom(name: string, value: string) {
     localStorage.setItem(name, value);
     return;
   } catch {
-    for (const key of DISPOSABLE) if (key !== name) localStorage.removeItem(key);
+    freeRoom(name);
   }
   try {
     localStorage.setItem(name, value);

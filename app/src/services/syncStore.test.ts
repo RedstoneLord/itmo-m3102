@@ -1,15 +1,22 @@
 // @vitest-environment jsdom
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const sync = vi.fn();
-vi.mock('./githubContent', () => ({ syncGithubContent: () => sync(), autoSyncGithubContent: () => sync() }));
+const readLastSync = vi.fn<() => number | null>(() => null);
+vi.mock('./githubContent', () => ({
+  syncGithubContent: () => sync(),
+  autoSyncGithubContent: () => sync(),
+  readLastSync: () => readLastSync(),
+}));
 
-const { useSyncStore } = await import('./syncStore');
+const { useSyncStore, useSyncReady, useSyncStamp } = await import('./syncStore');
 
 describe('syncStore', () => {
   beforeEach(() => {
     sync.mockReset();
-    useSyncStore.setState({ status: 'idle', summary: null, error: '' });
+    readLastSync.mockReset().mockReturnValue(null);
+    useSyncStore.setState({ status: 'idle', summary: null, error: '', lastSync: null });
   });
 
   it('кнопка + автосинхронизация одновременно — запрос к GitHub один', async () => {
@@ -37,5 +44,61 @@ describe('syncStore', () => {
     expect(sync).not.toHaveBeenCalled();
     expect(useSyncStore.getState().error).toMatch(/Нет интернета/);
     vi.restoreAllMocks();
+  });
+
+  it('время последней удачной синхронизации берётся заново после неё', async () => {
+    sync.mockResolvedValue({ notes: 1 });
+    readLastSync.mockReturnValue(1_000);
+    await useSyncStore.getState().run();
+    expect(useSyncStore.getState().lastSync).toBe(1_000);
+  });
+});
+
+describe('useSyncReady', () => {
+  beforeEach(() => useSyncStore.setState({ status: 'idle', summary: null, error: '', lastSync: null }));
+
+  it('холодный старт: сохранённого нет, первая синхронизация не закончилась — не готово', () => {
+    const { result } = renderHook(() => useSyncReady());
+    expect(result.current).toBe(false);
+    act(() => useSyncStore.setState({ status: 'syncing' }));
+    expect(result.current).toBe(false);
+  });
+
+  it('первая синхронизация закончилась — готово, и удачно, и с ошибкой', () => {
+    const { result } = renderHook(() => useSyncReady());
+    act(() => useSyncStore.setState({ status: 'done' }));
+    expect(result.current).toBe(true);
+    act(() => useSyncStore.setState({ status: 'error' }));
+    expect(result.current).toBe(true);
+  });
+
+  it('есть данные прошлой синхронизации — готово сразу, пока идёт новая', () => {
+    useSyncStore.setState({ status: 'syncing', lastSync: Date.now() });
+    const { result } = renderHook(() => useSyncReady());
+    expect(result.current).toBe(true);
+  });
+});
+
+describe('useSyncStamp', () => {
+  const at = new Date(2026, 9, 1, 12, 5).getTime();
+  beforeEach(() => useSyncStore.setState({ status: 'idle', summary: null, error: '', lastSync: null }));
+
+  it('синхронизации не было — подписи нет', () => {
+    const { result } = renderHook(() => useSyncStamp());
+    expect(result.current).toBeNull();
+  });
+
+  it('старые данные: дата видна, пока идёт обновление и после неудачи', () => {
+    useSyncStore.setState({ status: 'syncing', lastSync: at });
+    const { result } = renderHook(() => useSyncStamp());
+    expect(result.current).toBe('Данные от 1 окт., 12:05 · обновляем…');
+    act(() => useSyncStore.setState({ status: 'error' }));
+    expect(result.current).toBe('Данные от 1 окт., 12:05 · обновить не вышло');
+  });
+
+  it('обновилось — «Обновлено»', () => {
+    useSyncStore.setState({ status: 'done', lastSync: at });
+    const { result } = renderHook(() => useSyncStamp());
+    expect(result.current).toBe('Обновлено 1 окт., 12:05');
   });
 });

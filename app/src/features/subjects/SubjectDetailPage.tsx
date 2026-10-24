@@ -8,6 +8,7 @@ import { formatShortDate } from '../../lib/dates';
 import { useClock } from '../../lib/useClock';
 import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import { SECTIONS } from '../../app/navigation';
+import { useSyncReady, useSyncStamp } from '../../services/syncStore';
 import { resolveSubjectFolder } from '../../data/m3102';
 import { useGroupStore } from '../group/groupStore';
 import { useEditMode } from '../settings/EditModeContext';
@@ -39,7 +40,7 @@ import { SubjectMaterialsTab } from './SubjectMaterialsTab';
 import { SubjectNotesTab } from './SubjectNotesTab';
 import { SubjectOverview } from './SubjectOverview';
 import { SubjectTasksTab } from './SubjectTasksTab';
-import { getNextDeadline } from './subjectStats';
+import { getNextDeadline, getOverdueCount } from './subjectStats';
 import { useSubjectDialog } from './useSubjectDialog';
 import { useSubjectsStore } from './subjectsStore';
 import styles from './SubjectDetailPage.module.css';
@@ -66,6 +67,8 @@ export function SubjectDetailPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
   const navigate = useNavigate();
   const { today, time } = useClock();
+  const ready = useSyncReady();
+  const stamp = useSyncStamp();
 
   const subject = useSubjectsStore((state) => state.subjects.find((item) => item.id === subjectId));
   const tasks = useTasksStore((state) => state.tasks);
@@ -105,19 +108,23 @@ export function SubjectDetailPage() {
   const subjectNotes = notes.filter((note) => note.subjectId === subject.id);
   const subjectInfoItems = subjectInfo.filter((item) => item.subjectId === subject.id);
   const nextDeadline = getNextDeadline(tasks, subject.id, today, { deadlines: groupDeadlines, done: deadlinesDone });
+  const overdue = getOverdueCount(tasks, subject.id, today, { deadlines: groupDeadlines, done: deadlinesDone });
 
   const tabItems: TabItem<SubjectTab>[] = [
     { value: 'overview', label: TAB_LABELS.overview },
     { value: 'tasks', label: TAB_LABELS.tasks, count: subjectTasks.filter(isOpenTask).length },
-    { value: 'materials', label: TAB_LABELS.materials, count: subjectMaterials.length + subjectLectureNotes.length },
+    { value: 'materials', label: TAB_LABELS.materials, count: ready ? subjectMaterials.length + subjectLectureNotes.length : undefined },
     { value: 'notes', label: TAB_LABELS.notes, count: subjectNotes.length },
-    { value: 'links', label: TAB_LABELS.links, count: subjectGroupLinks.length + subjectLinks.length },
+    { value: 'links', label: TAB_LABELS.links, count: ready ? subjectGroupLinks.length + subjectLinks.length : undefined },
   ];
 
   const subtitle = [
     subject.teacherPrimary ?? 'Преподаватель не назначен',
-    nextDeadline ? `Ближайший дедлайн ${formatShortDate(nextDeadline, 'long')}` : 'Нет дедлайнов',
-  ].join(' · ');
+    overdue > 0 ? `Просрочено: ${overdue}` : nextDeadline ? `Ближайший дедлайн ${formatShortDate(nextDeadline, 'long')}` : ready && 'Нет дедлайнов',
+    stamp,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const resolvedContacts = resolveSubjectContacts(subject.id, classes, subject.contacts ?? []);
 
@@ -148,7 +155,7 @@ export function SubjectDetailPage() {
         }
       />
 
-      <SubjectCover subjectId={subject.id} today={today} time={time} nextDeadline={nextDeadline} />
+      <SubjectCover subjectId={subject.id} today={today} time={time} nextDeadline={nextDeadline} overdue={overdue} />
 
       <Tabs label="Разделы предмета" items={tabItems} value={tab} onChange={setTab} className={styles.tabs} />
 

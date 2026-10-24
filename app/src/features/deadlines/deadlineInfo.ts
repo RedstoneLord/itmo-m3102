@@ -1,12 +1,13 @@
 import type { BadgeTone } from '../../components/ui/Badge';
 import type { GroupDeadline } from '../group/groupStore';
+import { deadlineSubjectId } from '../subjects/subjectStats';
 
 const DAY_MS = 86_400_000;
 const dayStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 
 export interface DeadlineInfo {
   state: 'late' | 'urgent' | 'soon' | 'ok';
-  /** «Сегодня», «Завтра», «Через 7 дн.», «Просрочен» */
+  /** «Сегодня», «Завтра», «Через 7 дн.», «Просрочен», «Просрочен 6 дн.» */
   label: string;
   tone: BadgeTone;
 }
@@ -23,8 +24,15 @@ export function deadlineInfo(iso: string, now = Date.now()): DeadlineInfo {
   const days = Math.round((dayStart(due) - dayStart(new Date(now))) / DAY_MS);
   const hours = diff / 3_600_000;
   const state: DeadlineInfo['state'] = diff <= 0 ? 'late' : hours < 24 ? 'urgent' : hours < 72 ? 'soon' : 'ok';
-  const label = diff <= 0 ? 'Просрочен' : days === 0 ? 'Сегодня' : days === 1 ? 'Завтра' : `Через ${days} дн.`;
+  const label =
+    diff <= 0 ? (days < 0 ? `Просрочен ${-days} дн.` : 'Просрочен') : days === 0 ? 'Сегодня' : days === 1 ? 'Завтра' : `Через ${days} дн.`;
   return { state, label, tone: TONES[state] };
+}
+
+/** «ОП - Вторая Лаба» → { tag: 'ОП', title: 'Вторая Лаба' }: приставка с предметом — отдельной меткой, строки легче просматривать. Не предмет — название целиком */
+export function splitDeadlineName(name: string): { tag?: string; title: string } {
+  const match = /^(.{1,14}?)\s+[-–—]\s+(.+)$/.exec(name);
+  return match && deadlineSubjectId(name) ? { tag: match[1]!, title: match[2]! } : { title: name };
 }
 
 /** Порядок как на сайте группы: ближайшие → просроченные (свежие выше) → выполненные */

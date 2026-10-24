@@ -1,6 +1,4 @@
-import { SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '../../components/ui/Button';
 import { ConfirmDeleteModal } from '../../components/ui/ConfirmDeleteModal';
 import { cn } from '../../lib/cn';
 import { useSettingsStore } from '../settings/settingsStore';
@@ -77,7 +75,7 @@ export function TodayPage() {
 
   return (
     <>
-      <TodayHeader date={today} week={week} />
+      <TodayHeader date={today} week={week} onCustomize={() => setCustomizing(true)} />
 
       <div className={styles.groups}>
         {groupBlocks(visible).map((group) => (
@@ -92,11 +90,6 @@ export function TodayPage() {
         ))}
       </div>
 
-      <div className={styles.customize}>
-        <Button variant="ghost" icon={SlidersHorizontal} onClick={() => setCustomizing(true)}>
-          Настроить главную
-        </Button>
-      </div>
       <HomeCustomizeDialog open={customizing} onClose={() => setCustomizing(false)} />
 
       <ClassDialog target={scheduleDialogs.classTarget} onClose={scheduleDialogs.closeClassDialog} />

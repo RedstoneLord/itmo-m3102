@@ -2,6 +2,25 @@
 import { expect, it } from 'vitest';
 import { useSettingsStore } from './settingsStore';
 
+it('с пустым хранилищем окно «первого входа» ещё не показано', () => {
+  expect(useSettingsStore.getState().onboarded).toBe(false);
+});
+
+it('у кого стор уже был (любая прежняя версия), окно «первого входа» считается показанным', async () => {
+  for (const version of [4, 5, 6]) {
+    useSettingsStore.setState({ onboarded: false });
+    localStorage.setItem('m3102:settings', JSON.stringify({ state: { theme: 'dark' }, version }));
+    await useSettingsStore.persist.rehydrate();
+    expect(useSettingsStore.getState().onboarded).toBe(true);
+  }
+});
+
+it('в сторе новой версии сохранённое onboarded не трогаем: вернули приветствие — оно покажется', async () => {
+  localStorage.setItem('m3102:settings', JSON.stringify({ state: { onboarded: false }, version: 7 }));
+  await useSettingsStore.persist.rehydrate();
+  expect(useSettingsStore.getState().onboarded).toBe(false);
+});
+
 it('сохранённая стартовая страница /calendar открывает месяц расписания', async () => {
   localStorage.setItem('m3102:settings', JSON.stringify({ state: { startPage: '/calendar' }, version: 4 }));
   await useSettingsStore.persist.rehydrate();
