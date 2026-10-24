@@ -28,9 +28,9 @@
   position: absolute;
   top: var(--space-6);
   bottom: var(--space-6);
-  left: 0;
+  left: var(--space-4);
   width: 4px;
-  border-radius: 0 4px 4px 0;
+  border-radius: 4px;
   background: var(--type-color, transparent);
   transform-origin: top;
   animation: pill-in 600ms var(--ease-luxury-out) 150ms both;

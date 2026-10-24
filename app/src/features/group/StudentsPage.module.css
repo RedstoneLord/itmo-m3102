@@ -130,6 +130,22 @@
   color: var(--color-accent-text);
 }
 
+/* «Это вы» — выбранный в «Кто вы?»: плашка-акцент и рамка карточки в цвет акцента */
+.me {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: var(--weight-semibold);
+}
+
+.mine {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+}
+
 .commits {
   color: var(--color-text-muted);
   text-decoration: none;

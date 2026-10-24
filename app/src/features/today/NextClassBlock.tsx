@@ -10,7 +10,8 @@ import { takesPlace, type ClassOccurrence } from '../schedule/occurrences';
 import type { ClassDetails, ClassType, ISODate } from '../../types/models';
 import { useLectureNotesStore } from '../materials/lectureNotesStore';
 import { compareLessons } from '../materials/noteOrder';
-import { parseLessonLabel } from '../schedule/lessons';
+import { labelMatches, lessonNumber, parseLessonLabel } from '../schedule/lessons';
+import { useScheduleData } from '../schedule/scheduleStore';
 import { useSubjectName } from '../subjects/subjectsStore';
 import type { ClassStatus } from './classStatus';
 import styles from './NextClassBlock.module.css';
@@ -34,7 +35,7 @@ export function NextClassBlock({ status, occurrences, date, today, time }: NextC
   const isNow = status.kind === 'now';
   const upcoming = status.kind === 'finished' ? status.next?.occurrence : status.occurrence;
   const details = upcoming?.details;
-  const note = useLatestLectureNote(details?.subjectId);
+  const found = useClassNote(upcoming);
 
   return (
     <section className={cn(styles.block, 'glass-edge', isNow && styles.now)} style={typeColor(details?.type)} aria-label="Ближайшая пара">
@@ -58,10 +59,10 @@ export function NextClassBlock({ status, occurrences, date, today, time }: NextC
             </p>
             <ClassDetailsLine details={details} showTime={status.kind !== 'finished'} />
             <div className={styles.actions}>
-              {note && (
-                <Link to={`/materials/notes/${note.id}`} className={buttonClass('secondary', 'md')}>
+              {found && (
+                <Link to={`/materials/notes/${found.note.id}`} className={buttonClass('secondary', 'md')}>
                   <FileText size={14} strokeWidth={1.75} aria-hidden />
-                  Конспект
+                  {found.exact ? 'Конспект' : `Последний конспект · ${found.note.lectureNumber}`}
                 </Link>
               )}
               <Link to={`/subjects/${details.subjectId}?tab=materials`} className={buttonClass('secondary', 'md')}>
@@ -81,19 +82,24 @@ export function NextClassBlock({ status, occurrences, date, today, time }: NextC
   );
 }
 
-/** Последний конспект предмета по номеру занятия — его и открывают перед следующей парой */
-function useLatestLectureNote(subjectId: string | undefined) {
+/**
+ * Конспект к этой паре — тот же поиск, что в карточке занятия в расписании (номер пары → папка «Лекция N»).
+ * Такого ещё нет — последний конспект предмета, но с честной подписью: это не материал именно этой пары.
+ */
+function useClassNote(occurrence: ClassOccurrence | undefined) {
   const notes = useLectureNotesStore((state) => state.lectureNotes);
-  return useMemo(
-    () =>
-      subjectId
-        ? notes
-            .filter((item) => item.subjectId === subjectId && !item.archived && parseLessonLabel(item.lectureNumber))
-            .sort(compareLessons)
-            .at(-1)
-        : undefined,
-    [notes, subjectId],
-  );
+  const schedule = useScheduleData();
+  return useMemo(() => {
+    if (!occurrence) return undefined;
+    const ofSubject = notes.filter(
+      (item) => item.subjectId === occurrence.details.subjectId && !item.archived && parseLessonLabel(item.lectureNumber),
+    );
+    const lesson = lessonNumber(occurrence, schedule);
+    const exact = lesson ? ofSubject.find((item) => labelMatches(item.lectureNumber, lesson)) : undefined;
+    if (exact) return { note: exact, exact: true };
+    const latest = ofSubject.sort(compareLessons).at(-1);
+    return latest ? { note: latest, exact: false } : undefined;
+  }, [notes, schedule, occurrence]);
 }
 
 /** Таблетка слева — цвет типа пары, как в расписании */

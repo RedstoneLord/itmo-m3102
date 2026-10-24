@@ -1,12 +1,7 @@
+/* Кнопки встают в ряд с остальными в верхней панели, панель станций — абсолютно под ними (поверх страницы только пока открыта) */
 .root {
-  position: fixed;
-  right: var(--space-5);
-  bottom: var(--space-5);
-  z-index: 40;
+  position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-2);
 }
 
 /* ---------- свёрнутая капсула ---------- */
@@ -18,8 +13,6 @@
   border: 1px solid var(--color-border);
   border-radius: 999px;
   background: var(--surface-overlay);
-  -webkit-backdrop-filter: var(--surface-filter-overlay);
-  backdrop-filter: var(--surface-filter-overlay);
   box-shadow: var(--shadow-popover);
 }
 
@@ -67,8 +60,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  max-width: 160px;
-  padding: 0 var(--space-3) 0 var(--space-2);
+  padding: 0 var(--space-2);
   border: 0;
   background: none;
   color: var(--color-text-secondary);
@@ -141,6 +133,10 @@
 
 /* ---------- раскрытая панель ---------- */
 .panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: var(--z-dropdown);
   width: 280px;
   padding: var(--space-3);
   border: 1px solid var(--color-border);
@@ -149,14 +145,13 @@
   -webkit-backdrop-filter: var(--surface-filter-overlay);
   backdrop-filter: var(--surface-filter-overlay);
   box-shadow: var(--shadow-modal);
-  transform-origin: bottom right;
+  transform-origin: top right;
 }
 
 .panelHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-2);
 }
 
 .panelTitle {
@@ -308,21 +303,14 @@
 
 /* Телефон: над нижней панелью и слева — справа кнопка оглавления конспекта */
 @media (max-width: 767px) {
-  .root {
-    right: auto;
-    left: var(--space-3);
-    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + var(--space-4));
-    align-items: flex-start;
-  }
-
-  /* Телефон, радио молчит: только кнопка воспроизведения — капсула не закрывает строки списка */
-  .capsule:not(.on) .label {
+  /* В узкой шапке — одна кнопка: играть и выбирать станцию можно в раскрывшейся панели */
+  .play {
     display: none;
   }
 
   .panel {
     width: min(300px, calc(100vw - 2 * var(--space-3)));
-    transform-origin: bottom left;
+    right: calc(-1 * var(--space-2));
   }
 }
 

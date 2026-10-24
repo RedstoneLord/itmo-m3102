@@ -5,12 +5,14 @@ import { Button, buttonClass } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { ConfirmDeleteModal } from '../../components/ui/ConfirmDeleteModal';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { LinesSkeleton } from '../../components/ui/LinesSkeleton';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SegmentedControl, type SegmentedOption } from '../../components/ui/SegmentedControl';
 import { SPRING_SMOOTH } from '../../lib/motion';
 import { pluralize } from '../../lib/pluralize';
 import { useClock } from '../../lib/useClock';
 import { repoEditUrl } from '../../services/github';
+import { useSyncReady, useSyncStamp } from '../../services/syncStore';
 import { useEditMode } from '../settings/EditModeContext';
 import { useSubjectsStore } from '../subjects/subjectsStore';
 import { HomeworkCard } from './HomeworkCard';
@@ -42,6 +44,8 @@ export function HomeworkPage({ tabs }: { tabs?: ReactNode }) {
   const deleteItem = useHomeworkStore((state) => state.deleteItem);
   const discardDraft = useHomeworkStore((state) => state.discardDraft);
   const subjects = useSubjectsStore((state) => state.subjects);
+  const ready = useSyncReady();
+  const stamp = useSyncStamp();
 
   const { isEditMode } = useEditMode();
   const [filter, setFilter] = useState<Filter>('active');
@@ -60,7 +64,7 @@ export function HomeworkPage({ tabs }: { tabs?: ReactNode }) {
 
   const groups = new Map<string, HomeworkItem[]>();
   for (const item of visible) groups.set(item.subject, [...(groups.get(item.subject) ?? []), item]);
-  if (showEmpty) for (const subject of subjects) if (!groups.has(subject.name)) groups.set(subject.name, []);
+  if (showEmpty && ready) for (const subject of subjects) if (!groups.has(subject.name)) groups.set(subject.name, []);
   const ordered = [...groups].sort(
     ([nameA, a], [nameB, b]) => (a[0] ? dueOrder(a[0]) : '9999').localeCompare(b[0] ? dueOrder(b[0]) : '9999') || nameA.localeCompare(nameB, 'ru'),
   );
@@ -73,7 +77,7 @@ export function HomeworkPage({ tabs }: { tabs?: ReactNode }) {
     <>
       <PageHeader
         title="Домашнее задание"
-        subtitle="Задания группы по всем предметам. Выполнение видно только вам."
+        subtitle={['Задания группы по всем предметам. Выполнение видно только вам.', stamp].filter(Boolean).join(' ')}
         actions={
           isEditMode && (
             <Button variant="primary" icon={Plus} onClick={() => openDialog({})}>
@@ -128,7 +132,8 @@ export function HomeworkPage({ tabs }: { tabs?: ReactNode }) {
           ))}
         </AnimatePresence>
       </div>
-      {ordered.length === 0 && (
+      {!ready && <LinesSkeleton label="Загружаем задания" />}
+      {ready && ordered.length === 0 && (
         // Появляется, когда последняя карточка уже уехала
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.2 } }}>
           {/* «Всё под контролем» при просроченном задании в соседней вкладке — ложное спокойствие */}

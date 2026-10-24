@@ -9,7 +9,7 @@ import { Fragment, useRef, type TouchEvent } from 'react';
 import type { ISODate } from '../../types/models';
 import { DayOccurrenceRow, timelineClass } from './DayOccurrenceRow';
 import type { OccurrenceAction } from './OccurrenceMenuItems';
-import { takesPlace, type ClassOccurrence, type DaySchedule } from './occurrences';
+import { nowMarkerIndex, takesPlace, type ClassOccurrence, type DaySchedule } from './occurrences';
 import styles from './DayView.module.css';
 
 interface DayViewProps {
@@ -75,14 +75,7 @@ export function DayView({ days, selectedDate, today, time, onSelectDate, onActio
           {!selected || selected.occurrences.length === 0 ? (
             <EmptyState compact icon={CalendarDays} title="В этот день пар нет" />
           ) : (
-            <List className={timelineClass}>
-              {selected.occurrences.map((occurrence, index) => (
-                <Fragment key={occurrence.key}>
-                  <BreakRow previous={selected.occurrences[index - 1]} next={occurrence} />
-                  <DayOccurrenceRow occurrence={occurrence} today={today} time={time} onAction={onAction} />
-                </Fragment>
-              ))}
-            </List>
+            <OccurrenceList occurrences={selected.occurrences} today={today} time={time} onAction={onAction} />
           )}
         </Swap>
       </div>
@@ -107,6 +100,39 @@ function useSwipe(onSwipe: (step: 1 | -1) => void) {
       if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) onSwipe(dx < 0 ? 1 : -1);
     },
   };
+}
+
+interface OccurrenceListProps {
+  occurrences: ClassOccurrence[];
+  today: ISODate;
+  time: string;
+  onAction: (action: OccurrenceAction, occurrence: ClassOccurrence) => void;
+}
+
+/** Пары одного дня с линией времени, перерывами между ними и, если день сегодняшний, линией «сейчас». Общий для «Дня» и «Недели» на телефоне. */
+export function OccurrenceList({ occurrences, today, time, onAction }: OccurrenceListProps) {
+  const nowAt = occurrences[0]?.date === today ? nowMarkerIndex(occurrences, time) : undefined;
+  return (
+    <List className={timelineClass}>
+      {occurrences.map((occurrence, index) => (
+        <Fragment key={occurrence.key}>
+          <BreakRow previous={occurrences[index - 1]} next={occurrence} />
+          {nowAt === index && <NowMarker time={time} />}
+          <DayOccurrenceRow occurrence={occurrence} today={today} time={time} onAction={onAction} />
+        </Fragment>
+      ))}
+      {nowAt === occurrences.length && <NowMarker key="now" time={time} />}
+    </List>
+  );
+}
+
+/** Линия «сейчас» между парами: время и тонкая линия, на линии времени слева — акцентная точка */
+function NowMarker({ time }: { time: string }) {
+  return (
+    <li className={styles.now} aria-label={`Сейчас ${time}`}>
+      <span>{time}</span>
+    </li>
+  );
 }
 
 /** Между парами — «Перемена 10 мин» или «Окно 1 ч 30 мин»: сразу видно, где свободное время */

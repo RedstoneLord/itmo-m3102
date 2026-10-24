@@ -16,6 +16,11 @@ const FOLDERS = ['Конспекты/', 'Материалы/', 'Лаборато
 const SAVED = /\.(pdf|png|jpe?g|gif|webp|svg)$/i;
 /** Параллельных загрузок: больше — GitHub начинает отвечать медленнее, меньше — дольше ждать */
 const PARALLEL = 4;
+/** Один файл (даже учебник на сотню мегабайт) должен скачаться за это время, иначе считаем запрос зависшим */
+const FETCH_TIMEOUT = 5 * 60_000;
+/** Номер текущей загрузки и способ её оборвать: «Очистить» и повторный запуск делают прежнюю недействительной */
+let operation = 0;
+let stop = () => {};
 
 export const offlineFiles = (files: RepoFile[]) =>
   files.filter((file) => FOLDERS.some((folder) => file.path.startsWith(folder)) && SAVED.test(file.path));
@@ -65,6 +70,11 @@ export const useOfflineStore = create<OfflineStore>()(
 
       download: async () => {
         if (get().status === 'running') return;
+        const id = ++operation;
+        const abort = new AbortController();
+        stop = () => abort.abort();
+        // «Очистить» и новая загрузка меняют номер операции — запоздавшие ответы старой больше ничего не пишут
+        const current = () => id === operation;
         const { missing, stale } = offlinePlan(useGroupStore.getState().files, get().saved);
         set({
           status: 'running',
@@ -80,22 +90,36 @@ export const useOfflineStore = create<OfflineStore>()(
           await warmUpCode();
 
           const queue = [...missing];
+          let failure: unknown;
           const worker = async () => {
-            for (let file = queue.shift(); file; file = queue.shift()) {
-              const url = rawUrl('group', file.path);
-              const response = await fetch(url, { cache: 'no-store' });
-              if (!response.ok) throw new Error(`Не удалось скачать ${file.path} (${response.status})`);
-              await cache.put(url, response);
-              const { path, size, sha } = file;
-              set((state) => ({
-                saved: { ...state.saved, [path]: sha ?? '' },
-                progress: state.progress && { ...state.progress, files: state.progress.files + 1, bytes: state.progress.bytes + size },
-              }));
+            try {
+              for (let file = queue.shift(); file && current(); file = queue.shift()) {
+                const url = rawUrl('group', file.path);
+                // Зависший запрос не держит загрузку вечно; первая ошибка отменяет остальные запросы
+                const signal = AbortSignal.any([abort.signal, AbortSignal.timeout(FETCH_TIMEOUT)]);
+                const response = await fetch(url, { cache: 'no-store', signal });
+                if (!response.ok) throw new Error(`Не удалось скачать ${file.path} (${response.status})`);
+                if (!current()) return;
+                await cache.put(url, response);
+                if (!current()) return;
+                const { path, size, sha } = file;
+                set((state) => ({
+                  saved: { ...state.saved, [path]: sha ?? '' },
+                  progress: state.progress && { ...state.progress, files: state.progress.files + 1, bytes: state.progress.bytes + size },
+                }));
+              }
+            } catch (error) {
+              failure ??= error;
+              abort.abort();
             }
           };
+          // Ждём всех: пока хоть один запрос жив, кнопки «Скачать» и «Очистить» остаются занятыми
           await Promise.all(Array.from({ length: PARALLEL }, worker));
+          if (!current()) return;
+          if (failure) throw failure;
           set({ status: 'idle', progress: null });
         } catch (error) {
+          if (!current()) return;
           const quota = error instanceof DOMException && error.name === 'QuotaExceededError';
           set({
             status: 'error',
@@ -112,6 +136,8 @@ export const useOfflineStore = create<OfflineStore>()(
       },
 
       clear: async () => {
+        operation++;
+        stop();
         await caches.delete(OFFLINE_CACHE);
         set({ saved: {}, status: 'idle', progress: null, error: '' });
       },

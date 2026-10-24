@@ -7,12 +7,12 @@ import { SearchDialog } from '../../features/search/SearchDialog';
 import { HomeworkDialog } from '../../features/homework/HomeworkDialog';
 import { useSearchShortcut } from '../../features/search/useSearchShortcut';
 import { useApplyAppearance } from '../../features/settings/appearance';
+import { useSettingsStore } from '../../features/settings/settingsStore';
 import { useApplyTheme } from '../../features/settings/theme';
 import { useMorphLinks } from '../../lib/morph';
 import { usePrefersReducedMotion } from '../../lib/motion';
 import { useScrollMemory } from '../../lib/useScrollMemory';
 import { CelebrateHedgehog } from '../hedgehog/CelebrateHedgehog';
-import { RadioCapsule } from '../radio/RadioCapsule';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { PageSkeleton } from '../ui/PageSkeleton';
 import { MobileNav } from './MobileNav';
@@ -22,6 +22,8 @@ import styles from './AppShell.module.css';
 
 // Профиль студента — отдельным куском: грузится при первом открытии и дальше остаётся (для анимации закрытия)
 const StudentProfile = lazy(() => import('../../features/group/StudentProfile').then((module) => ({ default: module.StudentProfile })));
+// Окно «первого входа» — тоже отдельным куском: нужно новому посетителю и по кнопке в настройках, остальным код не качается
+const FirstRun = lazy(() => import('../../features/onboarding/FirstRun').then((module) => ({ default: module.FirstRun })));
 
 /**
  * Каркас приложения: боковое меню + верхняя панель + область страницы.
@@ -87,14 +89,26 @@ export function AppShell() {
       </div>
 
       <MobileNav />
-      <RadioCapsule />
       <SearchDialog open={isSearchOpen} onClose={() => setSearchOpen(false)} />
       <HomeworkDialog />
       <LazyStudentProfile />
+      <LazyFirstRun />
       <ShortcutsDialog />
       <CelebrateHedgehog />
     </div>
   );
+}
+
+/** Подписка — здесь же, не в AppShell. Загруженное окно остаётся в дереве: ему нужно доиграть анимацию закрытия */
+function LazyFirstRun() {
+  const needed = useSettingsStore((state) => !state.onboarded);
+  const [used, setUsed] = useState(needed);
+  if (needed && !used) setUsed(true);
+  return used ? (
+    <Suspense fallback={null}>
+      <FirstRun />
+    </Suspense>
+  ) : null;
 }
 
 /** Подписка — здесь, а не в AppShell: иначе первое открытие профиля перерисовало бы всё приложение */

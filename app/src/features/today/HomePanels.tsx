@@ -8,12 +8,14 @@ import { Button, buttonClass } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { IconButton } from '../../components/ui/IconButton';
 import { Input } from '../../components/ui/Input';
+import { LinesSkeleton } from '../../components/ui/LinesSkeleton';
 import { Section } from '../../components/ui/Section';
 import { DateInput } from '../../components/ui/DateInput';
 import { useConfettiWhenCleared } from '../../lib/celebrate';
 import { cn } from '../../lib/cn';
 import { daysBetween, formatShortDate } from '../../lib/dates';
 import { pluralize } from '../../lib/pluralize';
+import { useSyncReady } from '../../services/syncStore';
 import type { ISODate } from '../../types/models';
 import { filePath, useGroupStore, type GroupDeadline } from '../group/groupStore';
 import { deadlineInfo, orderDeadlines } from '../deadlines/deadlineInfo';
@@ -72,11 +74,14 @@ export function DeadlinesPanel({ subjectId }: { subjectId?: string }) {
   // Ближайшие впереди, просроченные — после них (как на сайте группы)
   const active = orderDeadlines(deadlines, done).filter((item) => !done[item.id]);
   const completed = deadlines.filter((item) => done[item.id]);
+  const ready = useSyncReady();
   useConfettiWhenCleared(active.length);
 
   return (
     <Section title="Ближайшие дедлайны" action={<SectionLink to={SECTIONS.deadlines.path}>Все дедлайны</SectionLink>}>
-      {active.length === 0 ? (
+      {!ready ? (
+        <LinesSkeleton label="Загружаем дедлайны" />
+      ) : active.length === 0 ? (
         <p className={styles.empty}>{deadlines.length ? 'Все ближайшие дедлайны отмечены как выполненные.' : 'Сроков пока нет.'}</p>
       ) : (
         active.slice(0, 3).map((item) => <DeadlineRow key={item.id} item={item} done={false} />)
@@ -98,12 +103,15 @@ export function HomeworkPanel({ today, subjectId }: { today: ISODate; subjectId?
   const items = useHomeworkStore((state) => state.items);
   const done = useHomeworkStore((state) => state.done);
   const open = items.filter((item) => !done[item.id] && (!subjectId || resolveSubjectFolder(item.subject) === subjectId));
+  const ready = useSyncReady();
   useConfettiWhenCleared(open.length);
   const active = open.sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999')).slice(0, 5);
 
   return (
     <Section title="Домашнее задание" action={<SectionLink to={SECTIONS.homework.path}>Все задания</SectionLink>}>
-      {active.length === 0 ? (
+      {!ready ? (
+        <LinesSkeleton label="Загружаем задания" />
+      ) : active.length === 0 ? (
         <p className={styles.empty}>Актуальных заданий пока нет.</p>
       ) : (
         active.map((item) => <HomeworkCard key={item.id} item={item} today={today} compact />)
@@ -125,13 +133,15 @@ const FOLDERS = [
 export function MaterialsPanel() {
   const notes = useLectureNotesStore((state) => state.lectureNotes.filter((note) => !note.archived).length);
   const files = useGroupStore((state) => state.files);
+  const ready = useSyncReady();
   const count = (folder: string) => files.filter((file) => file.path.startsWith(`${folder}/`)).length;
 
   return (
     <Section title="Материалы" action={<SectionLink to="/materials?tab=materials">Все материалы</SectionLink>}>
       <Link to={SECTIONS.materials.path} className={styles.tileMain} data-spot>
         <span className={styles.tileCount}>
-          <AnimatedNumber value={notes} />
+          {/* Пока конспекты не загрузились, «0» было бы враньём — прочерк */}
+          {ready ? <AnimatedNumber value={notes} /> : <span>—</span>}
           <small>{pluralize(notes, ['конспект', 'конспекта', 'конспектов']).split(' ')[1]}</small>
         </span>
         <small>Лекции и практики по предметам</small>
@@ -215,6 +225,7 @@ export function StudyPlanPanel({ today }: { today: ISODate }) {
 export function RecentNotesPanel() {
   const notes = useLectureNotesStore((state) => state.lectureNotes);
   const subjects = useSubjectsStore((state) => state.subjects);
+  const ready = useSyncReady();
   const recent = notes
     .filter((note) => !note.archived)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -222,7 +233,9 @@ export function RecentNotesPanel() {
 
   return (
     <Section title="Недавние конспекты" action={<SectionLink to={SECTIONS.materials.path}>Все конспекты</SectionLink>}>
-      {recent.length === 0 ? (
+      {!ready ? (
+        <LinesSkeleton label="Загружаем конспекты" />
+      ) : recent.length === 0 ? (
         <p className={styles.empty}>Пока нет конспектов.</p>
       ) : (
         <div className={styles.notes}>

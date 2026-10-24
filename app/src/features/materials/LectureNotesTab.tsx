@@ -5,11 +5,12 @@ import { Button } from '../../components/ui/Button';
 import { Swap, useDirection } from '../../components/ui/Swap';
 import { Dropdown, type DropdownOption } from '../../components/ui/Dropdown';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { LinesSkeleton } from '../../components/ui/LinesSkeleton';
 import { List, ListItem } from '../../components/ui/List';
 import { cn } from '../../lib/cn';
 import { pluralize } from '../../lib/pluralize';
 import { useClock } from '../../lib/useClock';
-import { useSyncStore } from '../../services/syncStore';
+import { useSyncReady, useSyncStore } from '../../services/syncStore';
 import type { LectureNote, Subject } from '../../types/models';
 import { useEditMode } from '../settings/EditModeContext';
 import { useSubjectsStore } from '../subjects/subjectsStore';
@@ -39,6 +40,7 @@ export function LectureNotesTab() {
   const { today } = useClock();
   const lectureNotes = useLectureNotesStore((state) => state.lectureNotes);
   const subjects = useSubjectsStore((state) => state.subjects);
+  const ready = useSyncReady();
   const dialog = useLectureNoteDialog();
 
   // Предмет и папка — в адресе (?s=aisd&f=Лекция 1): «Назад» и выход из конспекта возвращают сюда же, а не в начало
@@ -107,7 +109,9 @@ export function LectureNotesTab() {
         </div>
       </div>
 
-      {sorted.length === 0 ? (
+      {!ready ? (
+        <LinesSkeleton label="Загружаем конспекты" />
+      ) : sorted.length === 0 ? (
         <EmptyState icon={NotebookText} title="Пока нет конспектов" description="Нажмите «Синхронизировать» или добавьте конспект вручную." />
       ) : byFolders && !inFolder ? (
         <FolderList notes={sorted} onSelect={setFolder} />
@@ -191,6 +195,7 @@ interface SubjectPickerProps {
 
 /** Список предметов с количеством конспектов у каждого — выбор предмета открывает его конспекты. */
 function SubjectPicker({ subjects, notes, onSelect }: SubjectPickerProps) {
+  const ready = useSyncReady();
   if (subjects.length === 0) {
     return (
       <EmptyState
@@ -218,7 +223,7 @@ function SubjectPicker({ subjects, notes, onSelect }: SubjectPickerProps) {
                 {subject.name}
               </button>
             }
-            trailing={<span className={styles.count}>{pluralize(count, NOTE_FORMS)}</span>}
+            trailing={<span className={styles.count}>{ready ? pluralize(count, NOTE_FORMS) : '—'}</span>}
           />
         );
       })}

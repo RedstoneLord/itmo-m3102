@@ -1,13 +1,10 @@
 import { Plus } from 'lucide-react';
-import { Fragment } from 'react';
-import { List } from '../../components/ui/List';
 import { cn } from '../../lib/cn';
 import { formatShortDate, getWeekdayName } from '../../lib/dates';
 import { pluralize } from '../../lib/pluralize';
 import type { ISODate } from '../../types/models';
 import { useEditMode } from '../settings/EditModeContext';
-import { BreakRow } from './DayView';
-import { DayOccurrenceRow, timelineClass } from './DayOccurrenceRow';
+import { OccurrenceList } from './DayView';
 import type { OccurrenceAction } from './OccurrenceMenuItems';
 import { takesPlace, type ClassOccurrence, type DaySchedule } from './occurrences';
 import styles from './WeekAgenda.module.css';
@@ -47,16 +44,7 @@ export function WeekAgenda({ days, today, time, onAddDate, onAction }: WeekAgend
                 </button>
               )}
             </header>
-            {day.occurrences.length > 0 && (
-              <List className={timelineClass}>
-                {day.occurrences.map((occurrence, index) => (
-                  <Fragment key={occurrence.key}>
-                    <BreakRow previous={day.occurrences[index - 1]} next={occurrence} />
-                    <DayOccurrenceRow occurrence={occurrence} today={today} time={time} onAction={onAction} />
-                  </Fragment>
-                ))}
-              </List>
-            )}
+            {day.occurrences.length > 0 && <OccurrenceList occurrences={day.occurrences} today={today} time={time} onAction={onAction} />}
           </section>
         );
       })}

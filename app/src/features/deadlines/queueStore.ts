@@ -105,3 +105,10 @@ export const useQueueStore = create<QueueStore>()(
     { name: storageKey('queue'), storage: localStore, partialize: ({ queues, at }) => ({ queues, at }) as QueueStore },
   ),
 );
+
+/** Какой по счёту в очереди стоит студент с этим GitHub-логином (с единицы); null — его в очереди нет или он не выбран */
+export function queuePlace(queue: QueueEntry[], login: string | null | undefined): number | null {
+  if (!login) return null;
+  const index = queue.findIndex((entry) => entry.login?.toLowerCase() === login.toLowerCase());
+  return index < 0 ? null : index + 1;
+}

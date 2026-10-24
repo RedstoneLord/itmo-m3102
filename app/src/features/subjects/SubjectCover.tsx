@@ -4,6 +4,7 @@ import { SECTIONS } from '../../app/navigation';
 import { buttonClass } from '../../components/ui/Button';
 import { addDays, formatDayLabel, formatWeekdayDate } from '../../lib/dates';
 import { pluralize } from '../../lib/pluralize';
+import { useSyncReady } from '../../services/syncStore';
 import type { ISODate } from '../../types/models';
 import { QuizProgressBar, useSubjectQuizProgress } from '../quizzes/QuizProgress';
 import { dueCards, useQuizStore } from '../quizzes/quizStore';
@@ -17,13 +18,16 @@ interface SubjectCoverProps {
   today: ISODate;
   time: string;
   nextDeadline?: ISODate;
+  /** Несданное, срок которого прошёл */
+  overdue?: number;
 }
 
 /** Шапка предмета: когда следующая пара, ближайший срок и как идут тесты — главное без переключения вкладок */
-export function SubjectCover({ subjectId, today, time, nextDeadline }: SubjectCoverProps) {
+export function SubjectCover({ subjectId, today, time, nextDeadline, overdue = 0 }: SubjectCoverProps) {
   const schedule = useScheduleData();
   const next = nextOccurrence(subjectId, today, time, schedule);
   const progress = useSubjectQuizProgress(subjectId);
+  const ready = useSyncReady();
   const keys = new Set(progress.sources.map((source) => source.key));
   const due = useQuizStore((state) => dueCards(state.review, today).filter((card) => keys.has(card.quiz)).length);
 
@@ -52,15 +56,24 @@ export function SubjectCover({ subjectId, today, time, nextDeadline }: SubjectCo
         <span className={styles.label}>
           <Clock size={14} strokeWidth={1.75} aria-hidden /> Ближайший срок
         </span>
-        <strong className={styles.value}>{nextDeadline ? formatDayLabel(nextDeadline, today, 'long') : 'Сроков нет'}</strong>
-        <span className={styles.sub}>{nextDeadline ? 'Дедлайн или задача по предмету' : 'Можно выдохнуть'}</span>
+        {overdue > 0 ? (
+          <>
+            <strong className={`${styles.value} ${styles.overdue}`}>Просрочено: {overdue}</strong>
+            <span className={styles.sub}>{nextDeadline ? `Дальше — ${formatDayLabel(nextDeadline, today, 'long')}` : 'Будущих сроков нет'}</span>
+          </>
+        ) : (
+          <>
+            <strong className={styles.value}>{nextDeadline ? formatDayLabel(nextDeadline, today, 'long') : ready ? 'Сроков нет' : '—'}</strong>
+            <span className={styles.sub}>{nextDeadline ? 'Дедлайн или задача по предмету' : ready && 'Можно выдохнуть'}</span>
+          </>
+        )}
       </div>
 
       <div className={styles.card} data-spot>
         <span className={styles.label}>
           <ListChecks size={14} strokeWidth={1.75} aria-hidden /> Тесты
         </span>
-        {progress.total ? (
+        {ready && progress.total ? (
           <>
             <strong className={styles.value}>
               {progress.passed} из {progress.total}
@@ -80,7 +93,7 @@ export function SubjectCover({ subjectId, today, time, nextDeadline }: SubjectCo
             </span>
           </>
         ) : (
-          <strong className={styles.value}>Тестов пока нет</strong>
+          <strong className={styles.value}>{ready ? 'Тестов пока нет' : '—'}</strong>
         )}
       </div>
     </section>

@@ -5,6 +5,7 @@ import { LazyMarkdown } from '../../components/markdown/LazyMarkdown';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { groupRawUrl } from '../../services/github';
+import { useSyncReady } from '../../services/syncStore';
 import { downloadUrl } from '../../lib/download';
 import { quizPageToMarkdown } from '../../components/quiz/parseQuiz';
 import { filePath, isHiddenPath, useGroupStore, type RepoFile } from './groupStore';
@@ -103,12 +104,15 @@ interface FolderViewProps {
 
 function FolderView({ files, folder, embedded = false }: FolderViewProps) {
   const listing = listFolder(files, folder);
+  const ready = useSyncReady();
 
   return (
     <>
       {!embedded && <Breadcrumbs path={folder} />}
 
-      {listing.folders.length === 0 && listing.files.length === 0 ? (
+      {!ready && files.length === 0 ? (
+        <LinesSkeleton label="Загружаем файлы" />
+      ) : listing.folders.length === 0 && listing.files.length === 0 ? (
         <EmptyState
           title={files.length ? (embedded ? 'Папка пуста' : 'Такой папки или файла нет') : 'Файлы ещё не загружены'}
           description={

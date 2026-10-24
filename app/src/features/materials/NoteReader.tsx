@@ -24,6 +24,13 @@ export function useSiblingNotes(note: LectureNote): LectureNote[] {
   return notes.filter((item) => !item.archived && item.subjectId === note.subjectId).sort(compareLessons);
 }
 
+/** Текст заголовка без MathML-копии формулы: KaTeX кладёт в DOM картинку формулы, MathML и исходную запись, textContent склеил бы все три */
+export function headingText(heading: Element): string {
+  const copy = heading.cloneNode(true) as Element;
+  copy.querySelectorAll('.katex-mathml').forEach((node) => node.remove());
+  return copy.textContent?.trim() ?? '';
+}
+
 /**
  * Заголовки h2/h3 отрисованного конспекта + какой из них сейчас читается. Берём из DOM, а не из
  * markdown: так текст совпадает с тем, что видно (формулы, жирный), а id ставим сами.
@@ -51,7 +58,7 @@ export function useToc(containerRef: RefObject<HTMLElement | null>, contentKey: 
         if (!heading.id) heading.id = `toc-${index}`;
         observer.observe(heading);
       });
-      setItems(headings.map((heading) => ({ id: heading.id, text: heading.textContent?.trim() ?? '', level: heading.tagName === 'H2' ? 2 : 3 })));
+      setItems(headings.map((heading) => ({ id: heading.id, text: headingText(heading), level: heading.tagName === 'H2' ? 2 : 3 })));
       setActiveId((current) => current || (headings[0]?.id ?? ''));
     };
     collect();

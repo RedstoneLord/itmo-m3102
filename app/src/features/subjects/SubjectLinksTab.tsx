@@ -1,7 +1,9 @@
 import { Link2 } from 'lucide-react';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { LinesSkeleton } from '../../components/ui/LinesSkeleton';
 import { List } from '../../components/ui/List';
 import { pluralize } from '../../lib/pluralize';
+import { useSyncReady } from '../../services/syncStore';
 import { LinkCards } from '../group/LinksPage';
 import type { GroupLink } from '../group/groupStore';
 import { MaterialRow } from '../materials/MaterialRow';
@@ -21,12 +23,19 @@ interface SubjectLinksTabProps {
 /** Быстрые ссылки предмета: курс, конференция, учебник — всё, на что нужно быстро перейти. */
 export function SubjectLinksTab({ links, groupLinks, today, onAdd, onEdit }: SubjectLinksTabProps) {
   const sorted = [...links].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const ready = useSyncReady();
 
   return (
     <>
-      <TabToolbar label={pluralize(groupLinks.length + links.length, ['ссылка', 'ссылки', 'ссылок'])} addLabel="Добавить ссылку" onAdd={onAdd} />
+      <TabToolbar
+        label={ready ? pluralize(groupLinks.length + links.length, ['ссылка', 'ссылки', 'ссылок']) : '—'}
+        addLabel="Добавить ссылку"
+        onAdd={onAdd}
+      />
       {groupLinks.length > 0 && <LinkCards links={groupLinks} />}
-      {sorted.length === 0 ? (
+      {!ready ? (
+        <LinesSkeleton label="Загружаем ссылки" />
+      ) : sorted.length === 0 ? (
         groupLinks.length === 0 && (
           <EmptyState icon={Link2} title="Пока нет ссылок" description="Страница курса, видеозвонок, учебник — всё, что открываете часто." />
         )

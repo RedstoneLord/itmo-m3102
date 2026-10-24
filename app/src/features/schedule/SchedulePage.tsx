@@ -8,6 +8,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { addDays, addMonths, formatMonthLabel, formatWeekRange, getWeekDates, startOfWeek } from '../../lib/dates';
 import { getStudyWeek, WEEK_PARITY_LABELS } from '../../lib/studyWeek';
 import { useClock } from '../../lib/useClock';
+import { useMediaQuery } from '../../lib/useMediaQuery';
 import type { ISODate } from '../../types/models';
 import { EventDialog } from '../calendar/EventDialog';
 import { useEventDialog } from '../calendar/useEventDialog';
@@ -25,14 +26,10 @@ import { useScheduleData } from './scheduleStore';
 import { useScheduleDialogs } from './useScheduleDialogs';
 import { WeekView } from './WeekView';
 
-/** На телефоне удобнее начинать с одного дня */
-function getDefaultView(): ScheduleView {
-  return window.matchMedia('(max-width: 767px)').matches ? 'day' : 'week';
-}
-
 /**
  * Расписание: день, неделя и месяц. Месяц — бывший «Календарь»: к парам добавлены личные задачи и события, дедлайны группы и ДЗ.
  * Режим — в адресе (?view=day|week|month), поэтому ссылка и «Назад» возвращают на тот же вид, а /calendar открывает месяц.
+ * Нет вида в адресе — по экрану: на телефоне удобнее один день, на компьютере неделя.
  */
 export function SchedulePage() {
   const { isEditMode } = useEditMode();
@@ -44,7 +41,8 @@ export function SchedulePage() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedView = searchParams.get('view');
-  const view: ScheduleView = SCHEDULE_VIEWS.find((item) => item === requestedView) ?? getDefaultView();
+  const narrow = useMediaQuery('(max-width: 767px)');
+  const view: ScheduleView = SCHEDULE_VIEWS.find((item) => item === requestedView) ?? (narrow ? 'day' : 'week');
 
   function changeView(next: ScheduleView) {
     // replace: переключение вида не должно множить записи в истории; ?date= и прочее остаётся
@@ -74,6 +72,15 @@ export function SchedulePage() {
 
   function move(count: number) {
     setSelectedDate(view === 'month' ? addMonths(selectedDate, count) : addDays(selectedDate, 7 * count));
+  }
+
+  // Показано не то, что содержит сегодня: тогда на телефоне у большого пальца появляется «Сегодня»
+  const awayFromToday =
+    view === 'month' ? selectedDate.slice(0, 7) !== today.slice(0, 7) : view === 'week' ? weekStart !== startOfWeek(today) : selectedDate !== today;
+
+  function goToday() {
+    setSelectedDate(today);
+    window.scrollTo({ top: 0 });
   }
 
   function openDay(date: ISODate) {
@@ -112,9 +119,10 @@ export function SchedulePage() {
       <ScheduleToolbar
         weekInCycle={week.weekInCycle}
         view={view}
+        awayFromToday={awayFromToday}
         onPrevious={() => move(-1)}
         onNext={() => move(1)}
-        onToday={() => setSelectedDate(today)}
+        onToday={goToday}
         onViewChange={changeView}
       />
 

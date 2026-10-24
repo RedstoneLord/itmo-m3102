@@ -41,9 +41,38 @@
   white-space: nowrap;
 }
 
+/* Только телефон: над нижней панелью справа (слева радио) — как кнопка оглавления у конспекта */
+.todayFloat {
+  display: none;
+}
+
+/* Палец — не курсор: «Сегодня» той же высоты, что кнопки-стрелки на сенсорных экранах */
+@media (pointer: coarse) {
+  .today {
+    height: 36px;
+  }
+}
+
 @media (max-width: 767px) {
   .toolbar {
     flex-wrap: wrap;
+  }
+
+  .todayFloat {
+    position: fixed;
+    right: var(--space-4);
+    bottom: calc(var(--mobile-nav-height) + var(--space-4) + env(safe-area-inset-bottom));
+    z-index: var(--z-dropdown);
+    display: block;
+    height: 44px;
+    padding: 0 var(--space-5);
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent-gradient);
+    box-shadow: var(--shadow-popover);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-on-accent);
   }
 
   .controls {

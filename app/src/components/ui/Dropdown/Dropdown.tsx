@@ -12,6 +12,12 @@ import styles from './Dropdown.module.css';
 export interface DropdownOption {
   value: string;
   label: string;
+  /** Фото слева (адрес картинки) — для списков людей; пока не загрузилось, видна первая буква имени */
+  avatar?: string;
+  /** Вторая строка мелким шрифтом, например @логин; по ней тоже ищется */
+  hint?: string;
+  /** Короче название для кнопки, когда пункт выбран (в списке — полное) */
+  shortLabel?: string;
 }
 
 interface DropdownProps {
@@ -30,6 +36,20 @@ interface DropdownProps {
   variant?: 'field' | 'ghost';
   /** Иконка слева от текста в варианте ghost, например ListFilter или ArrowDownUp */
   icon?: LucideIcon;
+  /** Подсказка в поле поиска внутри списка */
+  searchPlaceholder?: string;
+  /** Не уже этой ширины (px), даже если кнопка узкая: длинные имена в списке не обрезаются у края */
+  menuWidth?: number;
+}
+
+/** Кружок с фото; пока оно грузится (или не загрузилось) — первая буква имени на цвете акцента */
+function Avatar({ src, name, small }: { src: string; name: string; small?: boolean }) {
+  return (
+    <span className={cn(styles.avatar, small && styles.avatarSmall)} aria-hidden>
+      {name.charAt(0)}
+      <img src={src} alt="" loading="lazy" onError={(event) => (event.currentTarget.hidden = true)} />
+    </span>
+  );
 }
 
 const SEARCH_THRESHOLD = 8;
@@ -54,6 +74,8 @@ export function Dropdown({
   'aria-label': ariaLabel,
   variant = 'field',
   icon: Icon,
+  searchPlaceholder = 'Поиск…',
+  menuWidth = 200,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -90,7 +112,7 @@ export function Dropdown({
   const filteredOptions = useMemo(() => {
     if (!showSearch || !query.trim()) return options;
     const normalized = query.trim().toLowerCase();
-    return options.filter((option) => option.label.toLowerCase().includes(normalized));
+    return options.filter((option) => `${option.label} ${option.hint ?? ''}`.toLowerCase().includes(normalized));
   }, [options, query, showSearch]);
 
   useEffect(() => {
@@ -137,7 +159,7 @@ export function Dropdown({
       if (!trigger) return;
       const triggerRect = trigger.getBoundingClientRect();
       const menuHeight = menuRef.current?.offsetHeight ?? 240;
-      const width = Math.max(triggerRect.width, 200);
+      const width = Math.min(Math.max(triggerRect.width, menuWidth), window.innerWidth - 2 * GAP);
 
       const spaceBelow = window.innerHeight - triggerRect.bottom;
       const spaceAbove = triggerRect.top;
@@ -156,7 +178,7 @@ export function Dropdown({
     // Меню только что появилось без реальной высоты — перемеряем на следующий кадр.
     const raf = requestAnimationFrame(measure);
     return () => cancelAnimationFrame(raf);
-  }, [open, isMobile, filteredOptions.length]);
+  }, [open, isMobile, filteredOptions.length, menuWidth]);
 
   // Подсветка при переключении стрелками — список уже смонтирован, просто переносим фокус
   useEffect(() => {
@@ -210,6 +232,7 @@ export function Dropdown({
     }
   }
 
+  const check = <Check size={14} strokeWidth={2} className={menuStyles.check} aria-hidden />;
   const menuContent = (
     <>
       {showSearch && (
@@ -219,7 +242,8 @@ export function Dropdown({
             ref={attachSearchRef}
             type="text"
             className={styles.searchInput}
-            placeholder="Поиск…"
+            placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -240,14 +264,18 @@ export function Dropdown({
               role="option"
               aria-selected={option.value === value}
               tabIndex={-1}
-              className={cn(menuStyles.item, styles.option, index === highlighted && styles.highlighted)}
+              className={cn(menuStyles.item, styles.option, option.avatar && styles.person, index === highlighted && styles.highlighted)}
               onPointerMove={() => setHighlighted(index)}
               onClick={() => selectOption(option)}
             >
-              <span className={styles.checkSlot}>
-                {option.value === value && <Check size={14} strokeWidth={2} className={menuStyles.check} aria-hidden />}
+              {/* Обычный пункт — галочка слева; у человека слева фото, поэтому галочка справа */}
+              {!option.avatar && <span className={styles.checkSlot}>{option.value === value && check}</span>}
+              {option.avatar && <Avatar src={option.avatar} name={option.label} />}
+              <span className={cn(menuStyles.itemLabel, styles.optionText)}>
+                <span className={styles.optionLabel}>{option.label}</span>
+                {option.hint && <span className={styles.optionHint}>{option.hint}</span>}
               </span>
-              <span className={menuStyles.itemLabel}>{option.label}</span>
+              {option.avatar && <span className={styles.checkSlot}>{option.value === value && check}</span>}
             </button>
           ))
         )}
@@ -255,7 +283,7 @@ export function Dropdown({
     </>
   );
 
-  const triggerLabel = selected ? selected.label : placeholder;
+  const triggerLabel = selected ? (selected.shortLabel ?? selected.label) : placeholder;
 
   return (
     <div ref={rootRef} className={cn(styles.root, className)}>
@@ -270,7 +298,11 @@ export function Dropdown({
           disabled={disabled}
           onClick={() => (open ? closeMenu() : openMenu())}
         >
-          {Icon && <Icon size={14} strokeWidth={1.75} aria-hidden />}
+          {selected?.avatar ? (
+            <Avatar src={selected.avatar} name={selected.label} small />
+          ) : (
+            Icon && <Icon size={14} strokeWidth={1.75} aria-hidden />
+          )}
           {triggerLabel}
         </button>
       ) : (
@@ -285,6 +317,7 @@ export function Dropdown({
           disabled={disabled}
           onClick={() => (open ? closeMenu() : openMenu())}
         >
+          {selected?.avatar && <Avatar src={selected.avatar} name={selected.label} small />}
           <span className={cn(styles.value, !selected && styles.placeholder)}>{triggerLabel}</span>
           <ChevronDown size={14} strokeWidth={1.75} className={styles.chevron} aria-hidden />
         </button>

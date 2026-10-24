@@ -7,6 +7,11 @@ test.beforeEach(async ({ page }) => {
   // Четверг 1 октября 2026, полдень: в расписании по умолчанию есть пары
   await page.clock.setFixedTime(new Date('2026-10-01T12:00:00+03:00'));
   await mockGithub(page);
+  // Хранилище пустое — без этого поверх каждой страницы встало бы окно «первого входа» (его проверяет first-run.spec.ts);
+  // запись только если настроек ещё нет, иначе перезагрузка затёрла бы то, что тест выбрал
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('m3102:settings')) localStorage.setItem('m3102:settings', JSON.stringify({ state: { onboarded: true }, version: 7 }));
+  });
 });
 
 /** Открыть страницу и дождаться первой синхронизации с (подменённым) GitHub */
@@ -114,6 +119,70 @@ test('отметки из классической версии подхваты
   const stored = await page.evaluate(() => ({ hw: localStorage.getItem('m3102-hw-done-v1'), plan: localStorage.getItem('m3102-study-plan-v1') }));
   expect(stored.hw).toBe(classic.hw);
   expect(stored.plan).toBe(classic.plan);
+});
+
+/** GitHub (заглушки из mockGithub) отвечает, только когда вызвали release() — так видно, что на экране, пока данных ещё нет */
+async function holdGithub(page: Page) {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  for (const pattern of ['https://api.github.com/**', 'https://raw.githubusercontent.com/**']) {
+    await page.route(pattern, async (route) => {
+      await gate;
+      await route.fallback();
+    });
+  }
+  return release;
+}
+
+test('холодный старт: пока GitHub не ответил, нет ложных «пусто» и нулей — скелетоны и прочерки', async ({ page }) => {
+  const release = await holdGithub(page);
+  const go = (hash: string) => page.evaluate((value) => (location.hash = value), hash);
+
+  await page.goto('./#/today');
+  await expect(page.getByLabel('Загружаем дедлайны')).toBeAttached();
+  await expect(page.getByLabel('Загружаем задания')).toBeAttached();
+  await expect(page.getByLabel('Загружаем конспекты')).toBeAttached();
+  await expect(page.getByRole('link', { name: /^—\s*конспектов/ })).toBeVisible();
+  for (const text of ['Сроков пока нет', 'Актуальных заданий пока нет', 'Пока нет конспектов']) await expect(page.getByText(text)).toHaveCount(0);
+
+  await go('#/deadlines');
+  await expect(page.getByLabel('Загружаем дедлайны')).toBeAttached();
+  await expect(page.getByText('Дедлайнов пока нет')).toHaveCount(0);
+
+  // На корне «Материалов» — список предметов: вместо числа конспектов прочерк
+  await go('#/materials');
+  await expect(page.getByText('—', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Пока нет конспектов')).toHaveCount(0);
+  await expect(page.getByText(/^0 конспектов$/)).toHaveCount(0);
+
+  await go('#/subjects/dm');
+  await expect(page.getByRole('heading', { level: 1, name: 'Дискретная математика' })).toBeVisible();
+  await expect(page.getByLabel('Загружаем конспекты')).toBeAttached();
+  for (const text of ['Конспектов пока нет', 'Тестов пока нет', 'Сроков нет', 'Нет дедлайнов']) await expect(page.getByText(text)).toHaveCount(0);
+
+  // GitHub ответил — теперь «пусто» настоящее (в заглушке нет сроков и ДЗ), конспектов два
+  release();
+  await page.waitForFunction(() => localStorage.getItem('m3102:last-sync') !== null);
+  await go('#/today');
+  await expect(page.getByText('Сроков пока нет.')).toBeVisible();
+  await expect(page.getByText('Актуальных заданий пока нет.')).toBeVisible();
+  await expect(page.getByRole('link', { name: /^2\s*конспекта/ })).toBeVisible();
+});
+
+test('со старыми данными видна дата последнего обновления, пока идёт новая синхронизация', async ({ page }) => {
+  await openSynced(page);
+  // Прошлая удачная синхронизация была вчера в 09:30 (часы теста — 1 октября, полдень): автосинхронизация стартует заново
+  await page.evaluate(() => localStorage.setItem('m3102:last-sync', String(new Date('2026-09-30T09:30:00+03:00').getTime())));
+  const release = await holdGithub(page);
+  await page.reload();
+
+  // Сохранённое показано сразу, без скелетонов, с датой и пометкой об обновлении
+  await expect(page.getByText(/Данные от 30 .+, 09:30 · обновляем…/)).toBeVisible();
+  await expect(page.getByText('Сроков пока нет.')).toBeVisible();
+  await expect(page.getByLabel('Загружаем дедлайны')).toHaveCount(0);
+
+  release();
+  await expect(page.getByText(/Обновлено 1 .+, 12:00/)).toBeVisible();
 });
 
 test('стиль «Liquid Glass» включается из меню «Оформление», переживает перезагрузку, Minimalism его выключает', async ({ page }) => {

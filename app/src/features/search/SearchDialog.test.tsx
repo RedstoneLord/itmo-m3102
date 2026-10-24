@@ -43,3 +43,57 @@ it('поиск: находит конспект по тексту внутри, 
   await userEvent.keyboard('{Enter}');
   expect(screen.getByTestId('where').textContent).toBe('/materials/notes/gh:Конспекты/АиСД/master.md');
 });
+
+it('поиск: найденное в тексте — с разделом и выделенным словом, стрелки идут по разделам', async () => {
+  const now = new Date().toISOString();
+  useLectureNotesStore.setState({
+    lectureNotes: [
+      {
+        id: 'gh:Конспекты/ДМ/graphs.md',
+        subjectId: 'dm',
+        lectureNumber: 'Лекция 1',
+        title: 'Графы',
+        contentType: 'markdown',
+        content: '## Определение\n\nГраф — пара множеств. Слово-маячок: зюзюка.\n\n## Степени\n\nЗюзюка встречается и здесь.',
+        source: 'github',
+        archived: false,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+  });
+
+  render(
+    <MemoryRouter>
+      <SearchDialog open onClose={() => {}} />
+      <Routes>
+        <Route path="*" element={<Where />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  await userEvent.type(screen.getByRole('textbox', { name: 'Поиск' }), 'зюзюка');
+  const options = await screen.findAllByRole('option');
+  expect(options).toHaveLength(2);
+  expect(options[0]?.textContent).toContain('Определение');
+  expect(options[1]?.textContent).toContain('Степени');
+  expect([...document.querySelectorAll('mark')].map((mark) => mark.textContent?.toLowerCase())).toEqual(['зюзюка', 'зюзюка']);
+  expect(options[0]?.getAttribute('aria-selected')).toBe('true');
+
+  await userEvent.keyboard('{ArrowDown}');
+  expect(options[1]?.getAttribute('aria-selected')).toBe('true');
+  await userEvent.keyboard('{Enter}');
+  expect(screen.getByTestId('where').textContent).toBe('/materials/notes/gh:Конспекты/ДМ/graphs.md');
+});
+
+it('поиск: пока текст PDF недоступен, говорит об этом, а не только «ничего не найдено»', async () => {
+  useLectureNotesStore.setState({ lectureNotes: [] });
+  render(
+    <MemoryRouter>
+      <SearchDialog open onClose={() => {}} />
+    </MemoryRouter>,
+  );
+
+  await userEvent.type(screen.getByRole('textbox', { name: 'Поиск' }), 'несуществующееслово');
+  expect(await screen.findByText(/Текст PDF-конспектов недоступен/)).toBeTruthy();
+});

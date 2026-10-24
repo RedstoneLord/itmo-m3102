@@ -12,15 +12,26 @@ export function deadlineSubjectId(name: string): ID | undefined {
   return resolveSubjectFolder(name.split(/\s+[-–—]\s+/)[0]!);
 }
 
+type GroupDeadlines = { deadlines: GroupDeadline[]; done: Record<string, boolean> };
+
+/** Сколько незавершённых сроков предмета уже прошло: «Нет дедлайнов» при долгах врёт, поэтому считаем отдельно от будущих */
+export function getOverdueCount(tasks: Task[], subjectId: ID, today: ISODate, group: GroupDeadlines = { deadlines: [], done: {} }): number {
+  const fromTasks = getOpenTasks(tasks, subjectId).filter((task) => task.deadline !== undefined && task.deadline < today).length;
+  const fromGroup = group.deadlines.filter(
+    (item) => !group.done[item.id] && deadlineSubjectId(item.name) === subjectId && item.deadline.slice(0, 10) < today,
+  ).length;
+  return fromTasks + fromGroup;
+}
+
 /**
  * Ближайший срок предмета: незавершённые задачи учебного плана и дедлайны группы,
- * не отмеченные «выполнено для меня».
+ * не отмеченные «выполнено для меня». Прошедшие не входят — их считает `getOverdueCount`.
  */
 export function getNextDeadline(
   tasks: Task[],
   subjectId: ID,
   today: ISODate,
-  group: { deadlines: GroupDeadline[]; done: Record<string, boolean> } = { deadlines: [], done: {} },
+  group: GroupDeadlines = { deadlines: [], done: {} },
 ): ISODate | undefined {
   const fromTasks = getOpenTasks(tasks, subjectId)
     .filter((task) => task.deadline !== undefined && task.deadline >= today)

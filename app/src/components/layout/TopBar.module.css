@@ -64,7 +64,7 @@
 }
 
 /* Под сиянием шапка сливается с фоном: вверху страницы без подложки и линии, при прокрутке (data-scrolled) — полупрозрачная
-   подложка и тонкая линия. Без backdrop-filter: он дорог на прокрутке (кроме режима «Стекло») */
+   подложка и тонкая линия. Без backdrop-filter: он дорог на прокрутке (и в «Стекле» тоже — там просто плотнее заливка) */
 :global(:root[data-aurora='on']) .bar {
   border-bottom-color: transparent;
   background: transparent;
@@ -76,8 +76,6 @@
 :global(:root[data-style='glass'][data-scrolled]) .bar {
   border-bottom-color: var(--glass-bar-line);
   background: var(--glass-bar);
-  -webkit-backdrop-filter: var(--surface-filter);
-  backdrop-filter: var(--surface-filter);
 }
 
 :global(:root[data-aurora='on'][data-scrolled]) .bar {

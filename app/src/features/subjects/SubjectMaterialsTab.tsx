@@ -5,9 +5,11 @@ import { SECTIONS } from '../../app/navigation';
 import { buttonClass } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { IconButton } from '../../components/ui/IconButton';
+import { LinesSkeleton } from '../../components/ui/LinesSkeleton';
 import { List } from '../../components/ui/List';
 import { Section } from '../../components/ui/Section';
 import { Tabs, type TabItem } from '../../components/ui/Tabs';
+import { useSyncReady } from '../../services/syncStore';
 import type { ISODate, LectureNote, Material } from '../../types/models';
 import { FolderList } from '../materials/LectureNotesTab';
 import { compareLessons } from '../materials/noteOrder';
@@ -54,6 +56,7 @@ export function SubjectMaterialsTab({
   const [chip, setChip] = useState<MaterialChip>('all');
 
   const navigate = useNavigate();
+  const ready = useSyncReady();
   // Папки занятий по порядку (Лекция 1, Практика 1…), как в «Материалы → Конспекты»
   const sortedNotes = [...lectureNotes].sort(compareLessons);
   const openFolder = (folder: string) => navigate(`${SECTIONS.materials.path}?s=${encodeURIComponent(subjectId)}&f=${encodeURIComponent(folder)}`);
@@ -73,7 +76,9 @@ export function SubjectMaterialsTab({
           </div>
         }
       >
-        {sortedNotes.length === 0 ? (
+        {!ready ? (
+          <LinesSkeleton label="Загружаем конспекты" />
+        ) : sortedNotes.length === 0 ? (
           <EmptyState compact icon={BookOpen} title="Пока нет конспектов" />
         ) : (
           <FolderList notes={sortedNotes} onSelect={openFolder} />

@@ -1,10 +1,13 @@
+import { UserCheck } from 'lucide-react';
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { GithubMark } from '../../components/ui/GithubMark';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { TelegramMark } from '../../components/ui/TelegramMark';
+import { cn } from '../../lib/cn';
 import { M3102_STUDENTS } from '../../data/m3102';
 import { REPO_URL } from '../../services/github';
+import { useMeStore } from './meStore';
 import { useProfileStore } from './profileStore';
 import styles from './StudentsPage.module.css';
 
@@ -15,6 +18,7 @@ export function StudentsPage() {
   const [params, setParams] = useSearchParams();
   const openProfile = useProfileStore((state) => state.open);
   const prepareProfile = useProfileStore((state) => state.prepare);
+  const me = useMeStore((state) => state.login);
   useEffect(prepareProfile, [prepareProfile]);
   useEffect(() => {
     const login = params.get('u');
@@ -33,8 +37,9 @@ export function StudentsPage() {
       <div className={`${styles.grid} stagger`}>
         {M3102_STUDENTS.map((student) => {
           const github = `https://github.com/${encodeURIComponent(student.github)}`;
+          const isMe = student.github === me;
           return (
-            <article key={student.github} className={styles.card} data-spot>
+            <article key={student.github} className={cn(styles.card, isMe && styles.mine)} data-spot>
               <img
                 className={styles.photo}
                 src={`${github}.png?size=160`}
@@ -61,6 +66,12 @@ export function StudentsPage() {
                   )}
                 </div>
                 <div className={styles.pills}>
+                  {isMe && (
+                    <span className={styles.me}>
+                      <UserCheck size={12} strokeWidth={2} aria-hidden />
+                      Это вы
+                    </span>
+                  )}
                   <span className={styles.pill}>{student.fact}</span>
                   {student.role && <span className={styles.role}>{student.role}</span>}
                   <a

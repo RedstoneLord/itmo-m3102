@@ -19,6 +19,8 @@ interface ScheduleToolbarProps {
   /** Чётность текущей недели — вычисляется автоматически, переключать вручную нечего */
   weekInCycle: WeekInCycle;
   view: ScheduleView;
+  /** Показан не сегодняшний период: на телефоне тогда внизу появляется «Сегодня» — до верха панели не дотянуться */
+  awayFromToday: boolean;
   onPrevious: () => void;
   onNext: () => void;
   onToday: () => void;
@@ -26,7 +28,7 @@ interface ScheduleToolbarProps {
 }
 
 /** Панель над расписанием: переход по неделям или месяцам, «Сегодня», чётность недели, День/Неделя/Месяц. */
-export function ScheduleToolbar({ weekInCycle, view, onPrevious, onNext, onToday, onViewChange }: ScheduleToolbarProps) {
+export function ScheduleToolbar({ weekInCycle, view, awayFromToday, onPrevious, onNext, onToday, onViewChange }: ScheduleToolbarProps) {
   return (
     <div className={styles.toolbar}>
       <div className={styles.nav}>
@@ -36,6 +38,13 @@ export function ScheduleToolbar({ weekInCycle, view, onPrevious, onNext, onToday
         </button>
         <IconButton icon={ChevronRight} label={view === 'month' ? 'Следующий месяц' : 'Следующая неделя'} size="sm" onClick={onNext} />
       </div>
+
+      {/* Дубль кнопки из панели для большого пальца (только телефон): вспомогательным технологиям он не нужен */}
+      {awayFromToday && (
+        <button type="button" className={styles.todayFloat} onClick={onToday} aria-hidden tabIndex={-1}>
+          Сегодня
+        </button>
+      )}
 
       <div className={styles.controls}>
         {view !== 'month' && <span className={styles.cycleWeek}>{WEEK_PARITY_LABELS[weekInCycle]}</span>}

@@ -213,6 +213,12 @@ export function AppearanceSettings() {
         <SegmentedControl label="Скругления" options={RADIUS_OPTIONS} value={radius} onChange={(value) => setAppearance({ radius: value })} />
       </SettingsRow>
 
+      <SettingsRow label="Приветствие" description="Короткое окно, которое видит новый посетитель: стиль, тема и палитра в одном месте.">
+        <Button variant="secondary" size="sm" onClick={() => setAppearance({ onboarded: false })}>
+          Показать приветствие ещё раз
+        </Button>
+      </SettingsRow>
+
       <SettingsRow label="Дизайн-система" description="Все компоненты интерфейса на одной странице.">
         <Link to={SECTIONS.design.path} className={buttonClass('secondary', 'sm')}>
           Открыть

@@ -5,6 +5,7 @@ import { buttonClass } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { GithubMark } from '../../components/ui/GithubMark';
 import { Input } from '../../components/ui/Input';
+import { LinesSkeleton } from '../../components/ui/LinesSkeleton';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { TelegramMark } from '../../components/ui/TelegramMark';
 import { resolveSubjectFolder } from '../../data/m3102';
@@ -12,6 +13,7 @@ import { cn } from '../../lib/cn';
 import { SPRING_SMOOTH, usePrefersReducedMotion } from '../../lib/motion';
 import { pluralize } from '../../lib/pluralize';
 import { repoEditUrl } from '../../services/github';
+import { useSyncReady } from '../../services/syncStore';
 import { useEditMode } from '../settings/EditModeContext';
 import { useSubjectsStore } from '../subjects/subjectsStore';
 import { useGroupStore, type GroupLink } from './groupStore';
@@ -55,6 +57,7 @@ const LINK_FORMS: [string, string, string] = ['ссылка', 'ссылки', '�
 export function LinksPage({ embedded = false }: { embedded?: boolean }) {
   const links = useGroupStore((state) => state.links);
   const subjects = useSubjectsStore((state) => state.subjects);
+  const ready = useSyncReady();
   const [closed, setClosed] = useState<ReadonlySet<string>>(new Set());
   const { isEditMode } = useEditMode();
   const [query, setQuery] = useState('');
@@ -102,7 +105,9 @@ export function LinksPage({ embedded = false }: { embedded?: boolean }) {
         {embedded && addButton}
       </div>
 
-      {links.length === 0 ? (
+      {!ready ? (
+        <LinesSkeleton label="Загружаем ссылки" />
+      ) : links.length === 0 ? (
         <EmptyState title="Ссылок пока нет" description="Они появятся после синхронизации с GitHub." />
       ) : ordered.length === 0 ? (
         <EmptyState icon={Search} title="Ничего не найдено" description="Попробуйте другое слово." />
