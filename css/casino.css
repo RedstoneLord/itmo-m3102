@@ -268,6 +268,12 @@
   .ro-controls-row{position:sticky;bottom:12px;z-index:60;border-color:var(--accent);background:color-mix(in srgb,var(--card) 94%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 -6px 28px rgba(0,0,0,.28)}
   .ro-chip-selector{flex-wrap:nowrap;overflow-x:auto}
 }
+
+@media(min-width:861px){
+  .ro-hint{order:-2}
+  .ro-controls-row{order:-1}
+}
+
 @media(max-width:760px){
   .ro-controls-row{bottom:calc(env(safe-area-inset-bottom,0px) + 72px)}
 }
