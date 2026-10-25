@@ -30,6 +30,7 @@ export function renderBlackjackPage() {
   let prevBet = bet;
   let currentRound = null;
   let dealerRevealed = false;
+  let shownD = 0, shownP = 0, holeShown = false; // сколько карт уже на столе: анимируем только новые
 
   const { later, wait, guard, destroy: stopTimers } = makeTimers(() => dead);
   const fx = makeFx(), burst = (n, kind) => fx.burst(n, kind);
@@ -55,17 +56,19 @@ export function renderBlackjackPage() {
 
     <div id="bj-hud-host"></div>
 
-    <div class="bj-table ct-felt" id="bj-table">
+    <div class="bj-stage">
+      <aside class="bj-dealer-side" aria-label="Крупье">
+        <div class="bj-dealer-art">
+          <span class="bj-dealer-pic" aria-hidden="true">🦔</span>
+          <span class="bj-dealer-title">Крупье-ёжик</span>
+        </div>
+        <div class="bj-dealer-bubble" id="bj-dealer-bubble" role="status">Фыр! Делайте ставку и погнали.</div>
+      </aside>
+      <div class="bj-table ct-felt" id="bj-table">
       <div class="bj-perks-bar" id="bj-perks-bar"></div>
 
       <div class="bj-hand-section bj-dealer-section">
-        <div class="bj-dealer-wrap">
-          <div class="bj-dealer-art">
-            <span class="bj-dealer-pic" aria-hidden="true">🦔</span>
-            <span class="bj-dealer-title">Крупье-ёжик</span>
-          </div>
-          <div class="bj-dealer-bubble" id="bj-dealer-bubble" role="status">Фыр! Делайте ставку и погнали.</div>
-        </div>
+        
         <div class="bj-hand-header">
           <span class="bj-hand-label">Карты дилера</span>
           <span class="bj-score" id="bj-dealer-score" aria-live="polite"></span>
@@ -91,6 +94,7 @@ export function renderBlackjackPage() {
       </div>
 
       <div class="bj-actions" id="bj-actions"></div>
+    </div>
     </div>
 
     <dialog id="bj-dlg" class="app-dialog bj-dlg"></dialog>
@@ -183,11 +187,18 @@ export function renderBlackjackPage() {
     }
 
     const dCards = currentRound.dealer || [];
-    $('#bj-dealer-cards').innerHTML = dCards.map((c, i) => renderCard(c, i === 1 && !dealerRevealed, true)).join('');
+    const flipHole = dealerRevealed && !holeShown && dCards.length >= 2;
+    $('#bj-dealer-cards').innerHTML = dCards.map((c, i) => {
+      let html = renderCard(c, i === 1 && !dealerRevealed, i >= shownD);
+      if (flipHole && i === 1) html = html.replace('class="bj-card ', 'class="bj-card is-flipping ');
+      return html;
+    }).join('');
+    shownD = dCards.length; holeShown = dealerRevealed && dCards.length >= 2;
     $('#bj-dealer-score').textContent = formatScore(dCards, !dealerRevealed);
 
     const pCards = currentRound.player || [];
-    $('#bj-player-cards').innerHTML = pCards.map(c => renderCard(c, false, true)).join('');
+    $('#bj-player-cards').innerHTML = pCards.map((c, i) => renderCard(c, false, i >= shownP)).join('');
+    shownP = pCards.length;
     $('#bj-player-score').textContent = formatScore(pCards, false);
 
     const hHint = $('#bj-dealer-hint');
@@ -233,7 +244,7 @@ export function renderBlackjackPage() {
       toast('Недостаточно ягод для ставки!');
       return;
     }
-    busy = true; inHand = true; dealerRevealed = false;
+    busy = true; inHand = true; dealerRevealed = false; shownD = 0; shownP = 0; holeShown = false;
     hudState.locked = true; hud.update();
     prevBet = bet;
 
@@ -309,6 +320,8 @@ export function renderBlackjackPage() {
     // Запоминаем карты дилера до добора
     const initialDealerLen = 2;
     B.stand(currentRound, shoe);
+    const fullDealerCards = [...currentRound.dealer];
+    currentRound.dealer = fullDealerCards.slice(0, initialDealerLen); // добор покажем по одной карте
 
     // Раскрываем закрытую карту дилера
     dealerRevealed = true;
@@ -317,8 +330,8 @@ export function renderBlackjackPage() {
     await wait(240);
 
     // Показываем поочерёдно добор дилера (если дилер добрал карты)
-    if (currentRound.dealer.length > initialDealerLen) {
-      const fullDealer = [...currentRound.dealer];
+    if (fullDealerCards.length > initialDealerLen) {
+      const fullDealer = fullDealerCards;
       for (let i = initialDealerLen + 1; i <= fullDealer.length; i++) {
         currentRound.dealer = fullDealer.slice(0, i);
         renderHands();

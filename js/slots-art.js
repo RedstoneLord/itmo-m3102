@@ -4,7 +4,7 @@
 */
 export const LABELS = {
   berry: 'Малина', apple: 'Яблоко', mush: 'Гриб-мухомор', git: 'Значок Git', orange: 'Апельсин', cpp: 'Шестиугольник C++', rust: 'Рыжий ёжик с шестерёнкой',
-  pi: 'Свиток ∑ и π', hog: 'Ёжик', king: 'Король ёжиков', wild: 'Дикий шар-ёжик (Wild)', scatter: 'Щит-скаттер', bonus: 'Корзина с ягодами (бонус)', claude: 'Логотип Claude', itmo: 'Логотип ИТМО', seven: 'Счастливая семёрка', capsule: 'Золотая капсула', /* casino:step4 labels */
+  pi: 'Свиток ∑ и π', hog: 'Ёжик', king: 'Король ёжиков', wild: 'Wild (карта с вопросом)', scatter: 'Щит-скаттер', bonus: 'Корзина с ягодами (бонус)', claude: 'Логотип Claude', itmo: 'Логотип ИТМО', seven: 'Счастливая семёрка', capsule: 'Золотая капсула', /* casino:step4 labels */
 };
 const g = (id, a, b, x2 = 0, y2 = 1) => `<linearGradient id="g-${id}" x1="0" y1="0" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>`;
 const DEFS = [
@@ -77,7 +77,14 @@ const S = {
   rust: hedge({ body: 'rhogbody', back: '#8a3410', front: '#c9622a', hat: gearHat }),
   pi: '<path d="M22 20h60v52c0 8-6 12-12 12H30c-6 0-10-4-10-10 0-4 2-7 6-7h4V30c0-6-4-10-8-10z" fill="url(#g-parch)" stroke="#8a6a32" stroke-width="3" stroke-linejoin="round"/><path d="M22 20c-8 0-12 4-12 9s5 8 12 8" fill="#e2c78f" stroke="#8a6a32" stroke-width="3"/><text x="52" y="46" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="25" fill="#5b3fd0">∑</text><text x="52" y="70" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="700" font-size="25" fill="#7a55e0">π</text>',
   hog: hedge(), king: hedge({ hat: crownHat }),
-  wild: '<circle cx="50" cy="50" r="46" fill="url(#g-glow)"/><rect x="18" y="10" width="64" height="80" rx="8" fill="#1b1429" stroke="#ffd84a" stroke-width="3.5"/><rect x="22" y="14" width="56" height="72" rx="5" fill="none" stroke="#e2b036" stroke-width="1.2" stroke-dasharray="3 2"/><path d="M50 24c-7.5 0-13 4.5-13 11 0 8 9 10 9 16v2" fill="none" stroke="#ff4785" stroke-width="6" stroke-linecap="round"/><circle cx="50" cy="60" r="3.5" fill="#ffd84a"/><path d="M14 68l12-5h48l12 5-6 15H20z" fill="url(#g-red)" stroke="#ffd84a" stroke-width="2"/><text x="50" y="80" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="900" fill="#fff" letter-spacing="1.5">WILD</text>' + sparkle(24, 18, 5, '#ffd84a') + sparkle(76, 22, 6, '#fff'),
+  wild: '<circle cx="50" cy="50" r="46" fill="url(#g-glow)"/>'
+    + '<rect x="20" y="8" width="60" height="84" rx="8" fill="#fff" stroke="#e2b036" stroke-width="4"/>'
+    + '<rect x="26" y="14" width="48" height="72" rx="5" fill="none" stroke="#d6246e" stroke-opacity=".35" stroke-width="1.5"/>'
+    + '<path d="M38 38c0-9 5-14 12-14s12 5 12 13c0 11-12 11-12 22" fill="none" stroke="#d6246e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<circle cx="50" cy="73" r="5" fill="#d6246e"/>'
+    + '<text x="30" y="27" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="12" fill="#d6246e">?</text>'
+    + '<text x="70" y="79" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="12" fill="#d6246e" transform="rotate(180 70 75)">?</text>'
+    + sparkle(22, 16, 5, '#ffd84a') + sparkle(80, 20, 6, '#fff'),
   scatter: '<path d="M50 6l38 12v28c0 24-16 38-38 48C28 84 12 70 12 46V18z" fill="url(#g-navy)" stroke="#0b1f4a" stroke-width="3.5" stroke-linejoin="round"/><path d="M50 16l28 9v21c0 17-11 28-28 36-17-8-28-19-28-36V25z" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2"/><path d="M50 28l5.5 12 13 1.4-9.8 8.7 2.9 12.9L50 56.2 38.4 63l2.9-12.9-9.8-8.7 13-1.4z" fill="#fff6a0" stroke="#b9911a" stroke-width="2" stroke-linejoin="round"/>',
   bonus: '<path d="M20 44q30-44 60 0" stroke="#8a5a1e" stroke-width="6" fill="none" stroke-linecap="round"/><g>' + [[34, 40], [50, 34], [66, 40], [42, 46], [58, 46]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="url(#g-pink)" stroke="#a0124f" stroke-width="2"/>`).join('') + '</g><path d="M12 48h76l-8 40H20z" fill="url(#g-wick)" stroke="#6b4513" stroke-width="3" stroke-linejoin="round"/><path d="M20 60h60M22 72h56M36 48l-5 40M50 48v40M64 48l5 40" stroke="#6b4513" stroke-opacity=".55" stroke-width="2.5"/>',
 };

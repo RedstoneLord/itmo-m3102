@@ -22,6 +22,8 @@ import { applyCasinoTheme, chipTier } from './casino-themes.js';
 
 const WHEEL_ORDER = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
+const chipLabel = n => (n >= 1e6 ? +(n / 1e6).toFixed(1) + 'M' : n >= 1000 ? +(n / 1000).toFixed(1) + 'k' : String(n));
+
 export function renderRoulettePage() {
   const content = document.querySelector('#content');
   if (!content) return;
@@ -80,6 +82,7 @@ export function renderRoulettePage() {
       </div>
 
       <div class="ro-right-col">
+        <p class="ro-hint"><span><b>1</b> Выберите фишку</span><span><b>2</b> Нажмите на поле стола</span><span><b>3</b> Крутите колесо</span></p>
         <div class="ro-table ct-felt" id="ro-table" role="grid" aria-label="Игровой стол рулетки">
           ${buildTableHtml()}
         </div>
@@ -180,7 +183,7 @@ export function renderRoulettePage() {
       const key = anchor.dataset.chipKey;
       const b = bets.get(key);
       if (b && b.stake > 0) {
-        anchor.innerHTML = `<span class="ct-chip ro-chip-badge" data-tier="${chipTier(b.stake)}">${b.stake >= 1000 ? (b.stake / 1000) + 'k' : b.stake}</span>`;
+        anchor.innerHTML = `<span class="ct-chip ro-chip-badge" data-tier="${chipTier(b.stake)}">${chipLabel(b.stake)}</span>`;
       } else {
         anchor.innerHTML = '';
       }
@@ -238,6 +241,7 @@ export function renderRoulettePage() {
     }
 
     busy = true;
+    /* ui-fix */ { const wheelBox = $('#ro-wheel-wrap'); if (wheelBox && typeof wheelBox.scrollIntoView === 'function' && matchMedia('(max-width: 860px)').matches) wheelBox.scrollIntoView({ behavior: reduce() ? 'auto' : 'smooth', block: 'center' }); }
     hudState.locked = true; hud.update();
     $('#ro-summary').hidden = true;
     content.querySelectorAll('.ro-cell.is-winner').forEach(el => el.classList.remove('is-winner'));
