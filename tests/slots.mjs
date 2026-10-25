@@ -139,7 +139,7 @@ test('колесо дня: нужны 3 выполненные цели и не�
 });
 
 test('капсулы: редкости, гарантия эпика после 12, дубликаты → ягоды, бусты складываются', () => {
-  assert.equal(M.CATALOG.length, 50);
+  assert.equal(M.CATALOG.length, 75);
   for (const r of Object.keys(M.RARITY)) assert.ok(M.CATALOG.some(x => x.rarity === r), r);
   const S = M.newSlotsState(), rng = M.mulberry32(31); let gap = 0, maxGap = 0;
   for (let i = 0; i < 3000; i++) { const o = M.openCapsule(rng, S); if (o.item.rarity === 'epic' || o.item.rarity === 'legendary') { maxGap = Math.max(maxGap, gap); gap = 0; } else gap++; if (o.item.kind === 'boost') assert.equal(o.dup, false); }
@@ -201,10 +201,10 @@ test('перки ограничены +2.0% и потолками PERK_CAPS', ()
   assert.equal(clamped.pityShift, 4);
 });
 
-test('каталог: 50 предметов, все ID уникальны', () => {
-  assert.equal(M.CATALOG.length, 50);
+test('каталог: 75 предметов, все ID уникальны', () => {
+  assert.equal(M.CATALOG.length, 75);
   const ids = new Set(M.CATALOG.map(x => x.id));
-  assert.equal(ids.size, 50);
+  assert.equal(ids.size, 75);
 });
 
 test('signSlots / signShared: round-trip с новыми полями (equip, hist, breakUntil)', () => {

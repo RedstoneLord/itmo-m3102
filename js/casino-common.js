@@ -151,6 +151,28 @@ export function renderHud(host, state) {
 /* ---------- звук ---------- */
 export const getAudio = () => makeSlotsAudio();
 
+/* content-pack: реплики эмоций и плашки новых предметов за столами */
+export const EMOTES = {
+  'emote:fyr': '🦔 Крупье-ёжик довольно фырчит: «Фыр-фыр!»',
+  'emote:meow': '🐈 Из-за стола донеслось тихое: «Мяу.»',
+  'emote:cheer': '🎉 Ёжик подбрасывает ягоды: «Ура-а-а!»',
+  'emote:think': '🤔 Ёжик прищурился: «Хм-м-м… а если так?»',
+  'emote:cmon': '🔥 Ёжик стучит лапой по столу: «Ну давай же!»',
+  'emote:flip': '🤸 Ёжик делает кувырок прямо на сукне. Фыр!',
+};
+const BASE_PILL_SKIP = new Set(['felt:burgundy', 'chips:berry', 'emote:fyr', 'cardback:marked', 'perkcharm:horseshoe', 'perkcharm:ace']);
+/** Плашки надетых предметов, у которых нет собственной плашки в играх. cls: 'bj' | 'ro'. */
+export function extraPills(S, cls) {
+  const out = [], eq = (S && S.equip) || {}, album = (S && S.album) || {};
+  for (const kind of ['felt', 'chips', 'cardback', 'perkcharm', 'emote']) {
+    const id = eq[kind], it = id && M.ITEM[id];
+    if (!it || BASE_PILL_SKIP.has(id) || !(album[id] || M.FREE_ITEMS.includes(id))) continue;
+    if (kind === 'emote') out.push('<button class="btn2 ' + cls + '-emote-btn" type="button" data-emote="' + esc(id) + '">🦔 ' + esc(it.name) + '</button>');
+    else out.push('<span class="' + cls + '-perk-pill" title="' + esc(it.desc) + '">' + esc(it.name) + '</span>');
+  }
+  return out;
+}
+
 /* ---------- таймеры страницы: later/wait/guard с отменой при уходе ---------- */
 export function makeTimers(isDead = () => false) {
   const timers = new Set(), aborts = new Set();

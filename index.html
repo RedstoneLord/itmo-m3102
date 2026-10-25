@@ -1813,7 +1813,7 @@ const HATS=[
   {id:'cap',name:'Грибная шапка',cost:250},
   {id:'glasses',name:'Очки',cost:350},
   {id:'chef',name:'Поварской колпак',cost:130,perk:'Яблоки бодрят сильнее'},{id:'helmet',name:'Каска',cost:220,perk:'Старт со щитом'},{id:'wizard',name:'Колпак мага',cost:280,perk:'Ягоды сами подлетают'},{id:'propeller',name:'Пропеллер',cost:400,perk:'Дольше в воздухе'},{id:'halo',name:'Нимб',cost:450,perk:'Бодрость копится медленнее'},{id:'foil',name:'Шапочка из фольги',cost:0,secret:true,perk:'Бонусы действуют дольше'},{id:'crown',name:'Корона',cost:600},
-  {id:'itmocap',name:'Кепка студента ИТМО',cost:0,secret:true,perk:'Сонливость растёт медленнее'},{id:'goldtop',name:'Золотой цилиндр',cost:0,secret:true,perk:'Ягоды дают больше очков'},{id:'crabgear',name:'Шлем краба-шестерёнки',cost:0,secret:true,perk:'Старт со щитом и неуязвимостью'},{id:'orangepeel',name:'Апельсиновая кожура',cost:0,secret:true,perk:'Яблоки бодрят сильнее'},{id:'cpphelm',name:'Шлем C++',cost:0,secret:true,perk:'Быстрый старт'},{id:'foilpro',name:'Фольга-ПРО',cost:0,secret:true,perk:'Бонусы действуют вдвое дольше'},{id:'luckyseven',name:'Шляпа счастливой семёрки',cost:0,secret:true,perk:'Каждая седьмая ягода забега — двойная'}
+  {id:'itmocap',name:'Кепка студента ИТМО',cost:0,secret:true,perk:'Сонливость растёт медленнее'},{id:'goldtop',name:'Золотой цилиндр',cost:0,secret:true,perk:'Ягоды дают больше очков'},{id:'crabgear',name:'Шлем краба-шестерёнки',cost:0,secret:true,perk:'Старт со щитом и неуязвимостью'},{id:'orangepeel',name:'Апельсиновая кожура',cost:0,secret:true,perk:'Яблоки бодрят сильнее'},{id:'cpphelm',name:'Шлем C++',cost:0,secret:true,perk:'Быстрый старт'},{id:'foilpro',name:'Фольга-ПРО',cost:0,secret:true,perk:'Бонусы действуют вдвое дольше'},{id:'luckyseven',name:'Шляпа счастливой семёрки',cost:0,secret:true,perk:'Каждая седьмая ягода забега — двойная'},{id:'grandpa',name:'Дедушкина кепка',cost:320,perk:'Бодрость восстанавливается быстрее'}
 ];
 
 const GOAL_DEFS=[
@@ -2113,6 +2113,11 @@ function drawHat(ctx,id,R){
     ctx.fillStyle='#e6eaf2';ctx.beginPath();ctx.moveTo(-0.38*R,0);ctx.lineTo(-0.26*R,-0.55*R);ctx.lineTo(-0.05*R,-0.38*R);ctx.lineTo(0.16*R,-0.7*R);ctx.lineTo(0.38*R,0);ctx.closePath();ctx.fill();ctx.fillStyle='#8fe3ff';starPath(ctx,0.2*R,-0.5*R,0.08*R);ctx.fill();ctx.fillStyle='#ffe27a';starPath(ctx,-0.2*R,-0.3*R,0.06*R);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=0.04*R;ctx.beginPath();ctx.moveTo(-0.26*R,-0.55*R);ctx.lineTo(-0.12*R,-0.08*R);ctx.stroke();
   }else if(id==='luckyseven'){
     ctx.fillStyle='#d62f4b';ctx.beginPath();ctx.arc(0,0,0.5*R,Math.PI,0);ctx.closePath();ctx.fill();ctx.fillStyle='#b41f38';ell(ctx,0,0,0.6*R,0.08*R,0);ctx.fillStyle='#fff';ctx.font='900 '+(0.46*R)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('7',0,-0.22*R);ctx.textBaseline='alphabetic';ctx.fillStyle='#ffe066';starPath(ctx,0.34*R,-0.5*R,0.1*R);ctx.fill();
+  }else if(id==='grandpa'){
+    ctx.fillStyle='#7a6652';ctx.beginPath();ctx.ellipse(-0.04*R,-0.1*R,0.5*R,0.3*R,-0.06,Math.PI,0);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#5a4a3a';ell(ctx,0.34*R,-0.02*R,0.36*R,0.07*R,0.06);
+    ctx.strokeStyle='rgba(255,255,255,0.22)';ctx.lineWidth=0.03*R;ctx.beginPath();ctx.moveTo(-0.3*R,-0.12*R);ctx.lineTo(-0.12*R,-0.36*R);ctx.moveTo(0,-0.1*R);ctx.lineTo(0.12*R,-0.37*R);ctx.moveTo(-0.4*R,-0.2*R);ctx.lineTo(0.3*R,-0.2*R);ctx.stroke();
+    ctx.fillStyle='#a58d73';circ(ctx,-0.04*R,-0.4*R,0.045*R);
   }else if(id==='crown'){
     ctx.fillStyle='#ffcf40';ctx.strokeStyle='#d99a1f';ctx.lineWidth=0.04*R;
     ctx.beginPath();ctx.moveTo(-0.36*R,0);ctx.lineTo(-0.36*R,-0.42*R);ctx.lineTo(-0.18*R,-0.2*R);ctx.lineTo(0,-0.5*R);ctx.lineTo(0.18*R,-0.2*R);ctx.lineTo(0.36*R,-0.42*R);ctx.lineTo(0.36*R,0);ctx.closePath();ctx.fill();ctx.stroke();
@@ -2295,7 +2300,7 @@ const MID={par:0.28,base:0.70,a1:24,f1:0.0058,a2:34,f2:0.0021,ph:1.2};
 const DECO={0:['tuft','flower'],1:['tuft','flower','flower'],2:['leaf','mush','tuft'],3:['mush','mush','tuft'],4:['tuft','pebble','flower'],5:['tuft','flower','pebble']};
 const AMB={0:['dust','#fff4cc'],1:['petal','#ffb6d0'],2:['leaf','#e8903a'],3:['spore','#e9d4ff'],4:['dust','#ffe2b0'],5:['firefly','#fff29a']};
 const COMBO_MSG=['Ёжик в ударе!','Колючая магия!','Это вообще легально?!','Мама, смотри без лап!','Иголки дрожат от восторга!','Ёжик-легенда!','Белки аплодируют стоя!','Физика обиделась!'];
-const MS={42:'🌌 42 м — ответ на всё!',100:'🎓 100 м! Привет, M3102',314:'π метров! 3,14…',404:'🔍 404 м — ёжик не найден',500:'🏃 500 м — лёгкая разминка',2048:'🎮 2048 м — 2^11 одобряет',1337:'😎 1337 м — l33t-ёж'};
+const MS={42:'🌌 42 м — ответ на всё!',100:'🎓 100 м! Привет, M3102',314:'π метров! 3,14…',404:'🔍 404 м — ёжик не найден',500:'🏃 500 м — лёгкая разминка',2048:'🎮 2048 м — 2^11 одобряет',1337:'😎 1337 м — l33t-ёж',256:'💾 256 м — ровно один байт!',777:'🎰 777 м — счастливое число!',1024:'📦 1024 м — один «кибиметр»',3141:'🥧 3141 м — π-рожок'};
 const FONT='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
 
 class Game{
@@ -2458,7 +2463,7 @@ class Game{
       if(dx*dx+dy*dy<(R+22)*(R+22))this.collect(k,c);
     }
     // сонливость, комбо
-    this.sleep=Math.max(0,this.sleep-dt*lerp(0.03,0.016,pc)*(this.save.hat==='halo'?1.5:1));if(h.cof>0)this.sleep=0;
+    this.sleep=Math.max(0,this.sleep-dt*lerp(0.03,0.016,pc)*(this.save.hat==='halo'?1.5:this.save.hat==='grandpa'?1.35:1));if(h.cof>0)this.sleep=0;
     if(this.combo>0){this.comboT-=dt;if(this.comboT<=0){this.combo=0;}}
     // дистанция
     this.dist=Math.max(this.dist,(h.x-100)/25);
@@ -2500,6 +2505,10 @@ class Game{
     if(r.flips>=42&&!this.ms.e42){this.ms.e42=1;this.addBanner('🌀 42 кувырка — ответ на всё! +42 🍓');this.save.berries+=42;r.berries+=42;this.audio.sfx('unlock');this.burst(c.x,c.y,18,{type:'star',col:'#ffe066',size:6,sp:260,life:0.9,g:0});}
     if(r.perfect>=7&&!this.ms.e7){this.ms.e7=1;this.addBanner('🍀 Семь идеальных приземлений! +7 🍓');this.save.berries+=7;r.berries+=7;this.audio.sfx('goal');}
     if(r.stumbles===0&&this.dist>=150&&!this.ms.ecl){this.ms.ecl=1;this.addBanner('✨ 150 м без единого бонка! +20 🍓');this.save.berries+=20;r.berries+=20;this.audio.sfx('goal');}
+    if(r.flips>=100&&!this.ms.e100){this.ms.e100=1;this.addBanner('🌪 100 кувырков за забег — ёжик-волчок! +25 🍓');this.save.berries+=25;r.berries+=25;this.audio.sfx('unlock');this.burst(c.x,c.y,22,{type:'star',col:'#ffe066',size:6,sp:280,life:0.9,g:0});}
+    if(this.t>=404&&!this.ms.e404){this.ms.e404=1;this.sleep=0;this.addBanner('🔍 Ошибка 404: сонливость не найдена');this.audio.sfx('goal');}
+    if(r.berries>=77&&!this.ms.e77){this.ms.e77=1;this.addBanner('🎰 77 ягод за забег — загляни в казино! +7 🍓');this.save.berries+=7;r.berries+=7;this.audio.sfx('goal');}
+    if(new Date().getHours()===3&&!this.ms.e3am){this.ms.e3am=1;this.text(c.x,c.y-R*2.6,'Три часа ночи. Ёжик тоже не спит.','#c9d6ff',22);}
     if(this.sleep>=0.9&&this.state==='play'&&!this.ms.enap){this.ms.enap=1;this.text(c.x,c.y-R*2.4,'Ещё пять минуточек…','#c9d6ff',24);}
   }
   word(w){
@@ -2507,7 +2516,11 @@ class Game{
     const h=this.hog,c=this.center(h),T=this.world.terrain;
     if(w==='fyr'){this.snort();if(!this.ms.wfyr){this.ms.wfyr=1;h.boostT=Math.max(h.boostT,2.5);}return;}
     const k='w'+w;if(this.ms[k])return;this.ms[k]=1;
-    if(w==='itmo'){this.rainT=5;this.addBanner('🎓 Университет ИТМО! +10 🍓');this.save.berries+=10;this.run.berries+=10;this.audio.sfx('unlock');this.flash=0.4;}
+    if(w==='rust'){this.addBanner('🦀 Борроу-чекер доволен! Щит выдан');h.shd=25;this.audio.sfx('mush');this.burst(c.x,c.y,14,{col:'#c9622a',size:5,sp:220,life:0.7,g:0,type:'star'});}
+    else if(w==='matan'){this.addBanner('∀ε>0 ∃δ>0: ягоды сходятся!');for(let i=0;i<10;i++){const x=c.x+260+i*50;this.world.pickups.push({x,y:T.y(x)-60-Math.round(90/(i+1)),kind:'berry',got:false,ph:i});}this.audio.sfx('mush');}
+    else if(w==='coffee'){this.addBanner('☕ Двойной эспрессо!');h.cof=8;this.sleep=0;h.boostT=Math.max(h.boostT,3);this.audio.sfx('mush');}
+    else if(w==='moon'){this.addBanner('🌕 Лунная гравитация!');h.fea=12;this.audio.sfx('flower');}
+    else if(w==='itmo'){this.rainT=5;this.addBanner('🎓 Университет ИТМО! +10 🍓');this.save.berries+=10;this.run.berries+=10;this.audio.sfx('unlock');this.flash=0.4;}
     else if(w==='kot'){this.text(c.x,c.y-R*2.6,'Мяу.','#ffe9c2',30);this.addBanner('🐈 Кот одобряет! +7 🍓');this.save.berries+=7;this.run.berries+=7;this.audio.sfx('flower');}
     else if(w==='git'){this.addBanner('git commit -m "ягоды"');for(let i=0;i<12;i++){const a=i/12*TAU,x=c.x+320+Math.cos(a)*90;this.world.pickups.push({x,y:T.y(x)-110+Math.sin(a)*70,kind:'berry',got:false,ph:i});}this.audio.sfx('mush');}
   }
@@ -3001,7 +3014,7 @@ class Game{
 }
 
 /* ===== интерфейс: оверлеи, ввод, магазин шляп ===== */
-const WORDS={'KeyI,KeyT,KeyM,KeyO':'itmo','KeyF,KeyY,KeyR':'fyr','KeyK,KeyO,KeyT':'kot','KeyG,KeyI,KeyT':'git'};
+const WORDS={'KeyI,KeyT,KeyM,KeyO':'itmo','KeyF,KeyY,KeyR':'fyr','KeyK,KeyO,KeyT':'kot','KeyG,KeyI,KeyT':'git','KeyR,KeyU,KeyS,KeyT':'rust','KeyM,KeyA,KeyT,KeyA,KeyN':'matan','KeyC,KeyO,KeyF,KeyF,KeyE,KeyE':'coffee','KeyM,KeyO,KeyO,KeyN':'moon'};
 const CTRL=new Set(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD']);
 function drawPreview(cv,hat,r,sz){
   const dpr=2,w=sz[0],h=sz[1];cv.style.width=w+'px';cv.style.height=h+'px';
@@ -3129,7 +3142,7 @@ function mount(container,opts){
     const te=e.target.closest('.hh-emo');
     if(te&&container.contains(te)){ec++;te.style.display='inline-block';te.style.transition='transform .5s';te.style.transform='rotate('+(ec*360)+'deg)';audio.sfx('flip',ec);if(ec===7&&!(save.eggs||(save.eggs={})).spin){save.eggs.spin=1;save.berries+=7;persist(save);$('.hh-name').textContent='Ёжик-кувырок ×7';renderStart();}return;}
     const pv=e.target.closest('.hh-prev');
-    if(pv&&container.contains(pv)){pc++;if(pc===25&&!save.owned.includes('foil')){save.owned.push('foil');persist(save);audio.sfx('unlock');const sb2=$('.hh-start .hh-sub');if(sb2)sb2.innerHTML='🧢 Секретная шапочка из фольги найдена!<br>Загляни в «Шляпы».';}audio.sfx('flower');pv.classList.remove('hh-boing');void pv.offsetWidth;pv.classList.add('hh-boing');const sb=$('.hh-start .hh-sub');if(sb&&pc===5)sb.innerHTML='Эй! Не тыкай ёжика 🦔<br>Он щекотки боится.';if(sb&&pc===12)sb.innerHTML='Ладно, секрет: нажми H во время игры 😉';return;}
+    if(pv&&container.contains(pv)){pc++;if(pc===25&&!save.owned.includes('foil')){save.owned.push('foil');persist(save);audio.sfx('unlock');const sb2=$('.hh-start .hh-sub');if(sb2)sb2.innerHTML='🧢 Секретная шапочка из фольги найдена!<br>Загляни в «Шляпы».';}if(pc===50&&!save.owned.includes('grandpa')){save.owned.push('grandpa');persist(save);audio.sfx('unlock');const sg=$('.hh-start .hh-sub');if(sg)sg.innerHTML='👴 Дедушка оставил свою кепку!<br>Загляни в «Шляпы».';}audio.sfx('flower');pv.classList.remove('hh-boing');void pv.offsetWidth;pv.classList.add('hh-boing');const sb=$('.hh-start .hh-sub');if(sb&&pc===5)sb.innerHTML='Эй! Не тыкай ёжика 🦔<br>Он щекотки боится.';if(sb&&pc===12)sb.innerHTML='Ладно, секрет: нажми H во время игры 😉';return;}
     const hat=e.target.closest('[data-hat]');
     if(hat&&container.contains(hat)){
       const h=HATS.find(x=>x.id===hat.dataset.hat);if(!h)return;

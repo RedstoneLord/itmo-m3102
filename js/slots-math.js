@@ -653,6 +653,32 @@ export const CATALOG = [
   it('perkcharm:clover', 'perkcharm', 'Клевер', 'common', 'Эффект: +15% к шансу капсулы-символа'),
   it('perkcharm:horseshoe', 'perkcharm', 'Подкова', 'common', 'Эффект: рулетка возвращает 10% проигранной ставки на число'),
   it('perkcharm:ace', 'perkcharm', 'Туз в рукаве', 'epic', 'Эффект: блэкджек платит 3:2 за 21 из трёх карт'),
+  /* content-pack: +25 предметов (5 рубашек, 5 фишек, 5 сукон, 5 эмоций, 5 талисманов) */
+  it('cardback:hedgehog', 'cardback', 'Рубашка «Ёжик»', 'common', 'Оформление рубашки карт: тёплые колючки'),
+  it('cardback:circuit', 'cardback', 'Рубашка «Плата»', 'common', 'Оформление рубашки карт: зелёные дорожки'),
+  it('cardback:orange', 'cardback', 'Апельсиновая рубашка', 'rare', 'Оформление рубашки карт. Вы Апельсин?'),
+  it('cardback:starry', 'cardback', 'Звёздная рубашка', 'rare', 'Оформление рубашки карт: ночное небо'),
+  it('cardback:gilded', 'cardback', 'Золочёная рубашка', 'epic', 'Оформление рубашки карт: золотая сетка'),
+  it('chips:gold', 'chips', 'Золотые фишки', 'rare', 'Эффект: +0,1% к выплатам слотов'),
+  it('chips:neon', 'chips', 'Неоновые фишки', 'rare', 'Эффект: +5% к шансу капсулы-символа'),
+  it('chips:ice', 'chips', 'Ледяные фишки', 'common', 'Эффект: рулетка возвращает ещё 3% проигранной ставки на число'),
+  it('chips:mint', 'chips', 'Мятные фишки', 'common', 'Эффект: 21 из трёх карт в блэкджеке платит +0,1 ставки'),
+  it('chips:rainbow', 'chips', 'Радужные фишки', 'epic', 'Эффект: +0,15% к выплатам слотов и +3% к шансу капсулы-символа'),
+  it('felt:midnight', 'felt', 'Полуночное сукно', 'common', 'Оформление игрового стола'),
+  it('felt:sand', 'felt', 'Песчаное сукно', 'common', 'Оформление игрового стола'),
+  it('felt:royal', 'felt', 'Королевское сукно', 'rare', 'Оформление игрового стола'),
+  it('felt:emerald', 'felt', 'Изумрудное сукно', 'rare', 'Оформление игрового стола'),
+  it('felt:aurora', 'felt', 'Сукно «Аврора»', 'epic', 'Оформление игрового стола'),
+  it('emote:meow', 'emote', 'Эмоция «Мяу»', 'common', 'Реплика ёжика за столами казино'),
+  it('emote:cheer', 'emote', 'Эмоция «Ура!»', 'common', 'Реплика ёжика за столами казино'),
+  it('emote:think', 'emote', 'Эмоция «Хм…»', 'common', 'Реплика ёжика за столами казино'),
+  it('emote:cmon', 'emote', 'Эмоция «Ну давай!»', 'rare', 'Реплика ёжика за столами казино'),
+  it('emote:flip', 'emote', 'Эмоция «Кувырок»', 'epic', 'Реплика ёжика за столами казино'),
+  it('perkcharm:rabbit', 'perkcharm', 'Заячья лапка', 'common', 'Эффект: +10% к шансу капсулы-символа'),
+  it('perkcharm:coin', 'perkcharm', 'Счастливая монета', 'common', 'Эффект: +0,2% к выплатам слотов'),
+  it('perkcharm:crystal', 'perkcharm', 'Хрустальный шар', 'rare', 'Эффект: «Удвоить или ничего» показывает 2 прошлые карты'),
+  it('perkcharm:lantern', 'perkcharm', 'Фонарик', 'rare', 'Эффект: эпическая капсула гарантирована на одну капсулу раньше'),
+  it('perkcharm:ladybug', 'perkcharm', 'Божья коровка', 'epic', 'Эффект: +1 к ежедневным спинам'),
 ];
 
 export const ITEM = Object.fromEntries(CATALOG.map(x => [x.id, x]));
@@ -663,7 +689,7 @@ export const SETS = [{ reward: 'title:hats', need: () => HAT_SET }, { reward: 't
 export const grantSets = S => { const got = []; for (const set of SETS) { if (!S.album[set.reward] && set.need().every(id => S.album[id])) { S.album[set.reward] = 1; got.push(set.reward); } } return got; };
 
 export const HAT_SET = CATALOG.filter(x => x.kind === 'hat').map(x => x.id);
-export const CHARM_SET = CATALOG.filter(x => x.kind === 'perkcharm').map(x => x.id); /* casino:step3 CHARM_SET */
+export const CHARM_SET = ['perkcharm:clover', 'perkcharm:horseshoe', 'perkcharm:ace']; /* casino:step3 CHARM_SET */
 export const albumProgress = S => ({
   have: CATALOG.filter(x => (S && S.album && S.album[x.id]) || FREE_ITEMS.includes(x.id)).length,
   total: CATALOG.length
@@ -684,6 +710,17 @@ export const ITEM_PERKS = {
   'perkcharm:clover': { capsuleChanceMult: 1.15 },
   'perkcharm:horseshoe': { rouletteRefund: 0.1 },
   'perkcharm:ace': { bjBonus: 0.5 },
+  /* content-pack */
+  'chips:gold': { payoutPct: 0.1 },
+  'chips:neon': { capsuleChanceMult: 1.05 },
+  'chips:ice': { rouletteRefund: 0.03 },
+  'chips:mint': { bjBonus: 0.1 },
+  'chips:rainbow': { payoutPct: 0.15, capsuleChanceMult: 1.03 },
+  'perkcharm:rabbit': { capsuleChanceMult: 1.1 },
+  'perkcharm:coin': { payoutPct: 0.2 },
+  'perkcharm:crystal': { gambleHint: 2 },
+  'perkcharm:lantern': { pityShift: 1 },
+  'perkcharm:ladybug': { dailyExtra: 1 },
 };
 export function clampPerks(p = {}) {
   const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d), C = PERK_CAPS;

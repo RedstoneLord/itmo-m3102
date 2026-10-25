@@ -15,7 +15,7 @@ import {
   toast, clearToasts,
   renderHud, getAudio,
   makeTimers, makeFx, makeAwards,
-  ACH
+  ACH, EMOTES, extraPills
 } from './casino-common.js';
 import { applyCasinoTheme } from './casino-themes.js';
 
@@ -164,7 +164,7 @@ export function renderBlackjackPage() {
   function renderPerks() {
     const perks = perksOf(H, S);
     const pills = [];
-    if (perks.bjBonus > 0) {
+    if (S.equip && S.equip.perkcharm === 'perkcharm:ace') {
       pills.push('<span class="bj-perk-pill">🍀 Талисман «Туз в рукаве»: 3:2 за 21 из 3 карт</span>');
     }
     if (S.equip && S.equip.cardback === 'cardback:marked') {
@@ -173,6 +173,7 @@ export function renderBlackjackPage() {
     if (S.equip && S.equip.emote === 'emote:fyr') {
       pills.push('<button class="btn2 bj-emote-btn" id="bj-emote-btn" type="button" aria-label="Фыркнуть">🦔 «Фыр!»</button>');
     }
+    pills.push(...extraPills(S, 'bj'));
     $('#bj-perks-bar').innerHTML = pills.join('');
   }
 
@@ -471,6 +472,7 @@ export function renderBlackjackPage() {
     else if (id === 'bj-hit') { guard(doHit()); }
     else if (id === 'bj-stand') { guard(doStand()); }
     else if (id === 'bj-emote-btn') { audio.click(); toast('🦔 Крупье-ёжик довольно фырчит: «Фыр-фыр!»'); }
+    else if (btn.dataset.emote) { audio.click(); toast(EMOTES[btn.dataset.emote] || '🦔 Фыр!'); }
     else if (btn.dataset.break) {
       setBreak(S, btn.dataset.break); save(); hud.update(); if (dlg.open) dlg.close();
       toast('Перерыв активирован.'); renderActions();

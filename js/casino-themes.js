@@ -127,6 +127,22 @@ export const ITEM_STYLES = {
   'felt:burgundy': { '--ct-felt-a': '#7a1f33', '--ct-felt-b': '#3b0f1b', '--ct-felt-line': '#e8c37a', '--ct-felt-ink': '#ffe9c4' },
   'chips:berry': { '--ct-chip-1': '#ffd1e3', '--ct-chip-2': '#e8467c', '--ct-chip-3': '#a0124f', '--ct-chip-4': '#3d1230', '--ct-chip-edge': '#ffd1e3', '--ct-chip-ink': '#3d1230', '--ct-chip-stripe': '#ffd1e3' },
   'cardback:marked': { '--ct-cb-a': '#233466', '--ct-cb-b': '#4d87bf', '--ct-cb-c': '#ffe27a' },
+  /* content-pack */
+  'cardback:hedgehog': { '--ct-cb-a': '#6c473d', '--ct-cb-b': '#f7c291', '--ct-cb-c': '#f27ab0', '--ct-cb-pattern': 'radial-gradient(circle,rgba(255,211,182,.55) 0 2px,transparent 3px) 0 0/12px 12px' },
+  'cardback:circuit': { '--ct-cb-a': '#0e3a2a', '--ct-cb-b': '#33ff99', '--ct-cb-c': '#ffd84a', '--ct-cb-pattern': 'linear-gradient(90deg,rgba(51,255,153,.35) 1px,transparent 1px) 0 0/10px 10px,linear-gradient(rgba(51,255,153,.25) 1px,transparent 1px) 0 0/10px 10px' },
+  'cardback:orange': { '--ct-cb-a': '#e8730e', '--ct-cb-b': '#ffd9a0', '--ct-cb-c': '#3a2410', '--ct-cb-pattern': 'radial-gradient(circle,rgba(255,255,255,.4) 0 3px,transparent 4px) 0 0/16px 16px' },
+  'cardback:starry': { '--ct-cb-a': '#141a46', '--ct-cb-b': '#cfe3ff', '--ct-cb-c': '#ffe27a', '--ct-cb-pattern': 'radial-gradient(circle,rgba(255,255,255,.85) 0 1px,transparent 2px) 0 0/14px 14px,radial-gradient(circle,rgba(124,240,255,.6) 0 1px,transparent 2px) 7px 7px/14px 14px' },
+  'cardback:gilded': { '--ct-cb-a': '#3a2a08', '--ct-cb-b': '#f0c95a', '--ct-cb-c': '#fff1b0', '--ct-cb-pattern': 'repeating-linear-gradient(45deg,rgba(255,241,176,.25) 0 2px,transparent 2px 9px)' },
+  'felt:midnight': { '--ct-felt-a': '#1b2440', '--ct-felt-b': '#0a0f20', '--ct-felt-line': '#6f86ff', '--ct-felt-ink': '#e6ecff' },
+  'felt:sand': { '--ct-felt-a': '#c9a96e', '--ct-felt-b': '#8c6d3a', '--ct-felt-line': '#fff1c4', '--ct-felt-ink': '#2b1d00' },
+  'felt:royal': { '--ct-felt-a': '#1f4aa8', '--ct-felt-b': '#0c2159', '--ct-felt-line': '#ffd84a', '--ct-felt-ink': '#eef3ff' },
+  'felt:emerald': { '--ct-felt-a': '#0f8a5f', '--ct-felt-b': '#054a33', '--ct-felt-line': '#7dffc4', '--ct-felt-ink': '#eafff5' },
+  'felt:aurora': { '--ct-felt-a': '#2fb39a', '--ct-felt-b': '#4a2f8a', '--ct-felt-line': '#e07ad0', '--ct-felt-ink': '#f6ecff' },
+  'chips:gold': { '--ct-chip-1': '#fff1b0', '--ct-chip-2': '#f0c95a', '--ct-chip-3': '#c9962a', '--ct-chip-4': '#6e4a0c', '--ct-chip-edge': '#fff1b0', '--ct-chip-ink': '#2b1d00', '--ct-chip-stripe': '#fff8d6' },
+  'chips:neon': { '--ct-chip-1': '#d6fbff', '--ct-chip-2': '#19d3ff', '--ct-chip-3': '#d61fd6', '--ct-chip-4': '#2a0a3a', '--ct-chip-edge': '#19d3ff', '--ct-chip-ink': '#0b0f2e', '--ct-chip-stripe': '#ffffff' },
+  'chips:ice': { '--ct-chip-1': '#f2fbff', '--ct-chip-2': '#a9e3ff', '--ct-chip-3': '#5fb4e8', '--ct-chip-4': '#1d4a78', '--ct-chip-edge': '#ffffff', '--ct-chip-ink': '#0d2a44', '--ct-chip-stripe': '#ffffff' },
+  'chips:mint': { '--ct-chip-1': '#e6fff3', '--ct-chip-2': '#5fd9a2', '--ct-chip-3': '#1f9d63', '--ct-chip-4': '#0b3d27', '--ct-chip-edge': '#e6fff3', '--ct-chip-ink': '#0b3d27', '--ct-chip-stripe': '#e6fff3' },
+  'chips:rainbow': { '--ct-chip-1': '#ffd1e3', '--ct-chip-2': '#ffd84a', '--ct-chip-3': '#4aa8ff', '--ct-chip-4': '#9069cf', '--ct-chip-edge': '#ffffff', '--ct-chip-ink': '#2a1a40', '--ct-chip-stripe': '#ffffff' },
 };
 const EQUIP_KINDS = ['felt', 'chips', 'cardback'];
 

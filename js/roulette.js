@@ -16,7 +16,7 @@ import {
   renderHud, getAudio,
   makeTimers, makeFx, makeAwards,
   stepBet,
-  ACH
+  ACH, EMOTES, extraPills
 } from './casino-common.js';
 import { applyCasinoTheme, chipTier } from './casino-themes.js';
 
@@ -146,7 +146,7 @@ export function renderRoulettePage() {
   function renderPerks() {
     const perks = perksOf(H, S);
     const pills = [];
-    if (perks.rouletteRefund > 0) {
+    if (S.equip && S.equip.perkcharm === 'perkcharm:horseshoe') {
       pills.push('<span class="ro-perk-pill">🍀 Талисман «Подкова»: возврат 10% проигранной ставки на число</span>');
     }
     if (S.equip && S.equip.felt === 'felt:burgundy') {
@@ -158,6 +158,7 @@ export function renderRoulettePage() {
     if (S.equip && S.equip.emote === 'emote:fyr') {
       pills.push('<button class="btn2 ro-emote-btn" id="ro-emote-btn" type="button">🦔 «Фыр!»</button>');
     }
+    pills.push(...extraPills(S, 'ro'));
     $('#ro-perks-bar').innerHTML = pills.join('');
   }
 
@@ -382,11 +383,11 @@ export function renderRoulettePage() {
         html += `<li><span>${lbl} (${argStr}): ставка ${w.bet.stake} 🍓</span><b>+${fmt(w.ret)} 🍓${w.hot ? ' (🔥 ×3.5)' : ''}</b></li>`;
       }
       if (settled.refund > 0) {
-        html += `<li class="is-perk"><span>Талисман «Подкова» (возврат на число):</span><b>+${fmt(settled.refund)} 🍓</b></li>`;
+        html += `<li class="is-perk"><span>Возврат за проигранные ставки на число:</span><b>+${fmt(settled.refund)} 🍓</b></li>`;
       }
       html += '</ul>';
     } else if (settled.refund > 0) {
-      html += `<p class="ro-sum-empty">Ставки не сыграли. Талисман «Подкова» вернул <b>+${fmt(settled.refund)} 🍓</b>.</p>`;
+      html += `<p class="ro-sum-empty">Ставки не сыграли. Возврат за число: <b>+${fmt(settled.refund)} 🍓</b>.</p>`;
     } else {
       html += '<p class="ro-sum-empty">Ставки не сыграли. Попробуйте ещё раз!</p>';
     }
@@ -479,6 +480,7 @@ export function renderRoulettePage() {
       audio.click();
       toast('🦔 Крупье-ёжик довольно фырчит: «Фыр-фыр!»');
     }
+    else if (btn.dataset.emote) { audio.click(); toast(EMOTES[btn.dataset.emote] || '🦔 Фыр!'); }
     else if (btn.dataset.break) {
       setBreak(S, btn.dataset.break); save(); hud.update(); if (dlg.open) dlg.close();
       toast('Перерыв активирован.'); renderTableBets();

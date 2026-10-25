@@ -17,7 +17,7 @@ const tally = (list, f) => list.reduce((o, x) => { const k = f(x); o[k] = (o[k] 
 test('каталог: ID уникальны, всего 27 + 23, редкость и виды новых предметов', () => {
   const ids = M.CATALOG.map(x => x.id);
   assert.equal(new Set(ids).size, ids.length);
-  assert.equal(M.CATALOG.length, 50);
+  assert.equal(M.CATALOG.length, 75);
   assert.equal(NEW_IDS.length, 23); assert.equal(new Set(NEW_IDS).size, 23);
   for (const id of NEW_IDS) assert.ok(M.ITEM[id], id);
   const fresh = NEW_IDS.map(id => M.ITEM[id]);
