@@ -5,5 +5,3 @@ src/data/siteQuizzes
 # Интерпретатор кода массива RedstoneLord — тоже как в оригинале
 src/components/diagrams/arrayCode.js
 src/data/courseInfo
-src/features/slots/slots.js
-src/features/slots/slots.css

@@ -1,0 +1,183 @@
+/* Вид страниц казино группы на токенах нашего сайта. Их файлы css/slots.css, css/casino.css и css/casino-themes.css подключены как есть (CasinoPage.tsx),
+   а это — правка поверх оригинала: переменные сайта группы (--accent, --card…) и его общие классы (.btn2, .dash-panel, .app-dialog…), которых у нас нет */
+:is(.slots-page, .casino-page) {
+  --accent: var(--color-accent);
+  --accent2: var(--color-accent-2);
+  --card: var(--color-bg-elevated);
+  --bg: var(--color-bg);
+  --text: var(--color-text);
+  --muted: var(--color-text-muted);
+  --border: var(--color-border);
+  --rs: 1;
+  --rp: 1;
+  color: var(--color-text);
+  font-family: inherit;
+}
+
+:is(.slots-page, .casino-page) button,
+:is(.slots-page, .casino-page) input,
+:is(.slots-page, .casino-page) select {
+  font-family: inherit;
+}
+
+:is(.slots-page, .casino-page) h1,
+:is(.slots-page, .casino-page) h2,
+:is(.slots-page, .casino-page) h3 {
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.sl-intro h1 {
+  font-family: var(--font-display);
+}
+
+:is(.slots-page, .casino-page) .sub {
+  margin: 0;
+  max-width: 44rem;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+:is(.slots-page, .casino-page) .sched-eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-accent-text);
+}
+
+:is(.slots-page, .casino-page) .btn2 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1-5);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+
+:is(.slots-page, .casino-page) .btn2:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  :is(.slots-page, .casino-page) .btn2:hover:not(:disabled) {
+    background: var(--color-bg-hover);
+  }
+}
+
+:is(.slots-page, .casino-page) .btn-primary {
+  border-color: transparent;
+  background: var(--accent-gradient);
+  color: var(--color-on-accent);
+}
+
+@media (hover: hover) {
+  :is(.slots-page, .casino-page) .btn-primary:hover:not(:disabled) {
+    background: var(--accent-gradient-hover);
+  }
+}
+
+:is(.slots-page, .casino-page) .dash-panel {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+}
+
+:is(.slots-page, .casino-page) .panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+:is(.slots-page, .casino-page) .panel-head h2 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+:is(.slots-page, .casino-page) .plan-hint,
+:is(.slots-page, .casino-page) .dialog-hint {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+/* Окна выплат, капсул и перерыва — нативный <dialog> с оформлением сайта */
+:is(.slots-page, .casino-page) .app-dialog {
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  box-shadow: var(--shadow-modal);
+}
+
+:is(.slots-page, .casino-page) .app-dialog::backdrop {
+  background: rgb(10 12 24 / 0.55);
+}
+
+:is(.slots-page, .casino-page) .dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+:is(.slots-page, .casino-page) .dialog-head h2 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+:is(.slots-page, .casino-page) .dialog-head button {
+  min-width: 36px;
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+:is(.slots-page, .casino-page) .dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+
+:is(.slots-page, .casino-page) .sl-sym,
+:is(.slots-page, .casino-page) .sl-ic {
+  max-width: none;
+}
+
+/* Телефон: ссылка «Коллекция» — метка «ежедневный спин готов» уходит строкой под текст, а не отнимает у него ширину */
+@media (max-width: 560px) {
+  .cs-collection {
+    flex-wrap: wrap;
+  }
+
+  .cs-collection .cs-more-body {
+    flex: 1 1 200px;
+  }
+
+  .cs-collection .cs-chip {
+    order: 3;
+    margin-left: 58px;
+  }
+}

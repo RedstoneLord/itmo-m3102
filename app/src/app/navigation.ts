@@ -47,7 +47,7 @@ export const SECTIONS = {
   memes: { label: 'Мемы', path: '/memes', icon: Image },
   diagrams: { label: 'Диаграммы', path: '/diagrams', icon: Shapes },
   game: { label: 'Ёжик-кувырок', path: '/game', icon: Gamepad2 },
-  slots: { label: 'Колючий куш', path: '/slots', icon: Dices },
+  casino: { label: 'Казино', path: '/casino', icon: Dices },
   settings: { label: 'Настройки', path: '/settings', icon: Settings },
   more: { label: 'Ещё', path: '/more', icon: Ellipsis },
   // Служебная страница со всеми компонентами. В меню её нет — открывается из меню пользователя.
@@ -67,7 +67,7 @@ export const SIDEBAR_PRIMARY: Section[] = [
 ];
 
 /** Боковое меню: «Другое», после разделителя. */
-export const SIDEBAR_SECONDARY: Section[] = [SECTIONS.students, SECTIONS.diagrams, SECTIONS.memes, SECTIONS.game, SECTIONS.slots];
+export const SIDEBAR_SECONDARY: Section[] = [SECTIONS.students, SECTIONS.diagrams, SECTIONS.memes, SECTIONS.game, SECTIONS.casino];
 
 /** Нижняя панель на телефоне (плюс кнопка «Ещё»). */
 export const MOBILE_TABS: Section[] = [SECTIONS.today, SECTIONS.schedule, SECTIONS.materials, SECTIONS.deadlines];
@@ -82,15 +82,20 @@ export const MORE_PAGE_SECTIONS: Section[] = [
   SECTIONS.diagrams,
   SECTIONS.memes,
   SECTIONS.game,
-  SECTIONS.slots,
+  SECTIONS.casino,
   SECTIONS.settings,
 ];
 
 const ALL_SECTIONS: Section[] = Object.values(SECTIONS);
 
+/** Страницы казино группы: хаб, слоты, блэкджек, рулетка, коллекция */
+const CASINO_PATHS = /^\/(casino|slots|blackjack|roulette|collection)(\/|$)/;
+
 /** Раздел, к которому относится адрес страницы: "/tasks" → Задачи */
 export function findSection(pathname: string): Section | undefined {
   // Файлы группы и ссылки — части «Материалов» (вкладки), отдельных разделов у них нет
   if (pathname.startsWith('/files') || pathname.startsWith('/links')) return SECTIONS.materials;
+  // Игры казино — страницы одного раздела: подсвечивается «Казино», а не пусто
+  if (CASINO_PATHS.test(pathname)) return SECTIONS.casino;
   return ALL_SECTIONS.find((section) => pathname.startsWith(section.path));
 }

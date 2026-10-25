@@ -46,7 +46,8 @@ const ReviewPage = page(() => import('../features/quizzes/ReviewPage'), 'ReviewP
 const ExamPage = page(() => import('../features/quizzes/ExamPage'), 'ExamPage');
 // Игра тяжёлая (~60 КБ) — грузится, только когда её открыли
 const GamePage = lazy(() => import('../features/game/GamePage'));
-const SlotsPage = lazy(() => import('../features/slots/SlotsPage'));
+// Казино группы: хаб, слоты, блэкджек, рулетка, коллекция — каждая игра догружает свой модуль
+const CasinoPage = lazy(() => import('../features/casino/CasinoPage'));
 
 /**
  * Все страницы приложения. Данные живут в localStorage (backend нет), конспекты, материалы
@@ -117,7 +118,13 @@ export function App() {
             <Route path="design" element={<DesignSystemPage />} />
             <Route path="diagrams" element={<DiagramEditorPage />} />
             <Route path="game" element={<GamePage />} />
-            <Route path="slots" element={<SlotsPage />} />
+            <Route path="casino" element={<CasinoPage game="casino" />} />
+            <Route path="slots" element={<CasinoPage game="slots" />} />
+            <Route path="blackjack" element={<CasinoPage game="blackjack" />} />
+            <Route path="roulette" element={<CasinoPage game="roulette" />} />
+            <Route path="collection" element={<CasinoPage game="collection" />} />
+            {/* Страницы казино группы зовут «Ёжика» по адресу #/hedgehog, у нас это игра */}
+            <Route path="hedgehog" element={<Navigate to={SECTIONS.game.path} replace />} />
 
             {/* Неизвестный адрес — возвращаем на главную */}
             <Route path="*" element={<Navigate to={SECTIONS.today.path} replace />} />

@@ -428,7 +428,9 @@ html {
 }
 
 @supports (animation-timeline: scroll()) {
-  [data-fade-x] {
+  /* .cs-tabs — вкладки коллекции казино группы (его разметка, атрибут не поставить) */
+  [data-fade-x],
+  .cs-tabs {
     animation: fade-x linear both;
     animation-timeline: scroll(self inline);
     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
@@ -437,7 +439,8 @@ html {
 
   /* «Уменьшить движение» гасит длительности всех анимаций; у привязанной к прокрутке она должна остаться автоматической */
   @media (prefers-reduced-motion: reduce) {
-    [data-fade-x] {
+    [data-fade-x],
+    .cs-tabs {
       animation-duration: auto !important;
     }
   }
