@@ -2114,22 +2114,6 @@ function drawHat(ctx,id,R){
   }else if(id==='luckyseven'){
     ctx.fillStyle='#d62f4b';ctx.beginPath();ctx.arc(0,0,0.5*R,Math.PI,0);ctx.closePath();ctx.fill();ctx.fillStyle='#b41f38';ell(ctx,0,0,0.6*R,0.08*R,0);ctx.fillStyle='#fff';ctx.font='900 '+(0.46*R)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('7',0,-0.22*R);ctx.textBaseline='alphabetic';ctx.fillStyle='#ffe066';starPath(ctx,0.34*R,-0.5*R,0.1*R);ctx.fill();
   }else if(id==='grandpa'){
-    // седые волосы из-под кепки: пряди у висков
-    ctx.fillStyle='#d9dce3';
-    ell(ctx,-0.42*R,0.1*R,0.12*R,0.2*R,0.2);
-    ell(ctx,0.44*R,0.14*R,0.11*R,0.18*R,-0.2);
-    ctx.fillStyle='#bfc3cd';ell(ctx,-0.46*R,0.2*R,0.07*R,0.12*R,0.2);
-    // борода: свисает под подбородком (в координатах шляпы она смещена вправо-вниз, голова у ёжика справа)
-    ctx.fillStyle='#e6e8ee';ctx.strokeStyle='#b5b9c4';ctx.lineWidth=0.03*R;
-    ctx.beginPath();
-    ctx.moveTo(0.3*R,0.45*R);
-    ctx.quadraticCurveTo(0.2*R,1.0*R,0.62*R,1.2*R);
-    ctx.quadraticCurveTo(1.05*R,1.0*R,0.98*R,0.5*R);
-    ctx.quadraticCurveTo(0.65*R,0.72*R,0.3*R,0.45*R);
-    ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.strokeStyle='rgba(150,156,170,0.7)';ctx.lineWidth=0.025*R;
-    ctx.beginPath();ctx.moveTo(0.5*R,0.78*R);ctx.lineTo(0.55*R,1.08*R);ctx.moveTo(0.72*R,0.76*R);ctx.lineTo(0.72*R,1.08*R);ctx.stroke();
-    // кепка
     ctx.fillStyle='#7a6652';ctx.beginPath();ctx.ellipse(-0.04*R,-0.1*R,0.5*R,0.3*R,-0.06,Math.PI,0);ctx.closePath();ctx.fill();
     ctx.fillStyle='#5a4a3a';ell(ctx,0.34*R,-0.02*R,0.36*R,0.07*R,0.06);
     ctx.strokeStyle='rgba(255,255,255,0.22)';ctx.lineWidth=0.03*R;ctx.beginPath();ctx.moveTo(-0.3*R,-0.12*R);ctx.lineTo(-0.12*R,-0.36*R);ctx.moveTo(0,-0.1*R);ctx.lineTo(0.12*R,-0.37*R);ctx.moveTo(-0.4*R,-0.2*R);ctx.lineTo(0.3*R,-0.2*R);ctx.stroke();
