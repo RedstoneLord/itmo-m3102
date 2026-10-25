@@ -1,7 +1,7 @@
 // Выгрузки предметов «Для ИИ» по ссылке: ai/<id предмета>.md. Читает конспекты и данные группы прямо из чекаута
 // репозитория (без сети) тем же кодом, что страница предмета; вызывается при сборке готового сайта (assemble-classic.ts).
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { buildAiFiles, COURSE_INFO_DIR } from '../src/features/subjects/aiFiles';
 
 /** Откуда берутся файлы: конспекты, материалы, лабораторные, записи лекций и описания курсов */
@@ -20,7 +20,9 @@ export async function writeAiFiles(root: string, out: string): Promise<number> {
   const paths = DIRS.filter((dir) => existsSync(join(root, dir))).flatMap((dir) => walk(root, dir));
   // Файлы в чекауте на Windows с CRLF — в выгрузке лишние «\r» не нужны
   const files = await buildAiFiles({ paths, read: (path) => readFileSync(join(root, path), 'utf8').replace(/\r\n/g, '\n') });
-  mkdirSync(out, { recursive: true });
-  for (const [name, text] of Object.entries(files)) writeFileSync(join(out, name), text);
+  for (const [name, text] of Object.entries(files)) {
+    mkdirSync(dirname(join(out, name)), { recursive: true });
+    writeFileSync(join(out, name), text);
+  }
   return Object.keys(files).length;
 }
