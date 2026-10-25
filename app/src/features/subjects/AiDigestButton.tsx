@@ -7,7 +7,7 @@ import { saveBlob } from '../../lib/download';
 import { noteSourceUrl } from '../../services/githubContent';
 import type { LectureNote, Material, Note, SubjectInfo } from '../../types/models';
 import { loadPdfTexts } from '../search/searchIndex';
-import { buildSubjectDigest, estimateTokens } from './aiDigest';
+import { AI_BASE, buildSubjectDigest, estimateTokens } from './aiDigest';
 
 interface AiDigestButtonProps {
   subjectId: string;
@@ -21,10 +21,12 @@ interface AiDigestButtonProps {
 }
 
 /**
- * Адрес выгрузки предмета на опубликованном сайте (файл кладёт в сайт scripts/build-ai.ts при сборке): ИИ открывает его и читает
- * всё одной ссылкой. Всегда адрес сайта группы, а не текущей страницы: ссылка одинакова в dev, в превью и у форка
+ * Адреса выгрузки предмета на опубликованном сайте (файлы кладёт в сайт scripts/build-ai.ts при сборке; всегда адрес сайта группы,
+ * а не текущей страницы: ссылка одинакова в dev, в превью и у форка). Целиком — для моделей с огромным окном; по частям — оглавление
+ * со ссылками на конспекты: ИИ открывает нужные, а не обрезает 100–250 тыс. токенов
  */
-const aiLink = (subjectId: string) => `https://redstonelord.github.io/itmo-m3102/app/ai/${subjectId}.md`;
+const aiLink = (subjectId: string) => `${AI_BASE}${subjectId}.md`;
+const aiIndexLink = (subjectId: string) => `${AI_BASE}${subjectId}/index.md`;
 
 /** «Для ИИ»: все конспекты и материалы предмета одним .md — скачать, скопировать текст или ссылку и отдать ChatGPT / Claude */
 export function AiDigestButton({ today, subjectId, ...data }: AiDigestButtonProps) {
@@ -38,6 +40,13 @@ export function AiDigestButton({ today, subjectId, ...data }: AiDigestButtonProp
       sourceUrl: noteSourceUrl,
       pdfText: (note) => (note.sourceRef ? pdf.get(note.sourceRef) : undefined),
       date: formatShortDate(today, 'long'),
+    });
+  }
+
+  function copyLink(url: string) {
+    void navigator.clipboard.writeText(url).then(() => {
+      setStatus('Ссылка скопирована');
+      setTimeout(() => setStatus(''), 4000);
     });
   }
 
@@ -77,17 +86,12 @@ export function AiDigestButton({ today, subjectId, ...data }: AiDigestButtonProp
       >
         Скопировать текст
       </DropdownItem>
-      {/* Личные заметки в файл по ссылке не попадают: он один на всех и собирается при деплое */}
-      <DropdownItem
-        icon={Link2}
-        onSelect={() =>
-          void navigator.clipboard.writeText(aiLink(subjectId)).then(() => {
-            setStatus('Ссылка скопирована');
-            setTimeout(() => setStatus(''), 4000);
-          })
-        }
-      >
-        Скопировать ссылку
+      {/* Личные заметки в файлы по ссылке не попадают: они одни на всех и собираются при деплое */}
+      <DropdownItem icon={Link2} onSelect={() => copyLink(aiIndexLink(subjectId))}>
+        Скопировать ссылку — по частям
+      </DropdownItem>
+      <DropdownItem icon={Link2} onSelect={() => copyLink(aiLink(subjectId))}>
+        Скопировать ссылку на весь файл
       </DropdownItem>
     </DropdownMenu>
   );

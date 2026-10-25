@@ -62,16 +62,29 @@ test('«Для ИИ»: ссылка на предмет копируется и 
   });
   await openSynced(page, './#/subjects/dm');
   await page.getByRole('button', { name: 'Для ИИ' }).click();
-  await page.getByRole('menuitem', { name: 'Скопировать ссылку' }).click();
-  const [link] = await page.evaluate(() => (window as unknown as { copied: string[] }).copied);
+  const copied = () => page.evaluate(() => (window as unknown as { copied: string[] }).copied);
+
+  // Весь файл одной ссылкой
+  await page.getByRole('menuitem', { name: 'Скопировать ссылку на весь файл' }).click();
   // Адрес всегда опубликованного сайта группы; а сам файл, который по нему будет лежать, собран в наш сайт и отдаётся рядом: смотрим его
-  expect(link).toBe('https://redstonelord.github.io/itmo-m3102/app/ai/dm.md');
+  expect((await copied())[0]).toBe('https://redstonelord.github.io/itmo-m3102/app/ai/dm.md');
   const file = await page.request.get(new URL('ai/dm.md', page.url()).href);
   expect(file.ok()).toBe(true);
   const text = await file.text();
   expect(text).toContain('# Дискретная математика — все материалы');
   // В шапке — когда собрано, с временем по Москве
   expect(text).toMatch(/\(ИТМО\) \d+ \S+, \d{2}:\d{2} МСК\./);
+
+  // По частям: оглавление маленькое и ведёт на файлы конспектов — ИИ открывает только нужные, а не обрезает сотни тысяч токенов
+  await page.getByRole('button', { name: /Для ИИ|Ссылка скопирована/ }).click();
+  await page.getByRole('menuitem', { name: 'Скопировать ссылку — по частям' }).click();
+  expect((await copied())[1]).toBe('https://redstonelord.github.io/itmo-m3102/app/ai/dm/index.md');
+  const index = await (await page.request.get(new URL('ai/dm/index.md', page.url()).href)).text();
+  expect(index).toContain('# Дискретная математика — оглавление (читать по частям)');
+  expect(index.length).toBeLessThan(text.length / 5);
+  const part = await page.request.get(new URL('ai/dm/01.md', page.url()).href);
+  expect(part.ok()).toBe(true);
+  expect(await part.text()).toContain('# Дискретная математика — ');
 });
 
 test('неделя расписания — сеткой по часам', async ({ page }) => {

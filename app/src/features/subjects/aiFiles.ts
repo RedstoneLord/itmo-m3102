@@ -3,7 +3,8 @@ import { formatShortDate } from '../../lib/dates';
 import { buildCourseInfo, buildGroupNotes, buildMaterials, noteSourceUrl, type TreeFile } from '../../services/githubContent';
 import { parseLinks } from '../group/groupStore';
 import { collectPdfText } from '../search/pdfText';
-import { buildSubjectDigest } from './aiDigest';
+import type { LectureNote } from '../../types/models';
+import { buildSubjectChunks, buildSubjectDigest } from './aiDigest';
 
 /** Репозиторий группы как набор файлов: пути от его корня и чтение текста (при сборке сайта — из чекаута, без сети) */
 export interface RepoSource {
@@ -33,7 +34,8 @@ function mskStamp(now: Date): string {
 }
 
 /**
- * Файлы `{id предмета}.md` — то же, что «Для ИИ» на странице предмета, но по ссылке: ИИ открывает адрес и читает всё сразу.
+ * Файлы `{id предмета}.md` — то же, что «Для ИИ» на странице предмета, но по ссылке: ИИ открывает адрес и читает всё сразу, — и те же
+ * материалы по частям (`{id}/index.md`, `{id}/01.md`…) для случаев, когда весь файл ИИ не осиливает.
  * Только публичное: конспекты, материалы и ссылки группы, описание курса. Личные заметки из браузера в ссылку попасть не могут.
  */
 export async function buildAiFiles(repo: RepoSource, now = new Date()): Promise<Record<string, string>> {
@@ -49,9 +51,8 @@ export async function buildAiFiles(repo: RepoSource, now = new Date()): Promise<
   const date = mskStamp(now);
 
   return Object.fromEntries(
-    M3102_SUBJECTS.map((subject) => [
-      `${subject.id}.md`,
-      buildSubjectDigest({
+    M3102_SUBJECTS.flatMap((subject) => {
+      const input = {
         subjectName: subject.name,
         info: info.filter((item) => item.subjectId === subject.id),
         notes: notes.filter((note) => note.subjectId === subject.id),
@@ -59,9 +60,16 @@ export async function buildAiFiles(repo: RepoSource, now = new Date()): Promise<
         links: links.filter((link) => resolveSubjectFolder(link.subject) === subject.id),
         personalNotes: [],
         sourceUrl: noteSourceUrl,
-        pdfText: (note) => (note.sourceRef ? pdf.get(note.sourceRef) : undefined),
+        pdfText: (note: LectureNote) => (note.sourceRef ? pdf.get(note.sourceRef) : undefined),
         date,
-      }),
-    ]),
+      };
+      // Целиком одним файлом — и по частям: оглавление `{id}/index.md` и по файлу на конспект (ИИ по ссылке не дочитывает 100–250 тыс. токенов)
+      const chunks = buildSubjectChunks(input, subject.id);
+      return [
+        [`${subject.id}.md`, buildSubjectDigest(input)],
+        [`${subject.id}/index.md`, chunks.index],
+        ...chunks.parts.map((part) => [part.name, part.text]),
+      ];
+    }),
   );
 }

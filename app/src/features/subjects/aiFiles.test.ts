@@ -17,7 +17,11 @@ const repo: RepoSource = { paths: Object.keys(files), read: (path) => files[path
 describe('выгрузка предметов для ИИ по ссылке', () => {
   it('по файлу на предмет; в файле предмета — его конспекты, текст PDF, материалы, ссылки и описание курса', async () => {
     const out = await buildAiFiles(repo, new Date('2026-10-22T10:00:00Z'));
-    expect(Object.keys(out).sort()).toEqual(M3102_SUBJECTS.map((subject) => `${subject.id}.md`).sort());
+    expect(
+      Object.keys(out)
+        .filter((name) => !name.includes('/'))
+        .sort(),
+    ).toEqual(M3102_SUBJECTS.map((subject) => `${subject.id}.md`).sort());
 
     const dm = out['dm.md']!;
     expect(dm).toContain('# Дискретная математика — все материалы');
@@ -44,5 +48,23 @@ describe('выгрузка предметов для ИИ по ссылке', ()
     expect(aisd).not.toContain('Множества');
     expect(aisd).not.toContain('Форма сдачи');
     for (const text of Object.values(out)) expect(text).not.toContain('# Мои заметки');
+  });
+
+  it('и по частям: оглавление со ссылками и по файлу на конспект, чтобы ИИ открывал только нужное', async () => {
+    const out = await buildAiFiles(repo, new Date('2026-10-22T10:00:00Z'));
+    const index = out['dm/index.md']!;
+    expect(index).toContain('# Дискретная математика — оглавление (читать по частям)');
+    expect(index).toContain('Экзамен в конце семестра');
+    expect(index).toContain('1. [Лекция 1. Множества](https://redstonelord.github.io/itmo-m3102/app/ai/dm/01.md) — ≈ ');
+    expect(index).toContain(' тыс. токенов');
+    expect(index).toContain('https://redstonelord.github.io/itmo-m3102/app/ai/dm.md');
+
+    const first = out['dm/01.md']!;
+    expect(first).toContain('# Дискретная математика — Лекция 1. Множества');
+    expect(first).toContain('Текст про множества');
+    expect(first).not.toContain('Текст про графы из PDF');
+    expect(out['dm/02.md']).toContain('Текст про графы из PDF');
+    expect(out['dm/03.md']).toBeUndefined();
+    expect(out['aisd/index.md']).toContain('Конспектов по предмету пока нет.');
   });
 });
