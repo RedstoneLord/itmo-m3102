@@ -20,6 +20,7 @@ const SHAPES = [
   ['diamond', 'Ромб (условие)'],
   ['circle', 'Круг'],
   ['db', 'База данных'],
+  ['note', 'Заметка'],
 ] as const;
 
 interface DiagramInspectorProps {

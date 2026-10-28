@@ -3,7 +3,7 @@ import { routeFlow } from './flowRoutes';
 import { resolveColor, takeOptions, textWidth, unquote, wrapText, type DiagramLines } from './parse';
 import styles from './Diagrams.module.css';
 
-export type NodeShape = 'circle' | 'box' | 'round' | 'diamond' | 'db';
+export type NodeShape = 'circle' | 'box' | 'round' | 'diamond' | 'db' | 'note';
 
 export interface GraphNode {
   id: string;
@@ -37,7 +37,9 @@ export interface GraphModel {
   flow?: boolean;
 }
 
-const EDGE = /^(.+?)\s*(->|--|<-)\s*(.+?)(?:\s*:\s*(.+))?$/;
+const EDGE = /^(.+?)\s*(-->|->|--|<-)\s*(.+?)(?:\s*:\s*(.+))?$/;
+/** Стрелки в цепочке `A -> B -> C` (движок группы понимает цепочки и `-->`) */
+const ARROW = /\s*(-->|->|--|<-)\s*/;
 const POSITION = /@\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*$/;
 
 function sizeNode(node: Pick<GraphNode, 'label' | 'shape'>): Pick<GraphNode, 'lines' | 'w' | 'h'> {
@@ -56,7 +58,7 @@ function sizeNode(node: Pick<GraphNode, 'label' | 'shape'>): Pick<GraphNode, 'li
 
 /**
  * `graph`: узлы `id "Подпись" @ x, y`, рёбра `A -> B : подпись` / `A -- B`, layout: manual|circle|grid|layered.
- * `diagram`: узлы `A: box|round|diamond|db "Текст" @ x, y`, рёбра как у графа, по умолчанию — сверху вниз.
+ * `diagram`: узлы `A: box|round|diamond|db|note "Текст" @ x, y`, рёбра как у графа, по умолчанию — сверху вниз.
  */
 export function parseGraph({ header, body }: DiagramLines, kind: 'graph' | 'diagram'): GraphModel {
   const nodes = new Map<string, GraphNode>();
@@ -78,7 +80,7 @@ export function parseGraph({ header, body }: DiagramLines, kind: 'graph' | 'diag
     const { rest: text, options } = takeOptions(raw);
     const color = options.color ? resolveColor(options.color) : undefined;
     // diagram: "A: round "Текст" @ 80, 40"
-    const flowNode = /^([^\s:"]+)\s*:\s*(box|round|diamond|db|circle)?\s*(".*?")?\s*(@.*)?$/.exec(text);
+    const flowNode = /^([^\s:"]+)\s*:\s*(box|round|diamond|db|circle|note)?\s*(".*?")?\s*(@.*)?$/.exec(text);
     if (kind === 'diagram' && flowNode && !EDGE.test(text.split(':')[0]!)) {
       const node = ensure(flowNode[1]!);
       node.shape = (flowNode[2] as NodeShape) ?? 'box';
@@ -91,17 +93,21 @@ export function parseGraph({ header, body }: DiagramLines, kind: 'graph' | 'diag
 
     const edge = EDGE.exec(text);
     if (edge && !text.startsWith('"')) {
-      const [from, arrow, to] = [edge[1]!.trim(), edge[2]!, edge[3]!.trim()];
-      ensure(from);
-      ensure(to);
-      edges.push({
-        from: arrow === '<-' ? to : from,
-        to: arrow === '<-' ? from : to,
-        label: edge[4]?.trim() || options.label || undefined,
-        directed: arrow !== '--' || directed,
-        color,
-        dashed: options.dashed,
-      });
+      // Цепочка `A -> B -> C` — это рёбра A→B и B→C с общей подписью; одиночное ребро — частный случай
+      const parts = [edge[1]!.trim(), edge[2]!, ...edge[3]!.trim().split(ARROW)];
+      for (let i = 0; i + 2 < parts.length; i += 2) {
+        const [left, arrow, right] = [parts[i]!, parts[i + 1]!, parts[i + 2]!];
+        ensure(left);
+        ensure(right);
+        edges.push({
+          from: arrow === '<-' ? right : left,
+          to: arrow === '<-' ? left : right,
+          label: edge[4]?.trim() || options.label || undefined,
+          directed: arrow !== '--' || directed,
+          color,
+          dashed: options.dashed,
+        });
+      }
       continue;
     }
 
@@ -276,6 +282,16 @@ function shape(node: GraphNode, x: number, y: number, w: number, h: number) {
           <ellipse className={styles.node} cx={x} cy={y - h / 2 + 6} rx={w / 2} ry={6} />
         </g>
       );
+    case 'note': {
+      // Лист с загнутым уголком, как у движка группы
+      const [left, right, top, bottom, fold] = [x - w / 2, x + w / 2, y - h / 2, y + h / 2, 18];
+      return (
+        <g>
+          <path className={styles.node} d={`M${left},${top} H${right - fold} L${right},${top + fold} V${bottom} H${left} Z`} />
+          <path className={styles.nodeFold} d={`M${right - fold},${top} V${top + fold} H${right}`} />
+        </g>
+      );
+    }
     default:
       return <rect className={styles.node} x={x - w / 2} y={y - h / 2} width={w} height={h} rx={8} />;
   }

@@ -138,7 +138,7 @@ export function readNode(source: string, lang: 'graph' | 'diagram', id: string) 
   const line = lines[nodeLine(lines, lang, id)] ?? '';
   return {
     label: /"([^"]*)"/.exec(line)?.[1] ?? id,
-    shape: lang === 'diagram' ? (/:\s*(box|round|diamond|db|circle)\b/.exec(line)?.[1] ?? 'box') : undefined,
+    shape: lang === 'diagram' ? (/:\s*(box|round|diamond|db|circle|note)\b/.exec(line)?.[1] ?? 'box') : undefined,
     ...readOptions(line),
   };
 }

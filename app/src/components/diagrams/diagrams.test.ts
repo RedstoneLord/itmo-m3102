@@ -55,6 +55,22 @@ describe('диаграммы DSL группы', () => {
     expect(model.nodes[1]!.y).toBeDefined();
   });
 
+  it('diagram: форма note (лист с уголком) разбирается, как у движка группы', () => {
+    const model = parseGraph(splitLines('title: Цикл\nP: box "План"\nV: note "Версия N"\nP -> V\nV -> P : Следующий цикл', 'diagram'), 'diagram');
+    expect(model.nodes.map((node) => `${node.id}:${node.shape}`)).toEqual(['P:box', 'V:note']);
+    expect(model.edges).toHaveLength(2);
+  });
+
+  it('diagram: цепочка A -> B -> C и стрелка --> дают отдельные рёбра, а не узел с именем «B -> C»', () => {
+    const model = parseGraph(splitLines('A: box "A"\nB: box "B"\nC: box "C"\nA -> B -> C : шаг\nC --> A', 'diagram'), 'diagram');
+    expect(model.nodes.map((node) => node.id)).toEqual(['A', 'B', 'C']);
+    expect(model.edges.map((edge) => `${edge.from}>${edge.to}${edge.label ? ':' + edge.label : ''}${edge.directed ? '' : '(--)'}`)).toEqual([
+      'A>B:шаг',
+      'B>C:шаг',
+      'C>A',
+    ]);
+  });
+
   it('graph: неориентированные рёбра и ручная раскладка', () => {
     const model = parseGraph(splitLines('layout: manual\nn1 "1" @ 320, 300\nn2 "2"\nn2 @ 320, 220\nn1 -- n2', 'graph'), 'graph');
     expect(model.edges[0]!.directed).toBe(false);

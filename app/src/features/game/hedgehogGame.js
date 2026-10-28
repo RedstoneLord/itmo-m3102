@@ -29,7 +29,7 @@ const HATS=[
   {id:'cap',name:'Грибная шапка',cost:250},
   {id:'glasses',name:'Очки',cost:350},
   {id:'chef',name:'Поварской колпак',cost:130,perk:'Яблоки бодрят сильнее'},{id:'helmet',name:'Каска',cost:220,perk:'Старт со щитом'},{id:'wizard',name:'Колпак мага',cost:280,perk:'Ягоды сами подлетают'},{id:'propeller',name:'Пропеллер',cost:400,perk:'Дольше в воздухе'},{id:'halo',name:'Нимб',cost:450,perk:'Бодрость копится медленнее'},{id:'foil',name:'Шапочка из фольги',cost:0,secret:true,perk:'Бонусы действуют дольше'},{id:'crown',name:'Корона',cost:600},
-  {id:'itmocap',name:'Кепка студента ИТМО',cost:0,secret:true,perk:'Сонливость растёт медленнее'},{id:'goldtop',name:'Золотой цилиндр',cost:0,secret:true,perk:'Ягоды дают больше очков'},{id:'crabgear',name:'Шлем краба-шестерёнки',cost:0,secret:true,perk:'Старт со щитом и неуязвимостью'},{id:'orangepeel',name:'Апельсиновая кожура',cost:0,secret:true,perk:'Яблоки бодрят сильнее'},{id:'cpphelm',name:'Шлем C++',cost:0,secret:true,perk:'Быстрый старт'},{id:'foilpro',name:'Фольга-ПРО',cost:0,secret:true,perk:'Бонусы действуют вдвое дольше'}
+  {id:'itmocap',name:'Кепка студента ИТМО',cost:0,secret:true,perk:'Сонливость растёт медленнее'},{id:'goldtop',name:'Золотой цилиндр',cost:0,secret:true,perk:'Ягоды дают больше очков'},{id:'crabgear',name:'Шлем краба-шестерёнки',cost:0,secret:true,perk:'Старт со щитом и неуязвимостью'},{id:'orangepeel',name:'Апельсиновая кожура',cost:0,secret:true,perk:'Яблоки бодрят сильнее'},{id:'cpphelm',name:'Шлем C++',cost:0,secret:true,perk:'Быстрый старт'},{id:'foilpro',name:'Фольга-ПРО',cost:0,secret:true,perk:'Бонусы действуют вдвое дольше'},{id:'luckyseven',name:'Шляпа счастливой семёрки',cost:0,secret:true,perk:'Каждая седьмая ягода забега — двойная'},{id:'grandpa',name:'Дедушкина кепка',cost:320,perk:'Бодрость восстанавливается быстрее'}
 ];
 
 const GOAL_DEFS=[
@@ -328,6 +328,31 @@ function drawHat(ctx,id,R){
     ctx.fillStyle='#2a6fd0';ctx.beginPath();for(let i=0;i<6;i++){const a=-Math.PI/2+i*Math.PI/3;ctx[i?'lineTo':'moveTo'](Math.cos(a)*0.46*R,-0.3*R+Math.sin(a)*0.4*R);}ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.font='800 '+(0.24*R)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('C++',0,-0.3*R);ctx.textBaseline='alphabetic';
   }else if(id==='foilpro'){
     ctx.fillStyle='#e6eaf2';ctx.beginPath();ctx.moveTo(-0.38*R,0);ctx.lineTo(-0.26*R,-0.55*R);ctx.lineTo(-0.05*R,-0.38*R);ctx.lineTo(0.16*R,-0.7*R);ctx.lineTo(0.38*R,0);ctx.closePath();ctx.fill();ctx.fillStyle='#8fe3ff';starPath(ctx,0.2*R,-0.5*R,0.08*R);ctx.fill();ctx.fillStyle='#ffe27a';starPath(ctx,-0.2*R,-0.3*R,0.06*R);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=0.04*R;ctx.beginPath();ctx.moveTo(-0.26*R,-0.55*R);ctx.lineTo(-0.12*R,-0.08*R);ctx.stroke();
+  }else if(id==='luckyseven'){
+    ctx.fillStyle='#d62f4b';ctx.beginPath();ctx.arc(0,0,0.5*R,Math.PI,0);ctx.closePath();ctx.fill();ctx.fillStyle='#b41f38';ell(ctx,0,0,0.6*R,0.08*R,0);ctx.fillStyle='#fff';ctx.font='900 '+(0.46*R)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('7',0,-0.22*R);ctx.textBaseline='alphabetic';ctx.fillStyle='#ffe066';starPath(ctx,0.34*R,-0.5*R,0.1*R);ctx.fill();
+}else if(id==='grandpa'){
+    // борода: сдвинута вправо-вниз и повёрнута на 15° против часовой стрелки вокруг своего центра
+    ctx.save();
+    ctx.fillStyle='#d9dce3';
+   ell(ctx,-0.42*R,0.1*R,0.12*R,0.2*R,0.2);
+    ctx.translate(0.8*R,0.95*R);          // центр бороды (0.6, 0.8) + сдвиг (+0.08, +0.10)
+    ctx.rotate(-15*Math.PI/180);          // отрицательный угол = против часовой
+    ctx.translate(-0.6*R,-0.8*R);
+    ctx.fillStyle='#e6e8ee';ctx.strokeStyle='#b5b9c4';ctx.lineWidth=0.03*R;
+    ctx.beginPath();
+    ctx.moveTo(0.3*R,0.45*R);
+    ctx.quadraticCurveTo(0.2*R,1.0*R,0.62*R,1.2*R);
+    ctx.quadraticCurveTo(1.05*R,1.0*R,0.98*R,0.5*R);
+    ctx.quadraticCurveTo(0.65*R,0.72*R,0.3*R,0.45*R);
+    ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.strokeStyle='rgba(150,156,170,0.7)';ctx.lineWidth=0.025*R;
+    ctx.beginPath();ctx.moveTo(0.5*R,0.78*R);ctx.lineTo(0.55*R,1.08*R);ctx.moveTo(0.72*R,0.76*R);ctx.lineTo(0.72*R,1.08*R);ctx.stroke();
+    ctx.restore();
+    // кепка
+    ctx.fillStyle='#7a6652';ctx.beginPath();ctx.ellipse(-0.04*R,-0.1*R,0.5*R,0.3*R,-0.06,Math.PI,0);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#5a4a3a';ell(ctx,0.34*R,-0.02*R,0.36*R,0.07*R,0.06);
+    ctx.strokeStyle='rgba(255,255,255,0.22)';ctx.lineWidth=0.03*R;ctx.beginPath();ctx.moveTo(-0.3*R,-0.12*R);ctx.lineTo(-0.12*R,-0.36*R);ctx.moveTo(0,-0.1*R);ctx.lineTo(0.12*R,-0.37*R);ctx.moveTo(-0.4*R,-0.2*R);ctx.lineTo(0.3*R,-0.2*R);ctx.stroke();
+    ctx.fillStyle='#a58d73';circ(ctx,-0.04*R,-0.4*R,0.045*R);
   }else if(id==='crown'){
     ctx.fillStyle='#ffcf40';ctx.strokeStyle='#d99a1f';ctx.lineWidth=0.04*R;
     ctx.beginPath();ctx.moveTo(-0.36*R,0);ctx.lineTo(-0.36*R,-0.42*R);ctx.lineTo(-0.18*R,-0.2*R);ctx.lineTo(0,-0.5*R);ctx.lineTo(0.18*R,-0.2*R);ctx.lineTo(0.36*R,-0.42*R);ctx.lineTo(0.36*R,0);ctx.closePath();ctx.fill();ctx.stroke();
@@ -335,55 +360,94 @@ function drawHat(ctx,id,R){
   }
   ctx.restore();
 }
+/* casino:step4 hedgehog — ёжик по эмодзи-референсу (профиль). Геометрия HOG одна на SVG (js/slots-art.js) и canvas (index.html, drawHog).
+   Координаты — в системе референса 512×512 (ёжик смотрит влево); и SVG, и canvas зеркалят её (scale(-k, k)), поэтому в игре ёжик смотрит вправо. */
+/* casino:step4 hedgehog — геометрия HOG совпадает с js/slots-art.js (там SVG, здесь canvas). */
+var HOG = {
+  body: 'M48 207L92 226L101 158L122 203L156 132L186 168L206 137L224 160L262 126L293 117L300 139L357 121L352 150L392 152L428 152L412 174L468 200L444 224L493 248L458 266L486 290L452 312L470 332L440 352L452 394L440 430C420 436 395 440 372 440L250 384L196 380L150 372L124 330L110 250Z',
+  under: 'M190 296C240 330 290 385 372 440L440 430L441 418C400 424 350 410 310 380C270 350 235 320 190 296Z',
+  fringe: 'M50 214L92 226C130 222 170 232 196 252L208 304C190 272 150 256 104 262C80 252 62 240 50 214Z',
+  farLeg: 'M114 350C134 344 158 344 166 350C172 392 170 425 160 446C150 454 120 454 106 448C104 430 106 392 114 350Z',
+  belly: 'M160 366C195 352 245 362 285 386L345 414L366 426C372 440 352 448 320 446L190 446C168 436 156 396 160 366Z',
+  neck: 'M176 285C200 300 210 340 192 374C176 382 156 384 140 380C170 362 182 322 176 285Z',
+  head: 'M18 312C28 276 80 246 138 246C186 248 206 290 204 332C202 372 150 390 92 380C48 372 18 342 18 312Z',
+  nose: 'M20 306C24 297 40 295 52 300C56 311 52 324 39 326C28 324 20 318 20 306Z',
+  mouth: 'M36 332C48 348 66 354 77 343',
+  ear: [198, 281, 28, 36, 16], earIn: [194, 286, 15, 23, 16], eye: [136, 299, 12, 17], eyeShine: [133, 291, 3.5],
+  pawNear: [166, 450, 36, 15], pawRear: [320, 446, 44, 17],
+  toes: { far: [[113, 441, 7]], near: [[154, 447, 8], [170, 454, 7]], rear: [[301, 450, 8], [316, 456, 7]] },
+  stripes: [[150, 212, 172, 168, 13, 'l'], [198, 238, 235, 190, 15, 'l'], [258, 205, 310, 165, 16, 'l'], [250, 265, 305, 222, 15, 'l'], [280, 303, 383, 242, 14, 'l'], [335, 232, 386, 205, 10, 'l'], [330, 328, 402, 298, 14, 'l'], [366, 358, 426, 346, 14, 'l'], [386, 389, 416, 392, 10, 'l'], [420, 316, 450, 304, 9, 'l'], [242, 174, 272, 156, 12, 'd'], [326, 190, 368, 160, 14, 'd'], [400, 264, 430, 254, 10, 'd']],
+  c: { quill: '#85594f', dark: '#6c473d', fringe: '#6f4639', stripeL: '#b97d69', stripeD: '#6f4a43', peach: '#ffd3b6', peachD: '#f7c291', pink: '#f27ab0', nose: '#3d3f43', eye: '#161616' },
+};
+var HOG_PATHS = null;
+function hogPaths() {
+  if (!HOG_PATHS) { HOG_PATHS = {}; for (var key of ['body', 'under', 'fringe', 'farLeg', 'belly', 'neck', 'head', 'nose', 'mouth']) HOG_PATHS[key] = new Path2D(HOG[key]); }
+  return HOG_PATHS;
+}
+function hogEllipse(ctx, e, fill, dx, dy) {
+  ctx.fillStyle = fill; ctx.beginPath(); ctx.ellipse(e[0] + (dx || 0), e[1] + (dy || 0), e[2], e[3], (e[4] || 0) * Math.PI / 180, 0, TAU); ctx.fill();
+}
+function hogToes(ctx, list, dx, dy) {
+  ctx.fillStyle = HOG.c.pink;
+  for (var t of list) { ctx.beginPath(); ctx.arc(t[0] + dx, t[1] + dy, t[2], 0, TAU); ctx.fill(); }
+}
 /* o: curl, leg, run, roll, hat, blink, sleepy, dizzy, t */
-function drawHog(ctx,R,o){
-  const curl=o.curl||0,face=1-clamp(curl*1.7,0,1),hat=o.hat||'none';
-  if(face>0.02){
-    ctx.save();ctx.globalAlpha=face;
-    const run=o.run===undefined?1:o.run,ph=o.leg||0;
-    for(let i=0;i<2;i++){
-      const s=Math.sin(ph+i*Math.PI),c=Math.cos(ph+i*Math.PI);
-      const fx=(i?0.5:-0.12)*R+s*0.26*R*run,fy=0.9*R-Math.max(0,c)*0.2*R*run;
-      ctx.fillStyle='#b98a5d';ell(ctx,fx,fy+0.02*R,0.22*R,0.14*R,0);
-      ctx.fillStyle='#efc99a';ell(ctx,fx,fy,0.2*R,0.12*R,0);
+function drawHog(ctx, R, o) {
+  var curl = o.curl || 0, prof = 1 - clamp(curl * 1.7, 0, 1), hat = o.hat || 'none', c = HOG.c, k = R * 0.0057;
+  if (prof > 0.02) {
+    var P = hogPaths(), run = o.run === undefined ? 1 : o.run, ph = o.leg || 0, amp = 26 * run;
+    var sw = i => Math.sin(ph + i * Math.PI) * amp, lift = i => Math.max(0, Math.cos(ph + i * Math.PI)) * 20 * run;
+    ctx.save(); ctx.globalAlpha = prof;
+    ctx.translate(256 * k, -115 * k - R); ctx.scale(-k, k);
+    // дальняя передняя лапа
+    var fx = sw(1), fy = -lift(1);
+    ctx.fillStyle = c.peachD; ctx.save(); ctx.translate(fx, fy); ctx.fill(P.farLeg); ctx.restore(); hogToes(ctx, HOG.toes.far, fx, fy);
+    // спина, низ, полосы
+    ctx.fillStyle = c.quill; ctx.fill(P.body);
+    ctx.fillStyle = c.dark; ctx.fill(P.under);
+    ctx.lineCap = 'round';
+    for (var s of HOG.stripes) { ctx.strokeStyle = s[5] === 'd' ? c.stripeD : c.stripeL; ctx.lineWidth = s[4]; ctx.beginPath(); ctx.moveTo(s[0], s[1]); ctx.lineTo(s[2], s[3]); ctx.stroke(); }
+    // брюшко и ближние лапы
+    ctx.fillStyle = c.peach; ctx.fill(P.belly);
+    var nx = sw(0), ny = -lift(0), rx = sw(1), ry = -lift(1);
+    hogEllipse(ctx, HOG.pawNear, c.peach, nx, ny); hogEllipse(ctx, HOG.pawRear, c.peach, rx, ry);
+    hogToes(ctx, HOG.toes.near, nx, ny); hogToes(ctx, HOG.toes.rear, rx, ry);
+    // шея, чёлка, голова, ухо
+    ctx.fillStyle = c.peachD; ctx.fill(P.neck);
+    ctx.fillStyle = c.fringe; ctx.fill(P.fringe);
+    ctx.fillStyle = c.peach; ctx.fill(P.head);
+    hogEllipse(ctx, HOG.ear, c.peach); hogEllipse(ctx, HOG.earIn, c.pink);
+    // глаз
+    var e = HOG.eye, bl = o.sleepy ? 0.25 : 1 - (o.blink || 0);
+    if (o.sleepy >= 1 || bl < 0.15) { ctx.strokeStyle = c.eye; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(e[0], e[1] + 4, 11, 0.15, Math.PI - 0.15); ctx.stroke(); }
+    else { hogEllipse(ctx, [e[0], e[1], e[2], e[3] * bl], c.eye); if (bl > 0.5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(HOG.eyeShine[0], HOG.eyeShine[1], HOG.eyeShine[2], 0, TAU); ctx.fill(); } }
+    ctx.fillStyle = c.nose; ctx.fill(P.nose);
+    ctx.strokeStyle = c.nose; ctx.lineWidth = 5; ctx.stroke(P.mouth);
+    ctx.restore();
+    // очки, шляпа, звёздочки — уже в координатах игры (центр ёжика в 0,0; голова справа)
+    ctx.save(); ctx.globalAlpha = prof;
+    if (hat === 'glasses') {
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 0.05 * R; ctx.beginPath(); ctx.moveTo(0.45 * R, 0.02 * R); ctx.lineTo(0.2 * R, -0.12 * R); ctx.stroke();
+      ctx.fillStyle = '#1d1d26'; ell(ctx, 0.64 * R, 0.03 * R, 0.21 * R, 0.19 * R, 0.1); ctx.fillStyle = 'rgba(255,255,255,0.55)'; ell(ctx, 0.58 * R, -0.03 * R, 0.07 * R, 0.04 * R, -0.4);
+    } else if (hat !== 'none') {
+      ctx.translate(0.62 * R, -0.3 * R); ctx.rotate(0.2); ctx.scale(0.72, 0.72); drawHat(ctx, hat, R);
     }
     ctx.restore();
+    if (o.dizzy) {
+      ctx.save(); ctx.globalAlpha = prof; ctx.fillStyle = '#ffe066';
+      for (var i = 0; i < 3; i++) { var a = (o.t || 0) * 4 + i * TAU / 3; starPath(ctx, 0.4 * R + Math.cos(a) * 0.55 * R, -1.3 * R + Math.sin(a) * 0.15 * R, 0.14 * R); ctx.fill(); }
+      ctx.restore();
+    }
   }
-  const n=Math.round(lerp(15,26,curl)),span=lerp(3.5,TAU,curl),center=Math.PI+0.3*(1-curl),rot=(o.roll||0)*curl;
-  spikeRow(ctx,n,span,center,0.86*R,0.38*R,'#5b3d2b',rot,0);
-  spikeRow(ctx,n,span,center+(span>=TAU-0.01?TAU/n/2:span/(n-1)/2),0.84*R,0.27*R,'#8b6240',rot,5);
-  const g=ctx.createRadialGradient(-0.3*R,-0.4*R,0.1*R,0,0,R);
-  g.addColorStop(0,'#a37850');g.addColorStop(1,'#6e4a31');
-  ctx.fillStyle=g;circ(ctx,0,0,0.93*R);
-  if(curl>0.3){
-    ctx.save();ctx.globalAlpha=clamp((curl-0.3)*1.4,0,1);ctx.rotate(rot);
-    ctx.strokeStyle='rgba(255,220,170,0.35)';ctx.lineWidth=0.06*R;ctx.lineCap='round';
-    for(let i=0;i<5;i++){const a=i*1.26;ctx.beginPath();ctx.arc(0,0,0.62*R,a,a+0.55);ctx.stroke();}
-    ctx.restore();
-  }
-  if(face>0.02){
-    ctx.save();ctx.globalAlpha=face;
-    ctx.save();ctx.beginPath();ctx.arc(0,0,0.93*R,0,TAU);ctx.clip();
-    ctx.fillStyle='#f0cfa1';ell(ctx,0.35*R,0.62*R,0.95*R,0.55*R,-0.15);ctx.restore();
-    ctx.fillStyle='#f6d9b0';ell(ctx,0.62*R,0.12*R,0.52*R,0.46*R,0.12);
-    ctx.fillStyle='#e8bf8d';circ(ctx,0.12*R,-0.42*R,0.2*R);ctx.fillStyle='#f3a7a0';circ(ctx,0.14*R,-0.4*R,0.11*R);
-    const ex=0.58*R,ey=-0.06*R,bl=o.sleepy?0.25:(1-(o.blink||0));
-    if(o.sleepy>=1||bl<0.15){ctx.strokeStyle='#2a1c16';ctx.lineWidth=0.06*R;ctx.lineCap='round';ctx.beginPath();ctx.arc(ex,ey+0.02*R,0.1*R,0.15,Math.PI-0.15);ctx.stroke();}
-    else{ctx.fillStyle='#1f1612';ell(ctx,ex,ey,0.1*R,0.11*R*bl,0);if(bl>0.5){ctx.fillStyle='#fff';circ(ctx,ex+0.035*R,ey-0.04*R,0.035*R);}}
-    ctx.fillStyle='rgba(255,130,150,0.5)';ell(ctx,0.62*R,0.3*R,0.14*R,0.09*R,0);
-    ctx.fillStyle='#2b1d18';circ(ctx,1.08*R,0.14*R,0.14*R);ctx.fillStyle='rgba(255,255,255,0.7)';circ(ctx,1.04*R,0.09*R,0.04*R);
-    ctx.strokeStyle='#7a4a30';ctx.lineWidth=0.035*R;ctx.lineCap='round';ctx.beginPath();ctx.arc(0.9*R,0.2*R,0.14*R,0.5,1.9);ctx.stroke();
-    if(hat==='glasses'){
-      ctx.strokeStyle='#222';ctx.lineWidth=0.05*R;ctx.beginPath();ctx.moveTo(0.4*R,-0.12*R);ctx.lineTo(0.05*R,-0.26*R);ctx.stroke();
-      ctx.fillStyle='#1d1d26';ell(ctx,0.58*R,-0.05*R,0.22*R,0.17*R,0.1);ctx.fillStyle='rgba(255,255,255,0.55)';ell(ctx,0.52*R,-0.1*R,0.07*R,0.04*R,-0.4);
-    }else if(hat!=='none'){
-      ctx.save();ctx.translate(0.36*R,-0.8*R);ctx.rotate(0.22);drawHat(ctx,hat,R);ctx.restore();
-    }
-    if(o.dizzy){
-      ctx.fillStyle='#ffe066';
-      for(let i=0;i<3;i++){const a=(o.t||0)*4+i*TAU/3;starPath(ctx,0.3*R+Math.cos(a)*0.5*R,-1.2*R+Math.sin(a)*0.15*R,0.14*R);ctx.fill();}
-    }
-    ctx.restore();
+  if (curl > 0.02) { // клубок: колючки того же рисунка (две тональности и светлые штрихи)
+    var ball = clamp(curl * 1.7, 0, 1), rot = o.roll || 0;
+    ctx.save(); ctx.globalAlpha = ball;
+    spikeRow(ctx, 24, TAU, 0, 0.86 * R, 0.36 * R, c.dark, rot, 0);
+    spikeRow(ctx, 24, TAU, TAU / 48, 0.84 * R, 0.27 * R, c.quill, rot, 5);
+    ctx.fillStyle = c.quill; circ(ctx, 0, 0, 0.93 * R);
+    ctx.save(); ctx.rotate(rot); ctx.lineCap = 'round'; ctx.lineWidth = 0.1 * R;
+    for (var j = 0; j < 5; j++) { var b = j * 1.26; ctx.strokeStyle = j % 2 ? c.stripeD : c.stripeL; ctx.beginPath(); ctx.arc(0, 0, 0.6 * R, b, b + 0.55); ctx.stroke(); }
+    ctx.restore(); ctx.restore();
   }
 }
 
@@ -503,9 +567,9 @@ const MID={par:0.28,base:0.70,a1:24,f1:0.0058,a2:34,f2:0.0021,ph:1.2};
 const DECO={0:['tuft','flower'],1:['tuft','flower','flower'],2:['leaf','mush','tuft'],3:['mush','mush','tuft'],4:['tuft','pebble','flower'],5:['tuft','flower','pebble']};
 const AMB={0:['dust','#fff4cc'],1:['petal','#ffb6d0'],2:['leaf','#e8903a'],3:['spore','#e9d4ff'],4:['dust','#ffe2b0'],5:['firefly','#fff29a']};
 const COMBO_MSG=['Ёжик в ударе!','Колючая магия!','Это вообще легально?!','Мама, смотри без лап!','Иголки дрожат от восторга!','Ёжик-легенда!','Белки аплодируют стоя!','Физика обиделась!'];
-const MS={42:'42 м — ответ на всё!',100:'100 м! Привет, M3102',314:'π метров! 3,14…',404:'404 м — ёжик не найден',500:'500 м — лёгкая разминка',2048:'2048 м — 2^11 одобряет',1337:'1337 м — l33t-ёж'};
-const FONT='"Inter Variable",Inter,system-ui,-apple-system,"Segoe UI",sans-serif';
-/* Правка поверх оригинала: интерфейс в стиле сайта М3102 — иконки lucide вместо эмодзи, шрифт Inter */
+const MS={42:'42 м — ответ на всё!',100:'100 м! Привет, M3102',314:'π метров! 3,14…',404:'404 м — ёжик не найден',500:'500 м — лёгкая разминка',2048:'2048 м — 2^11 одобряет',1337:'1337 м — l33t-ёж',256:'256 м — ровно один байт!',777:'777 м — счастливое число!',1024:'1024 м — один «кибиметр»',3141:'3141 м — π-рожок'};
+const FONT='"Onest Variable","Onest Fallback",system-ui,-apple-system,"Segoe UI",sans-serif';
+/* Правка поверх оригинала: интерфейс в стиле сайта М3102 — иконки lucide вместо эмодзи, шрифт сайта (Onest) */
 const ICONS={
   play:'<polygon points="6 3 20 12 6 21 6 3"/>',
   pause:'<rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/>',
@@ -568,7 +632,7 @@ class Game{
     this.t=0;this.tod=menu?90:0;this.score=0;this.trick=0;this.dist=0;this.distInt=0;this.combo=0;this.comboT=0;this.sleep=0;
     this.run={flips:0,perfect:0,stumbles:0,berries:0,apples:0,maxCombo:0};
     this.fx=[];this.texts=[];this.banners=[];this.shake=0;this.life=[];this.lifeT=1;this.zk=0;this.flash=0;this.rainT=0;this.ms={};this.dieT=0;this.cullT=0;this.saveT=0;this.timeInt=0;
-    this.biome=-1;this.cam.init=false;this.pal=getPal(this.tod);this.prog=0;this.bst=false;if(!menu){const bo=this.save.boosts||(this.save.boosts={}),used=[];if(bo.shield>0){bo.shield--;this.hog.shd=25;used.push('щит');}if(bo.coffee>0){bo.coffee--;this.hog.cof=8;used.push('кофе');}if(bo.magnet>0){bo.magnet--;this.hog.mag=9;used.push('магнит');}if(bo.berrystart>0){bo.berrystart--;this.bst=true;used.push('«Ягодный старт»');}if(used.length){this.addBanner('🎁 Бонусы: '+used.join(', '));persist(this.save);}}
+    this.biome=-1;this.cam.init=false;this.pal=getPal(this.tod);this.prog=0;this.bst=false;if(!menu){const bo=this.save.boosts||(this.save.boosts={}),used=[];if(bo.shield>0){bo.shield--;this.hog.shd=25;used.push('щит');}if(bo.coffee>0){bo.coffee--;this.hog.cof=8;used.push('кофе');}if(bo.magnet>0){bo.magnet--;this.hog.mag=9;used.push('магнит');}if(bo.berrystart>0){bo.berrystart--;this.bst=true;used.push('«Ягодный старт»');}if(used.length){this.addBanner('Бонусы: '+used.join(', '));persist(this.save);}}
   }
   start(){
     this.begin(false);this.state='play';this.biome=-1;
@@ -700,7 +764,7 @@ class Game{
       if(dx*dx+dy*dy<(R+22)*(R+22))this.collect(k,c);
     }
     // сонливость, комбо
-    this.sleep=Math.max(0,this.sleep-dt*lerp(0.03,0.016,pc)*(this.save.hat==='halo'?1.5:1));if(h.cof>0)this.sleep=0;
+    this.sleep=Math.max(0,this.sleep-dt*lerp(0.03,0.016,pc)*(this.save.hat==='halo'?1.5:this.save.hat==='grandpa'?1.35:1));if(h.cof>0)this.sleep=0;
     if(this.combo>0){this.comboT-=dt;if(this.comboT<=0){this.combo=0;}}
     // дистанция
     this.dist=Math.max(this.dist,(h.x-100)/25);
@@ -742,6 +806,10 @@ class Game{
     if(r.flips>=42&&!this.ms.e42){this.ms.e42=1;this.addBanner('42 кувырка — ответ на всё! +42 ягоды');this.save.berries+=42;r.berries+=42;this.audio.sfx('unlock');this.burst(c.x,c.y,18,{type:'star',col:'#ffe066',size:6,sp:260,life:0.9,g:0});}
     if(r.perfect>=7&&!this.ms.e7){this.ms.e7=1;this.addBanner('Семь идеальных приземлений! +7 ягод');this.save.berries+=7;r.berries+=7;this.audio.sfx('goal');}
     if(r.stumbles===0&&this.dist>=150&&!this.ms.ecl){this.ms.ecl=1;this.addBanner('150 м без единого бонка! +20 ягод');this.save.berries+=20;r.berries+=20;this.audio.sfx('goal');}
+    if(r.flips>=100&&!this.ms.e100){this.ms.e100=1;this.addBanner('100 кувырков за забег — ёжик-волчок! +25 ягод');this.save.berries+=25;r.berries+=25;this.audio.sfx('unlock');this.burst(c.x,c.y,22,{type:'star',col:'#ffe066',size:6,sp:280,life:0.9,g:0});}
+    if(this.t>=404&&!this.ms.e404){this.ms.e404=1;this.sleep=0;this.addBanner('Ошибка 404: сонливость не найдена');this.audio.sfx('goal');}
+    if(r.berries>=77&&!this.ms.e77){this.ms.e77=1;this.addBanner('77 ягод за забег — загляни в казино! +7 ягод');this.save.berries+=7;r.berries+=7;this.audio.sfx('goal');}
+    if(new Date().getHours()===3&&!this.ms.e3am){this.ms.e3am=1;this.text(c.x,c.y-R*2.6,'Три часа ночи. Ёжик тоже не спит.','#c9d6ff',22);}
     if(this.sleep>=0.9&&this.state==='play'&&!this.ms.enap){this.ms.enap=1;this.text(c.x,c.y-R*2.4,'Ещё пять минуточек…','#c9d6ff',24);}
   }
   word(w){
@@ -749,7 +817,11 @@ class Game{
     const h=this.hog,c=this.center(h),T=this.world.terrain;
     if(w==='fyr'){this.snort();if(!this.ms.wfyr){this.ms.wfyr=1;h.boostT=Math.max(h.boostT,2.5);}return;}
     const k='w'+w;if(this.ms[k])return;this.ms[k]=1;
-    if(w==='itmo'){this.rainT=5;this.addBanner('Университет ИТМО! +10 ягод');this.save.berries+=10;this.run.berries+=10;this.audio.sfx('unlock');this.flash=0.4;}
+    if(w==='rust'){this.addBanner('Борроу-чекер доволен! Щит выдан');h.shd=25;this.audio.sfx('mush');this.burst(c.x,c.y,14,{col:'#c9622a',size:5,sp:220,life:0.7,g:0,type:'star'});}
+    else if(w==='matan'){this.addBanner('∀ε>0 ∃δ>0: ягоды сходятся!');for(let i=0;i<10;i++){const x=c.x+260+i*50;this.world.pickups.push({x,y:T.y(x)-60-Math.round(90/(i+1)),kind:'berry',got:false,ph:i});}this.audio.sfx('mush');}
+    else if(w==='coffee'){this.addBanner('Двойной эспрессо!');h.cof=8;this.sleep=0;h.boostT=Math.max(h.boostT,3);this.audio.sfx('mush');}
+    else if(w==='moon'){this.addBanner('Лунная гравитация!');h.fea=12;this.audio.sfx('flower');}
+    else if(w==='itmo'){this.rainT=5;this.addBanner('Университет ИТМО! +10 ягод');this.save.berries+=10;this.run.berries+=10;this.audio.sfx('unlock');this.flash=0.4;}
     else if(w==='kot'){this.text(c.x,c.y-R*2.6,'Мяу.','#ffe9c2',30);this.addBanner('Кот одобряет! +7 ягод');this.save.berries+=7;this.run.berries+=7;this.audio.sfx('flower');}
     else if(w==='git'){this.addBanner('git commit -m "ягоды"');for(let i=0;i<12;i++){const a=i/12*TAU,x=c.x+320+Math.cos(a)*90;this.world.pickups.push({x,y:T.y(x)-110+Math.sin(a)*70,kind:'berry',got:false,ph:i});}this.audio.sfx('mush');}
   }
@@ -839,7 +911,7 @@ class Game{
   collect(k,c){
     const h=this.hog,m=this.mult();k.got=true;if(POWER_KINDS.includes(k.kind)){this.power(k);return;}
     if(k.kind==='berry'){
-      h.berryStreak++;h.berryT=0.9;const bb=(this.hog.stm>0?2:1)+(this.bst&&Math.random()<0.25?1:0);this.save.berries+=bb;this.run.berries+=bb;this.dayAdd('berries',1);this.trick+=5*m*(this.save.hat==='goldtop'?2:1);
+      h.berryStreak++;h.berryT=0.9;const bb=(this.hog.stm>0?2:1)+(this.bst&&Math.random()<0.25?1:0)+(this.save.hat==='luckyseven'&&this.run.berries%7===6?1:0);this.save.berries+=bb;this.run.berries+=bb;this.dayAdd('berries',1);this.trick+=5*m*(this.save.hat==='goldtop'?2:1);
       this.audio.sfx('berry',h.berryStreak-1);this.burst(k.x,k.y,5,{col:'#ff7fae',size:3,sp:100,life:0.4,g:0});
     }else if(k.kind==='apple'){
       this.sleep=Math.max(0,this.sleep-(this.save.hat==='chef'?0.4:this.save.hat==='orangepeel'?0.45:0.25));this.run.apples++;this.dayAdd('apples',1);this.trick+=50*m;
@@ -1243,7 +1315,7 @@ class Game{
 }
 
 /* ===== интерфейс: оверлеи, ввод, магазин шляп ===== */
-const WORDS={'KeyI,KeyT,KeyM,KeyO':'itmo','KeyF,KeyY,KeyR':'fyr','KeyK,KeyO,KeyT':'kot','KeyG,KeyI,KeyT':'git'};
+const WORDS={'KeyI,KeyT,KeyM,KeyO':'itmo','KeyF,KeyY,KeyR':'fyr','KeyK,KeyO,KeyT':'kot','KeyG,KeyI,KeyT':'git','KeyR,KeyU,KeyS,KeyT':'rust','KeyM,KeyA,KeyT,KeyA,KeyN':'matan','KeyC,KeyO,KeyF,KeyF,KeyE,KeyE':'coffee','KeyM,KeyO,KeyO,KeyN':'moon'};
 const CTRL=new Set(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD']);
 function drawPreview(cv,hat,r,sz){
   const dpr=2,w=sz[0],h=sz[1];cv.style.width=w+'px';cv.style.height=h+'px';
@@ -1306,7 +1378,7 @@ function mount(container,opts){
       '<canvas class="hh-prev"></canvas>'+
       '<h2 class="hh-h">Ёжик-кувырок</h2>'+
       '<p class="hh-sub">Катись с холмов, взлетай и крути кувырки.<br>Главное — не дать ёжику уснуть.</p>'+
-      '<div class="hh-row"><button class="btn2 btn-primary hh-big" data-act="play" type="button">'+ic('play')+' Играть</button><button class="btn2 hh-big" data-act="hats" type="button">Шляпы</button><a class="btn2 hh-big" href="#/slots">'+ic('slots')+' Слоты</a></div>'+
+      '<div class="hh-row"><button class="btn2 btn-primary hh-big" data-act="play" type="button">'+ic('play')+' Играть</button><button class="btn2 hh-big" data-act="hats" type="button">Шляпы</button><a class="btn2 hh-big" href="#/casino">'+ic('slots')+' Казино</a></div>'+
       '<div class="hh-chips"><span class="hh-chip" title="Ягоды">'+gl('berry')+fmt(save.berries)+'</span>'+slotsChip()+'<span class="hh-chip" title="Рекорд дистанции">'+ic('flag')+fmt(b.dist)+' м</span><span class="hh-chip" title="Рекорд очков">'+ic('star')+fmt(b.score)+'</span><span class="hh-chip" title="Лучшее комбо">'+ic('flame')+'×'+fmt(b.combo)+'</span></div>'+
       '<div class="hh-sec">Цели дня</div><ul class="hh-goals">'+goalsHtml()+'</ul>'+
       '<ul class="hh-help">'+
@@ -1347,7 +1419,8 @@ function mount(container,opts){
         const own=save.owned.includes(h.id),sel=save.hat===h.id;
         return '<button type="button" class="hh-hat'+(sel?' hh-sel':'')+(own?'':' hh-lock')+'" data-hat="'+h.id+'"><canvas></canvas><b>'+h.name+'</b>'+(h.perk?'<small class="hh-perk">'+h.perk+'</small>':'')+'<span>'+(sel?'Надето':own?'Надеть':gl('berry')+' '+h.cost)+'</span></button>';
       }).join('')+'</div>'+
-      '<div class="hh-row"><button class="btn2 btn-primary hh-big" data-act="back" type="button">'+ic('back')+' Назад</button></div>'+
+      /* Правка поверх оригинала: ссылка в коллекцию — там шляпы из капсул и все секретные, с примеркой */
+      '<div class="hh-row"><button class="btn2 btn-primary hh-big" data-act="back" type="button">'+ic('back')+' Назад</button><a class="btn2 hh-big" href="#/collection">Вся коллекция</a></div>'+
     '</div>';
     ovs.hats.querySelectorAll('.hh-hat').forEach(el=>drawPreview(el.querySelector('canvas'),el.dataset.hat,22,[72,72]));
   }
@@ -1371,7 +1444,7 @@ function mount(container,opts){
   }
   function onClick(e){
     const pv=e.target.closest('.hh-prev');
-    if(pv&&container.contains(pv)){pc++;if(pc===25&&!save.owned.includes('foil')){save.owned.push('foil');persist(save);audio.sfx('unlock');const sb2=$('.hh-start .hh-sub');if(sb2)sb2.innerHTML='Секретная шапочка из фольги найдена!<br>Загляни в «Шляпы».';}audio.sfx('flower');pv.classList.remove('hh-boing');void pv.offsetWidth;pv.classList.add('hh-boing');const sb=$('.hh-start .hh-sub');if(sb&&pc===5)sb.innerHTML='Эй! Не тыкай ёжика.<br>Он щекотки боится.';if(sb&&pc===12)sb.innerHTML='Ладно, секрет: нажми H во время игры.';return;}
+    if(pv&&container.contains(pv)){pc++;if(pc===25&&!save.owned.includes('foil')){save.owned.push('foil');persist(save);audio.sfx('unlock');const sb2=$('.hh-start .hh-sub');if(sb2)sb2.innerHTML='Секретная шапочка из фольги найдена!<br>Загляни в «Шляпы».';}if(pc===50&&!save.owned.includes('grandpa')){save.owned.push('grandpa');persist(save);audio.sfx('unlock');const sg=$('.hh-start .hh-sub');if(sg)sg.innerHTML='Дедушка оставил свою кепку!<br>Загляни в «Шляпы».';}audio.sfx('flower');pv.classList.remove('hh-boing');void pv.offsetWidth;pv.classList.add('hh-boing');const sb=$('.hh-start .hh-sub');if(sb&&pc===5)sb.innerHTML='Эй! Не тыкай ёжика.<br>Он щекотки боится.';if(sb&&pc===12)sb.innerHTML='Ладно, секрет: нажми H во время игры.';return;}
     const hat=e.target.closest('[data-hat]');
     if(hat&&container.contains(hat)){
       const h=HATS.find(x=>x.id===hat.dataset.hat);if(!h)return;
@@ -1439,4 +1512,7 @@ function mount(container,opts){
   };
 }
 
+
 export const HedgehogGame = { mount };
+/* Правка поверх оригинала: рисунок ёжика и список шляп нужны странице коллекции — примерка шляпы без запуска игры */
+export { drawHog, HATS };

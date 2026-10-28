@@ -145,6 +145,13 @@
   stroke: var(--color-border-strong);
 }
 
+/* Загнутый уголок листа («note»): только линия */
+.nodeFold {
+  fill: none;
+  stroke: var(--color-border-strong);
+  stroke-width: 1.4;
+}
+
 .nodeAccent {
   fill: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-elevated));
   stroke: color-mix(in srgb, var(--color-accent) 55%, transparent);
@@ -190,6 +197,7 @@
 
 /* Вершина с {color: …} — обводка этим цветом */
 .colored .node,
+.colored .nodeFold,
 .colored .nodeAccent,
 .colored .nodeWarm {
   stroke: var(--node-color);
