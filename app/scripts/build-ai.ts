@@ -2,10 +2,10 @@
 // репозитория (без сети) тем же кодом, что страница предмета; вызывается при сборке готового сайта (assemble-classic.ts).
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { buildAiFiles, COURSE_INFO_DIR } from '../src/features/subjects/aiFiles';
+import { buildAiFiles, CARDS_DIR, COURSE_INFO_DIR } from '../src/features/subjects/aiFiles';
 
-/** Откуда берутся файлы: конспекты, материалы, лабораторные, записи лекций и описания курсов */
-const DIRS = ['Конспекты', 'Материалы', 'Лабораторные', 'Записи лекций', COURSE_INFO_DIR.slice(0, -1)];
+/** Откуда берутся файлы: конспекты, материалы, лабораторные, записи лекций и описания курсов, карточки */
+const DIRS = ['Конспекты', 'Материалы', 'Лабораторные', 'Записи лекций', COURSE_INFO_DIR.slice(0, -1), CARDS_DIR.slice(0, -1)];
 
 /** Все файлы папки с путями через «/» (на Windows readdir отдаёт «\»; fs.cpSync и git портят кириллицу — обходим сами) */
 function walk(root: string, dir: string): string[] {

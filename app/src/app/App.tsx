@@ -49,6 +49,8 @@ const GamePage = lazy(() => import('../features/game/GamePage'));
 // Казино группы: хаб, слоты, блэкджек, рулетка, коллекция — каждая игра догружает свой модуль
 const CasinoPage = lazy(() => import('../features/casino/CasinoPage'));
 const CollectionPage = lazy(() => import('../features/casino/collection/CollectionPage'));
+// Карточки для самопроверки: режим повторения по конспекту, предмету или всем сразу
+const CardsPage = lazy(() => import('../features/cards/CardsPage'));
 
 /**
  * Все страницы приложения. Данные живут в localStorage (backend нет), конспекты, материалы
@@ -124,6 +126,7 @@ export function App() {
             <Route path="blackjack" element={<CasinoPage game="blackjack" />} />
             <Route path="roulette" element={<CasinoPage game="roulette" />} />
             <Route path="collection/*" element={<CollectionPage />} />
+            <Route path="cards" element={<CardsPage />} />
             {/* Страницы казино группы зовут «Ёжика» по адресу #/hedgehog, у нас это игра */}
             <Route path="hedgehog" element={<Navigate to={SECTIONS.game.path} replace />} />
 

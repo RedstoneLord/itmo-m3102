@@ -5,3 +5,5 @@ src/data/siteQuizzes
 # Интерпретатор кода массива RedstoneLord — тоже как в оригинале
 src/components/diagrams/arrayCode.js
 src/data/courseInfo
+# Карточки к конспектам — их пишут отдельные сессии, формат @@/Q:/A: проверяет cards:check, а не Prettier
+src/data/cards

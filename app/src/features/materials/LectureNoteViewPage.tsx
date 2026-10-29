@@ -15,6 +15,7 @@ import { useOptionalSubjectName } from '../subjects/subjectsStore';
 import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import { LectureNoteContentView } from './LectureNoteContentView';
 import { NoteLessonInfo } from './NoteLessonInfo';
+import { NoteCards } from '../cards/NoteCards';
 import { SiteQuiz } from './SiteQuiz';
 import { useMarksStore } from './marksStore';
 import { MarkButton, useMarkHighlights } from './NoteMarks';
@@ -208,6 +209,8 @@ function NoteView({ note }: { note: LectureNote }) {
           )}
           {/* Свой тест — только к конспектам группы и только если в конспекте нет теста от самой группы */}
           {note.source === 'github' && !note.content.includes('```quiz') && <SiteQuiz sourceRef={note.sourceRef} />}
+          {/* Карточки для самопроверки (см. features/cards) — к конспекту и к PDF, если они составлены */}
+          {note.source === 'github' && <NoteCards sourceRef={note.sourceRef} />}
         </div>
         <NotePager note={note} siblings={siblings} />
       </article>

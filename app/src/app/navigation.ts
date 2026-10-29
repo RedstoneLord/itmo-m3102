@@ -97,5 +97,7 @@ export function findSection(pathname: string): Section | undefined {
   if (pathname.startsWith('/files') || pathname.startsWith('/links')) return SECTIONS.materials;
   // Игры казино — страницы одного раздела: подсвечивается «Казино», а не пусто
   if (CASINO_PATHS.test(pathname)) return SECTIONS.casino;
+  // Карточки — режим повторения: подсвечивается «Повторение»
+  if (pathname.startsWith('/cards')) return SECTIONS.review;
   return ALL_SECTIONS.find((section) => pathname.startsWith(section.path));
 }

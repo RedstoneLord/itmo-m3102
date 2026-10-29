@@ -33,6 +33,8 @@ import { SubjectCover } from './SubjectCover';
 import { SubjectDialog } from './SubjectDialog';
 import { SubjectInfoDialog } from './SubjectInfoDialog';
 import { SubjectInfoSection } from './SubjectInfoSection';
+import { cardFilesOfSubject } from '../cards/cardsData';
+import { SubjectCards } from '../cards/SubjectCards';
 import { useSubjectInfoStore } from './subjectInfoStore';
 import { useSubjectInfoDialog } from './useSubjectInfoDialog';
 import { SubjectLinksTab } from './SubjectLinksTab';
@@ -45,7 +47,7 @@ import { useSubjectDialog } from './useSubjectDialog';
 import { useSubjectsStore } from './subjectsStore';
 import styles from './SubjectDetailPage.module.css';
 
-export type SubjectTab = 'overview' | 'tasks' | 'materials' | 'notes' | 'links';
+export type SubjectTab = 'overview' | 'tasks' | 'materials' | 'cards' | 'notes' | 'links';
 
 // Как в TodayHeader: играет один раз за сессию, а не при каждом открытии страницы предмета
 let hasRevealedSubjectTitle = false;
@@ -54,6 +56,7 @@ const TAB_LABELS: Record<SubjectTab, string> = {
   overview: 'Обзор',
   tasks: 'Задачи',
   materials: 'Конспекты',
+  cards: 'Карточки',
   notes: 'Заметки',
   links: 'Ссылки',
 };
@@ -110,10 +113,13 @@ export function SubjectDetailPage() {
   const nextDeadline = getNextDeadline(tasks, subject.id, today, { deadlines: groupDeadlines, done: deadlinesDone });
   const overdue = getOverdueCount(tasks, subject.id, today, { deadlines: groupDeadlines, done: deadlinesDone });
 
+  // Вкладка «Карточки» — только у предметов, к конспектам которых карточки уже составлены
+  const subjectCards = cardFilesOfSubject(subject.id);
   const tabItems: TabItem<SubjectTab>[] = [
     { value: 'overview', label: TAB_LABELS.overview },
     { value: 'tasks', label: TAB_LABELS.tasks, count: subjectTasks.filter(isOpenTask).length },
     { value: 'materials', label: TAB_LABELS.materials, count: ready ? subjectMaterials.length + subjectLectureNotes.length : undefined },
+    ...(subjectCards.length ? [{ value: 'cards' as const, label: TAB_LABELS.cards }] : []),
     { value: 'notes', label: TAB_LABELS.notes, count: subjectNotes.length },
     { value: 'links', label: TAB_LABELS.links, count: ready ? subjectGroupLinks.length + subjectLinks.length : undefined },
   ];
@@ -200,6 +206,7 @@ export function SubjectDetailPage() {
             onEditMaterial={materialDialog.openEdit}
           />
         )}
+        {tab === 'cards' && subjectCards.length > 0 && <SubjectCards subjectId={subject.id} />}
         {tab === 'notes' && (
           <SubjectNotesTab notes={subjectNotes} today={today} onAdd={() => noteDialog.openCreate(subject.id)} onEdit={noteDialog.openEdit} />
         )}

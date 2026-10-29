@@ -6,6 +6,7 @@ import { formatShortDate } from '../../lib/dates';
 import { saveBlob } from '../../lib/download';
 import { noteSourceUrl } from '../../services/githubContent';
 import type { LectureNote, Material, Note, SubjectInfo } from '../../types/models';
+import { cardFilesOfSubject } from '../cards/cardsData';
 import { loadPdfTexts } from '../search/searchIndex';
 import { AI_BASE, buildSubjectDigest, estimateTokens } from './aiDigest';
 
@@ -27,6 +28,8 @@ interface AiDigestButtonProps {
  */
 const aiLink = (subjectId: string) => `${AI_BASE}${subjectId}.md`;
 const aiIndexLink = (subjectId: string) => `${AI_BASE}${subjectId}/index.md`;
+/** Оглавление карточек предмета: по нему ИИ открывает набор по нужному конспекту (вопросы с ответами) */
+const aiCardsLink = (subjectId: string) => `${AI_BASE}${subjectId}/cards/index.md`;
 
 /** «Для ИИ»: все конспекты и материалы предмета одним .md — скачать, скопировать текст или ссылку и отдать ChatGPT / Claude */
 export function AiDigestButton({ today, subjectId, ...data }: AiDigestButtonProps) {
@@ -93,6 +96,11 @@ export function AiDigestButton({ today, subjectId, ...data }: AiDigestButtonProp
       <DropdownItem icon={Link2} onSelect={() => copyLink(aiLink(subjectId))}>
         Скопировать ссылку на весь файл
       </DropdownItem>
+      {cardFilesOfSubject(subjectId).length > 0 && (
+        <DropdownItem icon={Link2} onSelect={() => copyLink(aiCardsLink(subjectId))}>
+          Скопировать ссылку — карточки
+        </DropdownItem>
+      )}
     </DropdownMenu>
   );
 }
