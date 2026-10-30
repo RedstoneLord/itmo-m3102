@@ -1,0 +1,35 @@
+/* Extra settings: see js/prefs.js */
+
+/* Hide tests */
+html[data-hide-quizzes] .quiz-block { display: none !important; }
+html[data-hide-quizzes] .quiz-page > * { display: none !important; }
+html[data-hide-quizzes] .quiz-page::before {
+  content: "Тесты скрыты в настройках (Настройки → Тесты и удобство)";
+  display: block;
+  padding: 1rem 0;
+  opacity: .7;
+}
+
+/* Reduced motion */
+html[data-reduce-motion] *,
+html[data-reduce-motion] *::before,
+html[data-reduce-motion] *::after {
+  animation-duration: .001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Text size */
+html[data-text-scale="110"] body { zoom: 1.1; }
+html[data-text-scale="125"] body { zoom: 1.25; }
+html[data-text-scale="140"] body { zoom: 1.4; }
+
+/* Links */
+html[data-underline-links] a { text-decoration: underline; }
+
+/* Settings panel */
+.prefs-extra .prefs-row { display: flex; align-items: center; gap: .6rem; margin: .6rem 0; }
+.prefs-extra select { font: inherit; }
+.prefs-extra .prefs-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+.prefs-extra .prefs-actions button { font: inherit; cursor: pointer; }

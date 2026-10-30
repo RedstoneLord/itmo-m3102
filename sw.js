@@ -15,7 +15,7 @@
     и пометка «показана сохранённая версия».
   При изменении списка SHELL или после крупных правок можно поднять номер в CACHE.
 */
-const CACHE = 'm3102-shell-v16';
+const CACHE = 'm3102-shell-v17';
 const CONTENT = 'm3102-content-v1'; // не начинается с m3102-shell-, поэтому activate его не удаляет; то же имя в js/offline.js
 const SHELL = [
   './', './index.html', './site.css', './manifest.webmanifest',
@@ -32,7 +32,7 @@ const SHELL = [
   './img/icons/icon-192.png', './img/icons/icon-512.png', './img/icons/apple-touch-icon.png',
   './img/icons/icon-maskable-192.png', './img/icons/icon-maskable-512.png', './css/backdrop.css',
   './js/backdrop.js', './css/glass.css',
-  './js/settings.js', './css/settings.css', './css/appearance.css', './js/appearance.js',
+  './js/settings.js', './js/prefs.js', './css/prefs.css', './css/settings.css', './css/appearance.css', './js/appearance.js',
   './fonts/URWGothic-Book.woff2', './fonts/URWGothic-Demi.woff2',
   './js/slots.js', './js/slots-math.js', './js/slots-art.js', './js/slots-audio.js', './css/slots.css', './js/rewards.js',
   './css/casino-themes.css', './css/casino.css', './js/blackjack-math.js', './js/blackjack.js',

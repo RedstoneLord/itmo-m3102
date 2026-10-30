@@ -2,6 +2,8 @@
     <html lang="ru">
     <head>
     <meta charset="UTF-8">
+<!-- prefs-extra -->
+<script>try{var s=JSON.parse(localStorage.getItem("m3102-settings-v1")||"{}"),h=document.documentElement;if(s.hideQuizzes===true)h.setAttribute("data-hide-quizzes","");if(s.reduceMotion===true)h.setAttribute("data-reduce-motion","");if(s.underlineLinks===true)h.setAttribute("data-underline-links","");if([110,125,140].indexOf(Number(s.textScale))>=0)h.setAttribute("data-text-scale",String(Number(s.textScale)))}catch(e){}</script>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>M3102</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -331,7 +333,10 @@
     <link rel="stylesheet" href="./css/casino.css">
     <link rel="stylesheet" href="./css/casino-themes.css">
     <link rel="stylesheet" href="./css/palettes-special.css">
-    </head>
+    
+<link rel="stylesheet" href="css/prefs.css">
+<script type="module" src="js/prefs.js"></script>
+</head>
 
 <script>
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
