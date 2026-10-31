@@ -16,7 +16,8 @@ test('карточки: вкладка предмета, занятие с кл�
   await page.goto('./#/subjects/aisd?tab=cards');
   await expect(page.getByRole('tab', { name: 'Карточки', selected: true })).toBeVisible(FIRST_PAINT);
   await expect(page.getByText('Мастер-Теорема')).toBeVisible(FIRST_PAINT);
-  await page.getByRole('link', { name: 'Начать' }).click();
+  // У предмета много конспектов с карточками: общая кнопка «Начать» открыла бы первый, нужен именно этот
+  await page.getByRole('link', { name: /Мастер-Теорема/ }).click();
 
   await expect(page.getByText('1 из 17')).toBeVisible(FIRST_PAINT);
   await expect(page.getByText('Что описывает рекуррентность')).toBeVisible(FIRST_PAINT);
