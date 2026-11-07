@@ -45,7 +45,7 @@ const API = 'api.github.com';
 const REPO_API = '/repos/RedstoneLord/itmo-m3102/';
 const OFFLINE_DATA = [
   'data/lectures.json', 'data/display-names.json', 'data/search-index.json', 'data/old-paths.json',
-  'data/links.json', 'data/memes.json', 'Дедлайны/deadlines.json',
+  'data/links.json', 'data/memes.json', 'data/khinkali.json', 'Дедлайны/deadlines.json',
 ];
 const TIMEOUT = 6000; // сколько ждать сеть, если в кэше есть копия
 

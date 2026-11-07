@@ -74,6 +74,12 @@
     .student-overlay .role-pill{background:rgba(34,197,94,.35);color:#fff;backdrop-filter:blur(3px);}
     .student-card .btn{position:absolute;top:12px;right:12px;z-index:1;background:rgba(20,20,26,.55);border-color:rgba(255,255,255,.3);color:#fff;backdrop-filter:blur(3px);}
     .student-card .btn:hover{border-color:#fff;background:rgba(20,20,26,.75);}
+    .student-overlay .khinkali-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:calc(999px * var(--rp,1));background:rgba(0,0,0,.45);color:#fff;border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(3px);font-size:.72rem;font-weight:700;}
+    .khinkali-total-banner{display:inline-flex;align-items:center;gap:12px;padding:8px 16px;background:var(--card);border:1px solid var(--border);border-radius:calc(12px * var(--rs,1));box-shadow:0 2px 8px rgba(0,0,0,.06);align-self:flex-start;}
+    .khinkali-total-emoji{font-size:1.6rem;line-height:1;}
+    .khinkali-total-text{display:flex;flex-direction:column;}
+    .khinkali-total-num{font-size:1.25rem;font-weight:800;color:var(--text);line-height:1.1;font-variant-numeric:tabular-nums;}
+    .khinkali-total-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600;}
     .viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
     .btn2{border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 14px;border-radius:calc(7px * var(--rs,1));font-size:.85rem;cursor:pointer;text-decoration:none;}
     .btn2:hover{border-color:var(--accent);}
@@ -1373,9 +1379,63 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       {name:'Новожилова Марьяна Сергеевна',nick:'maryasch',fact:'Чтение',tg:'cgsg67'},
       {name:'Попова Екатерина Владимировна',nick:'EkaterinaPopova6',fact:'Вязание',tg:'epv08'}
     ];
-    function renderStudentsPage(){
+    let _khinkaliData = null;
+    async function loadKhinkaliData(){
+      if(_khinkaliData) return _khinkaliData;
+      try {
+        const res = await fetch('./data/khinkali.json');
+        if(res.ok){
+          _khinkaliData = await res.json();
+          return _khinkaliData;
+        }
+      } catch(e) {}
+      try {
+        const res = await fetch(rawUrl('data/khinkali.json'));
+        if(res.ok){
+          _khinkaliData = await res.json();
+          return _khinkaliData;
+        }
+      } catch(e) {}
+      return {};
+    }
+
+    function studentKhinkaliCount(data, student){
+      if(!data) return 0;
+      const map = data.students && typeof data.students === 'object' ? data.students : data;
+      if(Array.isArray(map)){
+        const nickLow = (student.nick || '').toLowerCase();
+        const nameLow = (student.name || '').toLowerCase();
+        const hit = map.find(x => {
+          const k = String(x.nick || x.github || x.name || '').toLowerCase();
+          return k === nickLow || k === nameLow;
+        });
+        return hit ? (Number(hit.count ?? hit.khinkali) || 0) : 0;
+      }
+      if(typeof map === 'object'){
+        const nickLow = (student.nick || '').toLowerCase();
+        const nameLow = (student.name || '').toLowerCase();
+        const surnameLow = (student.name || '').split(' ')[0].toLowerCase();
+        for(const [k, v] of Object.entries(map)){
+          const kl = k.toLowerCase();
+          if(kl === nickLow || kl === nameLow || kl === surnameLow){
+            return Number(v) || 0;
+          }
+        }
+      }
+      return 0;
+    }
+
+    function totalKhinkaliCount(data, students){
+      if(data && typeof data.total === 'number') return data.total;
+      return students.reduce((sum, s) => sum + studentKhinkaliCount(data, s), 0);
+    }
+
+    async function renderStudentsPage(){
       const c=document.getElementById('content');
+      const khinkali = await loadKhinkaliData();
+      const total = totalKhinkaliCount(khinkali, STUDENTS);
       const cards=STUDENTS.map(s=>{
+        const count = studentKhinkaliCount(khinkali, s);
         const ghUrl=`https://github.com/${encodeURIComponent(s.nick)}`;
         const githubPhoto=`${ghUrl}.png?size=160`;
         const surname=s.name.split(' ')[0];
@@ -1389,11 +1449,29 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       <a class="nick-link" href="${esc(ghUrl)}" target="_blank" rel="noopener">
         Github · @${esc(s.nick)}
       </a>${s.tg ? ` · <a class="nick-link" href="https://t.me/${esc(s.tg)}" target="_blank" rel="noopener">Telegram · @${esc(s.tg)}</a>` : ''}<br>
-      <span class="fact-pill">${esc(s.fact)}</span>${s.role ? `<span class="role-pill">${esc(s.role)}</span>` : ''}
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:4px;">
+        <span class="khinkali-pill" title="Съедено хинкали">🥟 ${count}</span>
+        <div><span class="fact-pill">${esc(s.fact)}</span>${s.role ? `<span class="role-pill">${esc(s.role)}</span>` : ''}</div>
+      </div>
     </div>
         </div>`;
       }).join('');
-      c.innerHTML=`<div class="intro"><h1>Студенты группы М3102</h1><p class="sub">Ник — ссылка на GitHub-профиль, «Коммиты» — история правок этого студента в репозитории материалов группы.</p></div><div class="students-grid">${cards}</div>`;
+      c.innerHTML=`<div class="intro">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:8px;">
+          <div>
+            <h1>Студенты группы М3102</h1>
+            <p class="sub">Ник — ссылка на GitHub-профиль, «Коммиты» — история правок этого студента в репозитории материалов группы.</p>
+          </div>
+          <div class="khinkali-total-banner" title="Общий счётчик хинкали группы">
+            <span class="khinkali-total-emoji">🥟</span>
+            <div class="khinkali-total-text">
+              <span class="khinkali-total-num">${total}</span>
+              <span class="khinkali-total-lbl">всего хинкали</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="students-grid">${cards}</div>`;
     }
 
     /* ---------- страница «Ещё» (Диаграммы + Мемы +...) ---------- */

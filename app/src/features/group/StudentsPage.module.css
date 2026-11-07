@@ -14,6 +14,14 @@
   background: var(--surface-inner);
 }
 
+.photoCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
 .photo {
   flex-shrink: 0;
   width: 64px;
@@ -21,6 +29,57 @@
   border-radius: 50%;
   background: var(--color-bg-hover);
   object-fit: cover;
+}
+
+.khinkaliBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-secondary);
+  line-height: 1.2;
+}
+
+.totalBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: var(--space-2) var(--space-3-5);
+  border-radius: var(--radius-lg);
+  background: var(--surface-inner);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.totalIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.totalInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.totalCount {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.totalLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: var(--weight-semibold);
 }
 
 .info {
