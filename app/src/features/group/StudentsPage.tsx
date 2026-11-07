@@ -15,9 +15,10 @@ type RawKhinkaliData = Record<string, unknown> | Array<{ nick?: string; github?:
 
 function studentKhinkaliCount(data: RawKhinkaliData | null, student: { github: string; name: string }): number {
   if (!data) return 0;
-  const map: unknown = (data as { students?: unknown }).students && typeof (data as { students?: unknown }).students === 'object'
-    ? (data as { students: unknown }).students
-    : data;
+  const map: unknown =
+    (data as { students?: unknown }).students && typeof (data as { students?: unknown }).students === 'object'
+      ? (data as { students: unknown }).students
+      : data;
   if (Array.isArray(map)) {
     const nickLow = student.github.toLowerCase();
     const nameLow = student.name.toLowerCase();
