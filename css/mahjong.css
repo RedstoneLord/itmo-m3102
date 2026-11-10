@@ -349,3 +349,12 @@
     height: 22px;
   }
 }
+
+/* Короткие отклики дополняют переходы костей между ходами. */
+.mj-tile { transition: background .18s, border-color .18s, box-shadow .18s; }
+.mj-tile[data-selected="true"] { box-shadow: 0 4px 0 var(--border), 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.mj-victory { animation: mj-arrive .4s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .mj-victory { animation: none; }
+  .mj-tile { transition: none; }
+}

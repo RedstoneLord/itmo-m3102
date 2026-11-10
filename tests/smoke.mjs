@@ -14,7 +14,7 @@ const code = `const PLAN_KEY=${planner};({readPlan})`;
 const { readPlan } = vm.runInNewContext(code, { Date, localStorage });
 const { isHiddenPath } = vm.runInNewContext(`const HIDDEN_FILE_NAMES=${visibility};({isHiddenPath})`);
 
-for (const path of ['README.md', '.gitignore', 'package.json', 'data/schedule.json', 'js/schedule.js', 'css/schedule.css']) assert.equal(isHiddenPath(path), true, path);
+for (const path of ['CLAUDE.md', 'AGENTS.md', 'claude.md', 'Agents.md', 'README.md', '.gitignore', 'package.json', 'data/schedule.json', 'js/schedule.js', 'css/schedule.css']) assert.equal(isHiddenPath(path), true, path);
 assert.equal(isHiddenPath('Конспекты/ДМ/main.md'), false);
 
 storage.set('m3102-study-plan-v1', '{broken');

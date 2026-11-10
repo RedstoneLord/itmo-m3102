@@ -41,8 +41,27 @@ export function renderMahjongPage() {
       message = 'Не удалось сохранить партию: браузеру не хватает места.';
     }
   };
+  const animations = new Set();
+  const ghosts = new Set();
+  const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.hasAttribute('data-reduce-motion');
+  function animate(node, frames, options = {}) {
+    if (reduceMotion() || !node.animate) return;
+    const animation = node.animate(frames, { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)', ...options });
+    animations.add(animation);
+    animation.finished.then(() => animations.delete(animation), () => animations.delete(animation));
+    return animation;
+  }
+  function clearMotion() {
+    animations.forEach((animation) => animation.cancel());
+    animations.clear();
+    ghosts.forEach((node) => node.remove());
+    ghosts.clear();
+  }
   function draw(focusId) {
     if (destroyed) return;
+    const previous = new Map([...content.querySelectorAll('.mj-tile')].map((node) => [node.dataset.tile, {
+      node, rect: node.getBoundingClientRect(), selected: node.dataset.selected, hint: node.dataset.hint,
+    }]));
     const g = progress.game,
       won = g && !g.tiles.length,
       moves = g ? pairs(g.tiles) : [];
@@ -72,6 +91,37 @@ export function renderMahjongPage() {
       <p class="mj-status" role="status">${g && !won && !moves.length ? 'Нет доступных пар. Отмените ход или перемешайте кости, чтобы продолжить.' : message}</p>
       <details class="mj-rules"><summary>Правила и награды</summary><p>Снимайте одинаковые кости парами. Кость свободна, если её не накрывает другая и открыт хотя бы один край: левый или правый. Затемнённые кости пока закрыты. Для клавиатуры используйте Tab и Enter.</p><p>Следующая пара за 12 секунд продолжает серию. Можно отдыхать сколько угодно — таймера проигрыша нет. Партия сохраняется после каждого хода.</p><p>За победу: 20 / 40 / 65 ягод по сложности. Бонус — 2 ягоды за шаг лучшей серии, максимум 20. Каждая подсказка, отмена или перемешивание уменьшает только бонус на 3 ягоды. Базовая награда остаётся. Перемешивание при необходимости перестраивает оставшиеся кости. Одна партия — одна выплата.</p></details>
     </section>`;
+    if (!reduceMotion()) {
+      const current = [...content.querySelectorAll('.mj-tile')];
+      const ids = new Set(current.map((node) => node.dataset.tile));
+      current.forEach((node, index) => {
+        const old = previous.get(node.dataset.tile);
+        const rect = node.getBoundingClientRect();
+        if (!old) {
+          animate(node, [{ opacity: 0, transform: 'translateY(10px) scale(.94)' }, { opacity: 1, transform: 'none' }], { delay: previous.size ? 0 : Math.min(index * 9, 220) });
+        } else if (Math.abs(old.rect.x - rect.x) > 1 || Math.abs(old.rect.y - rect.y) > 1) {
+          animate(node, [{ transform: `translate(${old.rect.x - rect.x}px, ${old.rect.y - rect.y}px)` }, { transform: 'none' }], { duration: 360 });
+        } else if (old.node.innerHTML !== node.innerHTML) {
+          animate(node, [{ opacity: .3, transform: 'scale(.88)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 320 });
+        } else if ((node.dataset.selected === 'true' && old.selected !== 'true') || (node.dataset.hint === 'true' && old.hint !== 'true')) {
+          animate(node, [{ transform: 'scale(1)' }, { transform: 'scale(1.07)', offset: .45 }, { transform: 'scale(1)' }]);
+        }
+      });
+      // Копии уходящих костей не задерживают ход и не принимают нажатия.
+      previous.forEach(({ node, rect }, id) => {
+        if (ids.has(id)) return;
+        const ghost = node.cloneNode(true);
+        ghost.removeAttribute('data-tile');
+        ghost.setAttribute('aria-hidden', 'true');
+        ghost.disabled = true;
+        ghost.style.cssText = `position:fixed;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;height:${rect.height}px;z-index:1000;pointer-events:none;`;
+        document.body.appendChild(ghost);
+        ghosts.add(ghost);
+        const motion = animate(ghost, [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'translateY(-14px) scale(.8)' }], { duration: 220 });
+        const remove = () => { ghost.remove(); ghosts.delete(ghost); };
+        if (motion) motion.finished.then(remove, remove); else remove();
+      });
+    }
     if (focusId !== undefined)
       content.querySelector(`[data-${typeof focusId === 'number' ? 'tile' : 'action'}="${focusId}"]`)?.focus({ preventScroll: true });
   }
@@ -165,6 +215,7 @@ export function renderMahjongPage() {
     if (event.key === MAHJONG_KEY) {
       // Другая версия или вкладка продолжила ту же партию: перечитываем перед следующим действием.
       destroyed = true;
+      clearMotion();
       content.removeEventListener('click', onClick);
       content.removeEventListener('change', onChange);
       window.removeEventListener('storage', onStorage);
@@ -176,6 +227,7 @@ export function renderMahjongPage() {
   window.addEventListener('storage', onStorage);
   window.__hhDestroy = () => {
     destroyed = true;
+    clearMotion();
     content.removeEventListener('click', onClick);
     content.removeEventListener('change', onChange);
     window.removeEventListener('storage', onStorage);
