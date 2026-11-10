@@ -1,0 +1,351 @@
+/* Маджонг: цвета, шрифты и скругления основного сайта, без внешних библиотек. */
+.mj-page {
+  max-width: 1050px;
+  margin: auto;
+  padding-bottom: 40px;
+  color: var(--text);
+}
+.mj-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  margin-top: 18px;
+}
+.mj-intro {
+  margin: 20px 0;
+}
+.mj-intro h1 {
+  margin: 8px 0;
+}
+.mj-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  background: var(--gl-fill, var(--card));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.mj-hero h2 {
+  font-size: clamp(18px, 2.5vw, 26px);
+  margin: 0 0 10px;
+}
+.mj-hero p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.mj-harvest {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.mj-harvest strong {
+  font-size: 28px;
+  color: var(--accent);
+}
+.mj-harvest span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.mj-setup,
+.mj-tools,
+.mj-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+}
+.mj-setup label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 100%;
+}
+.mj-setup select {
+  font: inherit;
+  padding: 12px;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(8px * var(--rs, 1));
+  max-width: 100%;
+}
+.mj-setup > .btn2:first-of-type {
+  margin-left: auto;
+}
+.mj-page .btn2 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+}
+.mj-page .btn2:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.mj-page .btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.mj-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.mj-stats > div {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--gl-fill, var(--card));
+  display: grid;
+  gap: 8px;
+}
+.mj-stats span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.mj-stats b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+}
+.mj-table {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--gl-fill, var(--card));
+  padding: 24px 12px;
+}
+.mj-board {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 8 / calc(var(--rows) * 1.0875);
+  margin: auto;
+  isolation: isolate;
+}
+.mj-tile {
+  position: absolute;
+  left: calc(var(--x) * 12% + var(--z) * 0.55%);
+  top: calc((var(--y) - var(--offset)) * 96% / var(--rows) - var(--z) * 0.8%);
+  width: 11.7%;
+  height: calc(92% / var(--rows));
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: calc(9px * var(--rs, 1));
+  background: var(--card);
+  color: var(--text);
+  box-shadow:
+    0 4px 0 var(--border),
+    0 6px 7px #0002;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.mj-tile > svg {
+  width: 60%;
+  height: 60%;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.mj-tile > span {
+  font-size: 10px;
+  pointer-events: none;
+}
+.mj-tile > small {
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  font-size: 9px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.mj-tile[data-free="false"] {
+  background: color-mix(in srgb, var(--text) 7%, var(--card));
+  cursor: default;
+}
+.mj-tile[data-free="false"] > svg {
+  opacity: 0.4;
+  filter: grayscale(0.65);
+}
+.mj-tile[data-selected="true"],
+.mj-tile[data-hint="true"] {
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+}
+.mj-tile[data-hint="true"] {
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+}
+.mj-status {
+  min-height: 1.6em;
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 14px;
+}
+.mj-notice {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.mj-welcome,
+.mj-victory {
+  text-align: center;
+  padding: 32px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--gl-fill, var(--card));
+}
+.mj-welcome > svg {
+  max-width: 100%;
+}
+.mj-welcome p,
+.mj-victory p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+.mj-victory strong {
+  color: var(--accent);
+}
+.mj-mascot {
+  animation: mj-arrive 0.35s ease-out;
+}
+.mj-rules {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  margin-top: 24px;
+  font-size: 14px;
+}
+.mj-rules summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.mj-rules p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+@keyframes mj-arrive {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (hover: hover) {
+  .mj-tile[data-free="true"]:hover {
+    border-color: var(--accent);
+  }
+}
+@media (max-width: 600px) {
+  .mj-hero {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .mj-playing p {
+    display: none;
+  }
+  .mj-hero h2 {
+    font-size: 18px;
+  }
+  .mj-harvest {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .mj-harvest strong {
+    font-size: 20px;
+  }
+  .mj-harvest > svg {
+    width: 22px;
+    height: 22px;
+  }
+  .mj-setup > .btn2:first-of-type {
+    margin-left: 0;
+  }
+  .mj-stats {
+    gap: 6px;
+  }
+  .mj-stats > div {
+    padding: 8px;
+    gap: 6px;
+  }
+  .mj-stats span {
+    font-size: 10px;
+    min-height: 2.8em;
+  }
+  .mj-stats b {
+    font-size: 20px;
+  }
+  .mj-table {
+    padding: 14px 4px;
+  }
+  .mj-tile {
+    border-radius: calc(5px * var(--rs, 1));
+    padding: 2px;
+  }
+  .mj-tile > span {
+    display: none;
+  }
+  .mj-tile > small {
+    font-size: 8px;
+    left: 2px;
+    top: 0;
+  }
+  .mj-tile > svg {
+    width: 72%;
+    height: 72%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mj-mascot {
+    animation: none;
+  }
+  .mj-tile {
+    transition: none;
+  }
+}
+/* Спрайт казино имеет собственные размеры: в интерфейсе маджонга задаём их явно. */
+.mj-harvest > svg {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+.mj-stats b > svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.mj-welcome > svg,
+.mj-mascot > svg {
+  width: 100px;
+  height: 100px;
+}
+@media (max-width: 600px) {
+  .mj-harvest > svg {
+    width: 22px;
+    height: 22px;
+  }
+}

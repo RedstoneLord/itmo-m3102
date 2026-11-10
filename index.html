@@ -337,6 +337,7 @@
     <link rel="stylesheet" href="./css/appearance.css">
     <link rel="stylesheet" href="./css/slots.css">
     <link rel="stylesheet" href="./css/casino.css">
+    <link rel="stylesheet" href="./css/mahjong.css">
     <link rel="stylesheet" href="./css/casino-themes.css">
     <link rel="stylesheet" href="./css/palettes-special.css">
     
@@ -408,6 +409,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     import { installCasinoThemes, decorateCasinoPage } from './js/casino-themes.js'; /* casino:step6 */
     import { renderBlackjackPage } from './js/blackjack.js';
     import { renderRoulettePage } from './js/roulette.js';
+    import { renderMahjongPage } from './js/mahjong.js';
     import { signShared, slotsChipText } from './js/slots-math.js';
     import { installSettings, renderSettingsPage } from './js/settings.js';
 
@@ -1483,6 +1485,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
           <a class="card" data-go="diagrams"><div class="ic">${ic('diagram',22)}</div><div class="meta"><div class="name">Диаграммы</div><div class="desc">Конструктор диаграмм для конспектов</div></div></a>
           <a class="card" data-go="memes"><div class="ic">${ic('smile',22)}</div><div class="meta"><div class="name">Мемы</div><div class="desc">Мемы группы</div></div></a>
           <a class="card" data-go="hedgehog"><div class="ic">🦔</div><div class="meta"><div class="name">Ёжик-кувырок</div><div class="desc">Мини-игра: катись с холмов, делай кувырки, не засыпай</div></div></a>
+          <a class="card" href="#/mahjong" data-go="mahjong"><div class="ic">${ic('more',22)}</div><div class="meta"><div class="name">Маджонг</div><div class="desc">Ягодный сад: собирай пары, открывай ярусы и получай ягоды</div></div></a>
           <a class="card" data-go="casino"><div class="ic">${ic('sparkles',22)}</div><div class="meta"><div class="name">Казино</div><div class="desc">Слоты, блэкджек и рулетка на ягоды ёжика</div></div></a>
           <a class="card" data-go="collection"><div class="ic">${ic('trophy',22)}</div><div class="meta"><div class="name">Коллекция</div><div class="desc">Капсулы, альбом, ежедневные спины и достижения</div></div></a>
           <a class="card" data-go="settings"><div class="ic">${ic('settings',22)}</div><div class="meta"><div class="name">Настройки</div><div class="desc">Цвета, шрифт и внешний вид сайта</div></div></a>
@@ -3335,6 +3338,7 @@ global.HedgehogGame={mount,_test:{Game,World,Terrain,loadSave}};
       if(h==='slots')return{mode:'slots',path:''};
       if(h==='casino')return{mode:'casino',path:''};
       if(h==='blackjack')return{mode:'blackjack',path:''};
+      if(h==='mahjong')return{mode:'mahjong',path:''};
       if(h==='roulette')return{mode:'roulette',path:''};
       if(h==='collection'||h.startsWith('collection/'))return{mode:'collection',path:h.slice(11)};
       if(h==='links')return{mode:'links',path:''};
@@ -3353,7 +3357,7 @@ global.HedgehogGame={mount,_test:{Game,World,Terrain,loadSave}};
       if(mode==='home')key='home';
       else if(mode==='schedule')key='schedule';
       else if(['homework','hw-deadlines','deadlines'].includes(mode))key='homework';
-      else if(['diagrams','memes','hedgehog','slots','casino','blackjack','roulette','collection','other','students','settings'].includes(mode))key='other';
+      else if(['diagrams','memes','hedgehog','mahjong','slots','casino','blackjack','roulette','collection','other','students','settings'].includes(mode))key='other';
       document.querySelectorAll(`#tab-${key},#bn-${key}`).forEach(el=>{el.classList.add('active');el.setAttribute('aria-current','page');});
     }
     function breadcrumbs(path){
@@ -3563,7 +3567,7 @@ function renderPdfView(path){
     });
     }
 
-const TAB_ORDER={home:0,browse:1,note:1,view:1,links:1,schedule:2,homework:3,'hw-deadlines':3,deadlines:3,other:4,students:4,diagrams:4,memes:4,hedgehog:4,settings:4,slots:4,casino:4,blackjack:4,roulette:4,collection:4};
+const TAB_ORDER={home:0,browse:1,note:1,view:1,links:1,schedule:2,homework:3,'hw-deadlines':3,deadlines:3,other:4,students:4,diagrams:4,memes:4,hedgehog:4,mahjong:4,settings:4,slots:4,casino:4,blackjack:4,roulette:4,collection:4};
 let currentMode=null,currentHash=null,transitionToken=0;
 const reducedMotion=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -3584,6 +3588,7 @@ function renderRoute(){
   else if(mode==='students')renderStudentsPage();
   else if(mode==='other')renderOtherPage();
   else if(mode==='hedgehog')renderHedgehogPage();
+  else if(mode==='mahjong')renderMahjongPage();
   else if(mode==='slots')renderSlotsPage();
   else if(mode==='casino')renderCasinoPage();
   else if(mode==='blackjack')renderBlackjackPage();
