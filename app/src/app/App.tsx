@@ -45,6 +45,7 @@ const TasksPage = page(() => import('../features/tasks/TasksPage'), 'TasksPage')
 const ReviewPage = page(() => import('../features/quizzes/ReviewPage'), 'ReviewPage');
 const ExamPage = page(() => import('../features/quizzes/ExamPage'), 'ExamPage');
 // Игра тяжёлая (~60 КБ) — грузится, только когда её открыли
+const MahjongPage = lazy(() => import('../features/mahjong/MahjongPage'));
 const GamePage = lazy(() => import('../features/game/GamePage'));
 // Казино группы: хаб, слоты, блэкджек, рулетка, коллекция — каждая игра догружает свой модуль
 const CasinoPage = lazy(() => import('../features/casino/CasinoPage'));
@@ -120,6 +121,7 @@ export function App() {
             <Route path="more" element={<MorePage />} />
             <Route path="design" element={<DesignSystemPage />} />
             <Route path="diagrams" element={<DiagramEditorPage />} />
+            <Route path="mahjong" element={<MahjongPage />} />
             <Route path="game" element={<GamePage />} />
             <Route path="casino" element={<CasinoPage game="casino" />} />
             <Route path="slots" element={<CasinoPage game="slots" />} />

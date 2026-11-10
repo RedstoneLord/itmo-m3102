@@ -43,6 +43,7 @@ const LABELS: Record<string, string> = {
   semester: 'семестр',
   me: 'кто вы в очередях',
   radio: 'станция радио',
+  mahjong: 'партия и статистика маджонга',
   'diagram-draft': 'черновик схемы',
   'pdf-pages': 'место в PDF',
 };

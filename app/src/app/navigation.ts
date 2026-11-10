@@ -47,6 +47,7 @@ export const SECTIONS = {
   memes: { label: 'Мемы', path: '/memes', icon: Image },
   diagrams: { label: 'Диаграммы', path: '/diagrams', icon: Shapes },
   game: { label: 'Ёжик-кувырок', path: '/game', icon: Gamepad2 },
+  mahjong: { label: 'Маджонг', path: '/mahjong', icon: Shapes },
   casino: { label: 'Казино', path: '/casino', icon: Dices },
   settings: { label: 'Настройки', path: '/settings', icon: Settings },
   more: { label: 'Ещё', path: '/more', icon: Ellipsis },
@@ -67,7 +68,7 @@ export const SIDEBAR_PRIMARY: Section[] = [
 ];
 
 /** Боковое меню: «Другое», после разделителя. */
-export const SIDEBAR_SECONDARY: Section[] = [SECTIONS.students, SECTIONS.diagrams, SECTIONS.memes, SECTIONS.game, SECTIONS.casino];
+export const SIDEBAR_SECONDARY: Section[] = [SECTIONS.students, SECTIONS.diagrams, SECTIONS.memes, SECTIONS.game, SECTIONS.mahjong, SECTIONS.casino];
 
 /** Нижняя панель на телефоне (плюс кнопка «Ещё»). */
 export const MOBILE_TABS: Section[] = [SECTIONS.today, SECTIONS.schedule, SECTIONS.materials, SECTIONS.deadlines];
@@ -82,6 +83,7 @@ export const MORE_PAGE_SECTIONS: Section[] = [
   SECTIONS.diagrams,
   SECTIONS.memes,
   SECTIONS.game,
+  SECTIONS.mahjong,
   SECTIONS.casino,
   SECTIONS.settings,
 ];
