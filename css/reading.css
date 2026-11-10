@@ -1,0 +1,104 @@
+/* Спокойное оформление классического сайта. Экранные правила не меняют PDF. */
+@media screen {
+  :root, :root[data-theme], :root:not([data-theme="light"]) {
+    --gl-tex: none;
+    --gl-sheen: none;
+    --gl-fill: var(--card);
+    --gl-fill-hover: var(--card);
+    --gl-glow: inset 0 0 0 transparent;
+    --gl-drop: 0 2px 8px rgb(0 0 0 / .025);
+    --gl-border: var(--border);
+    --gl-border-top: var(--border);
+  }
+  .bgfx-hog, .bgfx-stripes { animation: none; opacity: .07; }
+  .bgfx-glow { opacity: .08; }
+  .card:hover, .material-link:hover { transform: none; }
+  .intro .sub { line-height: 1.7; }
+  .card .name { line-height: 1.5; }
+  .card .desc { line-height: 1.6; margin-top: 5px; }
+  .is-reading body { background: var(--bg); }
+  .is-reading .bgfx { display: none; }
+  .is-reading header { position: relative; background: var(--bg); backdrop-filter: none; }
+  .is-reading .note-layout { gap: 40px; margin-top: 24px; }
+  .is-reading #note-body {
+    max-width: 70ch; padding: 28px 32px 56px;
+    background: var(--card); border-radius: var(--radius);
+    font-size: 1.0625rem; line-height: 1.85; letter-spacing: 0;
+    overflow-wrap: anywhere;
+  }
+  .is-reading #note-body:empty { display: none; }
+  .is-reading #note-body h1, .is-reading #note-body h2, .is-reading #note-body h3 {
+    color: var(--text); background: none; -webkit-text-fill-color: currentColor;
+    line-height: 1.35; margin-top: 1.8em; letter-spacing: -.02em;
+  }
+  .is-reading #note-body > :first-child { margin-top: 0; }
+  .is-reading #note-body p { margin: 1em 0; }
+  .is-reading #note-body li { margin: .35em 0; }
+  .is-reading #note-body a { text-underline-offset: .2em; }
+  .is-reading #note-body pre { overflow-wrap: normal; line-height: 1.6; }
+  .is-reading #note-body .katex-display { overflow-x: auto; overflow-y: hidden; padding-block: .3em; }
+  .is-reading #note-body .code-copy:focus-visible { opacity: 1; }
+  .is-reading .viewbar { margin-bottom: 20px; flex-wrap: wrap; }
+  .is-reading .side { box-shadow: none; backdrop-filter: none; }
+  .is-reading .lec-list.enter .lec { animation: none; }
+  @media (min-width: 1001px) {
+    .is-reading .note-layout { grid-template-columns: minmax(0,1fr) 260px; }
+    .is-reading .note-layout.no-side { grid-template-columns: minmax(0,1fr); }
+    .is-reading .side { top: 24px; max-height: calc(100dvh - 48px); }
+  }
+  @media (max-width: 760px) {
+    .is-reading #note-body { padding: 22px 16px 36px; font-size: 1rem; }
+    .is-reading .note-layout { margin-top: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .hh-loader > span { animation: none !important; }
+  }
+}
+
+/* Общая типографика: основной текст 16px, подписи не мельче 14px. */
+@media screen {
+  body { line-height: 1.6; letter-spacing: 0; }
+  button, input, select, textarea { line-height: 1.5; }
+  :where(a, button, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px;
+  }
+  .card .name, .link-body strong, .hw-text, .hw-item-top strong,
+  .today-subject, .recent-name, .plan-row label, .deadline-name,
+  .meme-card figcaption strong, .sched-card-body, .quiz-opt { font-size: 1rem; }
+  .btn2, .mat-switch a, .hw-filters button, .side-tabs button { min-height: 44px; }
+  .panel-head, .hw-item-top, .hw-group-head { flex-wrap: wrap; }
+  .panel-head { row-gap: 8px; }
+  .card, .link-card, .hw-item { line-height: 1.6; }
+  .plan-row label span, .sched-card-main small, .ss-text strong,
+  .ss-text small, .lec-name, .lec-file-name {
+    white-space: normal; overflow-wrap: anywhere;
+  }
+  .plan-row { padding-block: 8px; }
+  .hw-text, .link-body small, .settings-note, .diagram-help { line-height: 1.7; }
+  .hw-item.is-done { opacity: 1; }
+  .hw-item.is-done .hw-text { color: var(--muted); }
+  .hw-item:hover, .meme-card:hover, .lesson:hover, .recent-item:hover,
+  .link-card:hover, .btn2:hover, .week-pill:hover { transform: none; }
+  .intro h1 { font-size: clamp(1.8rem, 3.5vw, 2.75rem); line-height: 1.2; letter-spacing: -.035em; }
+  .sched-eyebrow { letter-spacing: .06em; }
+  .crumbs { line-height: 1.8; overflow-wrap: anywhere; }
+  .diagram-source textarea, .diagram-source-wrap pre { font-size: .9375rem; line-height: 1.65; }
+  .diagram-source-wrap { grid-template-columns: 44px minmax(0,1fr); }
+  .meme-delete:focus-visible, .meme-card:focus-within .meme-delete { opacity: 1; }
+  .bn-item { font-size: .875rem; }
+  .bn-item span:last-child { white-space: normal; overflow-wrap: anywhere; }
+  .ss-input, .side-search, .links-search input { font-size: 1rem; }
+  @media (max-width: 760px) {
+    input, select, textarea { font-size: 1rem; }
+    .hw-item-top { gap: 8px; }
+    .hw-due { white-space: normal; }
+    .sched-card summary { padding: 16px 14px; align-items: flex-start; flex-wrap: wrap; }
+    .sched-card-side { flex-wrap: wrap; gap: 8px; }
+    .sched-card-body { padding: 0 14px 18px; }
+    .week-pill { padding: 10px 2px; }
+    .side-subject { white-space: normal; }
+    .viewname { min-width: 0; overflow-wrap: anywhere; }
+    .meme-delete { opacity: 1; width: 36px; height: 36px; }
+  }
+}

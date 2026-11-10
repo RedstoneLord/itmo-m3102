@@ -75,7 +75,7 @@
   transform:translateY(-1px)
 }
 .dash-panel.homework-panel .hw-item-top{align-items:center;gap:10px}
-.dash-panel.homework-panel .hw-item-top strong{display:block;font-size:.85rem;font-weight:700}
+.dash-panel.homework-panel .hw-item-top strong{display:block;font-size:.875rem;font-weight:700}
 .dash-panel.homework-panel .hw-text{margin-top:5px}
 
 /* наведение: стекло становится плотнее, акцентная рамка */
@@ -113,11 +113,11 @@
 .panel-head{padding-bottom:14px;border-bottom:1px solid color-mix(in srgb,var(--gl-border) 70%,transparent);margin-bottom:18px}
 .panel-head h2{font-size:1.02rem;font-weight:780;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
 .panel-head h2::before{content:"";width:4px;height:1em;border-radius:calc(3px * var(--rs,1));background:linear-gradient(180deg,var(--accent),var(--accent2))}
-.panel-head>a{font-size:.74rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+.panel-head>a{font-size:.875rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
 .card .name,.material-link strong,.link-body strong,.dl-title,.sched-card-main strong,.today-detail strong{font-weight:700;letter-spacing:-.02em}
-.card .desc,.material-link small,.link-body small,.dl-note,.today-detail small,.recent-meta,.sched-card-main small{color:var(--muted);font-size:.76rem;line-height:1.5}
+.card .desc,.material-link small,.link-body small,.dl-note,.today-detail small,.recent-meta,.sched-card-main small{color:var(--muted);font-size:.875rem;line-height:1.5}
 .dl-queue-head,.dl-stat-label,.deadlines-page .overview-label,.sched-eyebrow,.hw-sec,.hh-sec{
-  font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)
+  font-size:.875rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)
 }
 .sched-eyebrow{color:var(--accent)}
 .dl-title,.sched-card-main strong{font-size:1.1rem}

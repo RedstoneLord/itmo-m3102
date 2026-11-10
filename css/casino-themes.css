@@ -87,7 +87,7 @@
 .casino-root.th-arcade .sl-reel{border-right:3px solid #0a0a1a}
 .casino-root.th-arcade .sl-sym,.sl-sym.sk-arcade{filter:url(#ct-arcade) drop-shadow(3px 3px 0 #0a0a1a);image-rendering:pixelated;-webkit-mask:radial-gradient(circle at 50% 50%,#000 58%,transparent 62%) 0 0/3px 3px;mask:radial-gradient(circle at 50% 50%,#000 58%,transparent 62%) 0 0/3px 3px}
 .casino-root.th-arcade h1{font-size:clamp(1.3rem,3.2vw,2.2rem);line-height:1.35}
-.casino-root.th-arcade :is(.btn2,.sl-stat>span,.cs-stat>span,.cs-kind,.sl-winbar>span){font-size:.62rem;line-height:1.6;letter-spacing:.03em}
+.casino-root.th-arcade :is(.btn2,.sl-stat>span,.cs-stat>span,.cs-kind,.sl-winbar>span){font-size:.875rem;line-height:1.6;letter-spacing:.03em}
 .casino-root.th-arcade :is(h2,h3){font-size:.95rem;line-height:1.5}
 .casino-root.th-arcade .cs-game{box-shadow:8px 8px 0 #0a0a1a;border:3px solid #0a0a1a}
 .casino-root.th-arcade .ct-felt{--ct-felt-tex:linear-gradient(rgba(255,61,154,.2) 1px,transparent 1px) 0 0/28px 28px,linear-gradient(90deg,rgba(49,224,255,.16) 1px,transparent 1px) 0 0/28px 28px}

@@ -17,8 +17,8 @@
 .choice-option{display:grid;justify-items:center;gap:8px;padding:16px 10px 14px;border:1px solid var(--border);border-radius:calc(12px * var(--rs,1));background:color-mix(in srgb,var(--card) 60%,transparent);color:var(--text);cursor:pointer;transition:border-color .25s,background .25s,transform .25s}
 .choice-option:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
 .choice-option[aria-checked="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
-.choice-name{font-size:.86rem;font-weight:700}
-.choice-note{font-size:.72rem;color:var(--muted);text-align:center}
+.choice-name{font-size:.875rem;font-weight:700}
+.choice-note{font-size:.875rem;color:var(--muted);text-align:center}
 
 .theme-swatch,.radius-swatch{position:relative;display:block;width:64px;height:42px}
 .theme-swatch{border:1px solid color-mix(in srgb,var(--text) 22%,transparent);border-radius:8px;overflow:hidden}
