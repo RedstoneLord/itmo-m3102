@@ -425,3 +425,31 @@
 .mj-tools > button > svg { width: 18px; height: 18px; flex-shrink: 0; }
 :root[data-reduce-motion] .mj-tile, :root[data-reduce-motion] .mj-tile svg, :root[data-reduce-motion] .mj-victory, :root[data-reduce-motion] .mj-mascot, :root[data-reduce-motion] .mj-progress progress { animation: none; transition: none; }
 :root[data-reduce-motion] .mj-prize { display: none; }
+
+/* Цвет помогает узнавать пары; закрытые кости сохраняют оттенок. */
+.mj-tile[data-kind="0"] { --tile-color: #e84f91; }
+.mj-tile[data-kind="1"] { --tile-color: #ef6558; }
+.mj-tile[data-kind="2"] { --tile-color: #eaa039; }
+.mj-tile[data-kind="3"] { --tile-color: #f77b42; }
+.mj-tile[data-kind="4"] { --tile-color: #f5a623; }
+.mj-tile[data-kind="5"] { --tile-color: #5097ef; }
+.mj-tile[data-kind="6"] { --tile-color: #6887e8; }
+.mj-tile[data-kind="7"] { --tile-color: #c77b47; }
+.mj-tile[data-kind="8"] { --tile-color: #a778ec; }
+.mj-tile[data-kind="9"] { --tile-color: #69b96c; }
+.mj-tile[data-kind="10"] { --tile-color: #e5bd37; }
+.mj-tile {
+  background: linear-gradient(155deg, color-mix(in srgb, var(--tile-color) 19%, var(--card)), color-mix(in srgb, var(--tile-color) 35%, var(--card)));
+  border-color: color-mix(in srgb, var(--tile-color) 65%, var(--border));
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--tile-color) 45%, var(--border)), 0 5px 9px #0002;
+  color: var(--text);
+}
+.mj-tile[data-free='false'] {
+  background: color-mix(in srgb, var(--tile-color) 16%, var(--bg));
+  border-color: color-mix(in srgb, var(--tile-color) 35%, var(--border));
+}
+.mj-tile[data-free='false'] svg { opacity: .62; filter: none; }
+.mj-tile[data-selected='true'], .mj-tile[data-hint='true'] {
+  background: color-mix(in srgb, var(--tile-color) 40%, var(--card));
+  border-color: var(--accent);
+}

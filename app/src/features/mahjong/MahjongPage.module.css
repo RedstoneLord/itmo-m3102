@@ -558,3 +558,63 @@
   height: 18px;
   flex-shrink: 0;
 }
+
+/* Цвет помогает узнавать пары; закрытые кости сохраняют оттенок. */
+.tile[data-kind='0'] {
+  --tile-color: #e84f91;
+}
+.tile[data-kind='1'] {
+  --tile-color: #ef6558;
+}
+.tile[data-kind='2'] {
+  --tile-color: #eaa039;
+}
+.tile[data-kind='3'] {
+  --tile-color: #f77b42;
+}
+.tile[data-kind='4'] {
+  --tile-color: #f5a623;
+}
+.tile[data-kind='5'] {
+  --tile-color: #5097ef;
+}
+.tile[data-kind='6'] {
+  --tile-color: #6887e8;
+}
+.tile[data-kind='7'] {
+  --tile-color: #c77b47;
+}
+.tile[data-kind='8'] {
+  --tile-color: #a778ec;
+}
+.tile[data-kind='9'] {
+  --tile-color: #69b96c;
+}
+.tile[data-kind='10'] {
+  --tile-color: #e5bd37;
+}
+.tile {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--tile-color) 19%, var(--color-bg-elevated)),
+    color-mix(in srgb, var(--tile-color) 35%, var(--color-bg-elevated))
+  );
+  border-color: color-mix(in srgb, var(--tile-color) 65%, var(--color-border));
+  box-shadow:
+    0 3px 0 color-mix(in srgb, var(--tile-color) 45%, var(--color-border)),
+    0 5px 9px #0002;
+  color: var(--color-text);
+}
+.tile[data-free='false'] {
+  background: color-mix(in srgb, var(--tile-color) 16%, var(--color-bg));
+  border-color: color-mix(in srgb, var(--tile-color) 35%, var(--color-border));
+}
+.tile[data-free='false'] svg {
+  opacity: 0.62;
+  filter: none;
+}
+.tile[data-selected='true'],
+.tile[data-hint='true'] {
+  background: color-mix(in srgb, var(--tile-color) 40%, var(--color-bg-elevated));
+  border-color: var(--color-accent);
+}

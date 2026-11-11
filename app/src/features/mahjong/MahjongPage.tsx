@@ -46,6 +46,7 @@ function GameTile({
       exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.7, y: -18 }}
       transition={reduced ? { duration: 0 } : SPRING_SNAPPY}
       style={{ '--x': t.x, '--y': t.y, '--z': t.z, zIndex: t.z * 200 + t.id, pointerEvents: present ? undefined : 'none' } as CSSProperties}
+      data-kind={kind}
       data-free={free}
       data-selected={selected}
       data-hint={hinted}
