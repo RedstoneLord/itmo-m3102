@@ -1,44 +1,84 @@
-import { useState, type CSSProperties } from 'react';
-import {
-  BookOpen,
-  Cherry,
-  Clover,
-  Code2,
-  Coffee,
-  Feather,
-  Flower2,
-  GraduationCap,
-  Leaf,
-  Lightbulb,
-  RotateCcw,
-  Shuffle,
-  Sparkles,
-  Sprout,
-  Trophy,
-} from 'lucide-react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { Cherry, Lightbulb, RotateCcw, Shuffle, Sprout } from 'lucide-react';
+import { AnimatePresence, motion, useIsPresent } from 'framer-motion';
+import { ensureSprite } from '../../../../js/slots-art.js';
+import { SPRING_SNAPPY, usePrefersReducedMotion } from '../../lib/motion';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
-import { LEVELS, isFree, pairs, rewardFor } from './engine';
+import { LEVELS, isFree, pairs, rewardFor, symbolKind, type Tile } from './engine';
 import { useMahjongStore } from './mahjongStore';
 import styles from './MahjongPage.module.css';
 
-const SYMBOLS = [
-  { icon: Cherry, name: 'Ягода' },
-  { icon: Leaf, name: 'Лист' },
-  { icon: Clover, name: 'Клевер' },
-  { icon: Flower2, name: 'Цветок' },
-  { icon: Sprout, name: 'Росток' },
-  { icon: Feather, name: 'Перо' },
-  { icon: BookOpen, name: 'Конспект' },
-  { icon: Code2, name: 'Код' },
-  { icon: Coffee, name: 'Кофе' },
-  { icon: GraduationCap, name: 'Зачёт' },
-  { icon: Sparkles, name: 'Искра' },
-  { icon: Lightbulb, name: 'Идея' },
-];
+const SYMBOLS = ['berry', 'apple', 'mush', 'git', 'orange', 'itmo', 'cpp', 'rust', 'pi', 'hog', 'seven'];
+const NAMES = ['Ягода', 'Яблоко', 'Гриб', 'Git', 'Апельсин', 'ИТМО', 'C++', 'Rust', 'Пи', 'Ёжик', 'Семёрка'];
+
+function Art({ kind, className }: { kind: number; className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 100 100" aria-hidden="true">
+      <use href={`#sl-${SYMBOLS[symbolKind(kind)]}`} />
+    </svg>
+  );
+}
+
+function GameTile({
+  tile: t,
+  free,
+  selected,
+  hinted,
+  onSelect,
+}: {
+  tile: Tile;
+  free: boolean;
+  selected: boolean;
+  hinted: boolean;
+  onSelect: (id: number) => void;
+}) {
+  const present = useIsPresent();
+  const reduced = usePrefersReducedMotion();
+  const kind = symbolKind(t.kind);
+  return (
+    <motion.button
+      type="button"
+      className={styles.tile}
+      layout={reduced ? false : 'position'}
+      initial={reduced ? false : { opacity: 0, scale: 0.85, y: 8 }}
+      animate={{ opacity: 1, scale: selected ? 1.04 : 1, y: 0 }}
+      exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.7, y: -18 }}
+      transition={reduced ? { duration: 0 } : SPRING_SNAPPY}
+      style={{ '--x': t.x, '--y': t.y, '--z': t.z, zIndex: t.z * 200 + t.id, pointerEvents: present ? undefined : 'none' } as CSSProperties}
+      data-free={free}
+      data-selected={selected}
+      data-hint={hinted}
+      data-tile={present ? t.id : undefined}
+      disabled={!free || !present}
+      aria-hidden={!present}
+      aria-pressed={selected}
+      aria-label={`${NAMES[kind]}, кость ${t.id + 1}${free ? ', свободна' : ', закрыта'}`}
+      onClick={() => onSelect(t.id)}
+    >
+      <span className={styles.corner} aria-hidden>
+        {kind + 1}
+      </span>
+      <Art key={kind} kind={kind} />
+      <span className={styles.tileLabel} aria-hidden>
+        {NAMES[kind]}
+      </span>
+    </motion.button>
+  );
+}
 
 export default function MahjongPage() {
   const { game, start, match, assist, undo, shuffle, wins, total } = useMahjongStore();
+  useEffect(() => {
+    ensureSprite();
+  }, []);
+  const [zoom, setZoom] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!game?.combo || !game.tiles.length) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [game?.combo, game?.tiles.length]);
   const [level, setLevel] = useState(game?.level ?? 1);
   const [selected, setSelected] = useState<number | null>(null);
   const [hint, setHint] = useState<number[]>([]);
@@ -46,6 +86,9 @@ export default function MahjongPage() {
   const [confirm, setConfirm] = useState(false);
   const available = game ? pairs(game.tiles) : [];
   const won = !!game && game.tiles.length === 0;
+  const fullCount = game ? LEVELS[game.level]!.layers.reduce((n, [w, h]) => n + w * h, 0) : 0;
+  const completed = game ? Math.round((1 - game.tiles.length / fullCount) * 100) : 0;
+  const streak = game && now - game.lastMatch <= 12_000 ? game.combo : 0;
   const begin = () => {
     start(level);
     setSelected(null);
@@ -63,6 +106,7 @@ export default function MahjongPage() {
     if (selected !== null) {
       if (match(selected, id)) {
         setSelected(null);
+        setNow(Date.now());
         const combo = useMahjongStore.getState().game!.combo;
         setMessage(combo > 1 ? `Серия ×${combo}! Ещё одна пара за 12 секунд?` : 'Пара найдена! Следующая за 12 секунд продолжит серию.');
         return;
@@ -113,6 +157,11 @@ export default function MahjongPage() {
         )}
         {game ? (
           <>
+            <div className={styles.progress}>
+              <span>Сад собран на {completed}%</span>
+              <span>{streak > 1 ? `Серия ×${streak}` : 'В своём темпе'}</span>
+              <progress aria-label="Прогресс сада" max={fullCount} value={fullCount - game.tiles.length} />
+            </div>
             <div className={styles.stats}>
               <div>
                 <span>Осталось пар</span>
@@ -135,7 +184,12 @@ export default function MahjongPage() {
             </div>
             {won ? (
               <section className={styles.victory} aria-label="Победа">
-                <Trophy size={40} aria-hidden />
+                <div className={styles.celebration}>
+                  <Art kind={9} />
+                  {Array.from({ length: 7 }, (_, i) => (
+                    <Art key={i} kind={0} className={styles.prize} />
+                  ))}
+                </div>
                 <h2>Сад собран!</h2>
                 <p>
                   <strong>+{game.earned} ягод</strong> уже в общем балансе. Их можно потратить в коллекции и других играх.
@@ -149,41 +203,31 @@ export default function MahjongPage() {
               </section>
             ) : (
               <>
-                <div className={styles.table}>
+                <div className={styles.boardHeading}>
+                  <span>Открытый край → одинаковая пара</span>
+                  <button type="button" aria-pressed={zoom} onClick={() => setZoom(!zoom)}>
+                    {zoom ? 'Всё поле' : 'Крупнее'}
+                  </button>
+                </div>
+                <div className={styles.table} data-zoom={zoom}>
                   <div
                     className={styles.board}
                     style={{ '--rows': game.rows ?? 8, '--offset': game.offset ?? 0 } as CSSProperties}
                     role="group"
                     aria-label={`Игровое поле: ${LEVELS[game.level]!.name}`}
                   >
-                    {game.tiles.map((t) => {
-                      const free = isFree(t, game.tiles);
-                      const { icon: Icon, name } = SYMBOLS[t.kind]!;
-                      return (
-                        <button
-                          key={t.id}
-                          type="button"
-                          className={styles.tile}
-                          style={{ '--x': t.x, '--y': t.y, '--z': t.z, zIndex: t.z * 100 + t.id } as CSSProperties}
-                          data-free={free}
-                          data-selected={selected === t.id}
-                          data-hint={hint.includes(t.id)}
-                          data-tile={t.id}
-                          disabled={!free}
-                          aria-pressed={selected === t.id}
-                          aria-label={`${name}, кость ${t.id + 1}${free ? ', свободна' : ', закрыта'}`}
-                          onClick={() => select(t.id)}
-                        >
-                          <span className={styles.corner} aria-hidden>
-                            {t.kind + 1}
-                          </span>
-                          <Icon strokeWidth={1.75} aria-hidden />
-                          <span className={styles.tileLabel} aria-hidden>
-                            {name}
-                          </span>
-                        </button>
-                      );
-                    })}
+                    <AnimatePresence>
+                      {game.tiles.map((t) => (
+                        <GameTile
+                          key={`${game.id}:${t.id}`}
+                          tile={t}
+                          free={isFree(t, game.tiles)}
+                          selected={selected === t.id}
+                          hinted={hint.includes(t.id)}
+                          onSelect={select}
+                        />
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
                 <div className={styles.tools}>
@@ -232,7 +276,7 @@ export default function MahjongPage() {
           </>
         ) : (
           <div className={styles.welcome}>
-            <Flower2 size={48} strokeWidth={1.25} aria-hidden />
+            <Art kind={9} />
             <h2>Время для маленькой победы</h2>
             <p>
               Выберите раскладку и откройте свой первый сад.

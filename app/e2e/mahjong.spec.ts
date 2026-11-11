@@ -38,6 +38,18 @@ test('маджонг: телефон и две темы без горизонт�
     await page.evaluate((value) => document.documentElement.setAttribute('data-theme', value), theme);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await expect(page.locator('[data-tile]').first()).toBeVisible();
+    await page.getByRole('button', { name: 'Крупнее', exact: true }).click();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(await page.getByRole('group', { name: /Игровое поле/ }).evaluate((el) => el.getBoundingClientRect().width)).toBeGreaterThanOrEqual(460);
+    await page.getByRole('button', { name: 'Всё поле', exact: true }).click();
+    const board = await page.getByRole('group', { name: /Игровое поле/ }).boundingBox();
+    const hint = page.getByRole('button', { name: 'Подсказка', exact: true });
+    await hint.scrollIntoViewIfNeeded();
+    const currentBoard = await page.getByRole('group', { name: /Игровое поле/ }).boundingBox();
+    const tools = await hint.boundingBox();
+    expect(board).not.toBeNull();
+    expect(tools!.y).toBeGreaterThanOrEqual(currentBoard!.y + currentBoard!.height);
+
   }
 });
 
@@ -72,3 +84,31 @@ test('маджонг: полная победа пополняет общий б
   await expect(page.getByRole('heading', { level: 1, name: 'Коллекция' })).toBeVisible();
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('hh_save_v1')!).berries)).toBe(balance);
 });
+
+for (const reduced of [false, true]) {
+  test(`маджонг: прежние ёжики, отмена и прогресс${reduced ? ', уменьшение движения' : ''}`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' });
+    await page.addInitScript(() => {
+      localStorage.setItem('m3102:mahjong', JSON.stringify({ version: 1, state: { wins: 0, total: 0, game: {
+        id: 'legacy-hedgehogs', level: 0, rows: 6, offset: 1, history: [], combo: 0, best: 0, lastMatch: 0, assists: 0, earned: 0,
+        tiles: [
+          { id: 0, x: 0, y: 1, z: 0, kind: 9 }, { id: 1, x: 1, y: 1, z: 0, kind: 11 },
+          { id: 2, x: 0, y: 3, z: 0, kind: 0 }, { id: 3, x: 1, y: 3, z: 0, kind: 0 },
+        ],
+      } } }));
+    });
+    await page.goto('./#/mahjong');
+    await expect(page.locator('[data-tile="0"]')).toHaveAccessibleName(/^Ёжик/);
+    await expect(page.locator('[data-tile="1"]')).toHaveAccessibleName(/^Ёжик/);
+    await page.locator('[data-tile="0"]').click();
+    await page.locator('[data-tile="1"]').click();
+    await expect(page.locator('[data-tile]')).toHaveCount(2);
+    await expect(page.getByRole('progressbar', { name: 'Прогресс сада' })).toHaveAttribute('value', '46');
+    await page.getByRole('button', { name: 'Отменить', exact: true }).click();
+    await expect(page.locator('[data-tile]')).toHaveCount(4);
+    await expect(page.getByRole('progressbar', { name: 'Прогресс сада' })).toHaveAttribute('value', '44');
+    for (const id of [0, 1, 2, 3]) await page.locator(`[data-tile="${id}"]`).click();
+    await expect(page.getByRole('heading', { name: 'Сад собран!' })).toBeVisible();
+    await expect(page.getByRole('progressbar', { name: 'Прогресс сада' })).toHaveAttribute('value', '48');
+  });
+}

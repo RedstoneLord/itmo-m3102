@@ -1,11 +1,11 @@
 import { ic } from './icons.js';
 import { ensureSprite, sym } from './slots-art.js';
 import { loadAll, saveAll, fmt } from './casino-common.js';
-import { LEVELS, pairs, isFree, rewardFor } from './mahjong-math.js';
+import { LEVELS, pairs, isFree, rewardFor, symbolKind } from './mahjong-math.js';
 import { MAHJONG_KEY, emptyProgress, newGame, matchPair, undoMove, shuffleGame, creditVictory } from './mahjong-state.js';
 
-const SYMBOLS = ['berry', 'apple', 'mush', 'git', 'orange', 'itmo', 'cpp', 'rust', 'pi', 'hog', 'seven', 'king'];
-const NAMES = ['Ягода', 'Яблоко', 'Гриб', 'Git', 'Апельсин', 'ИТМО', 'C++', 'Rust', 'Пи', 'Ёжик', 'Семёрка', 'Король'];
+const SYMBOLS = ['berry', 'apple', 'mush', 'git', 'orange', 'itmo', 'cpp', 'rust', 'pi', 'hog', 'seven', 'hog'];
+const NAMES = ['Ягода', 'Яблоко', 'Гриб', 'Git', 'Апельсин', 'ИТМО', 'C++', 'Rust', 'Пи', 'Ёжик', 'Семёрка', 'Ёжик'];
 
 export function renderMahjongPage() {
   const content = document.getElementById('content');
@@ -33,7 +33,8 @@ export function renderMahjongPage() {
     message = 'Найдите две одинаковые свободные кости.',
     confirm = false;
   let level = progress.game?.level ?? 1,
-    destroyed = false;
+    destroyed = false,
+    zoom = false;
   const save = () => {
     try {
       localStorage.setItem(MAHJONG_KEY, JSON.stringify({ state: progress, version: 1 }));
@@ -59,12 +60,15 @@ export function renderMahjongPage() {
   }
   function draw(focusId) {
     if (destroyed) return;
+    const scrollLeft = content.querySelector('.mj-table')?.scrollLeft ?? 0;
     const previous = new Map([...content.querySelectorAll('.mj-tile')].map((node) => [node.dataset.tile, {
       node, rect: node.getBoundingClientRect(), selected: node.dataset.selected, hint: node.dataset.hint,
     }]));
     const g = progress.game,
       won = g && !g.tiles.length,
-      moves = g ? pairs(g.tiles) : [];
+      moves = g ? pairs(g.tiles) : [],
+      fullCount = g ? LEVELS[g.level].layers.reduce((n, [w, h]) => n + w * h, 0) : 0,
+      completed = g ? Math.round((1 - g.tiles.length / fullCount) * 100) : 0;
     content.innerHTML = `<section class="mj-page" data-no-icons>
       <a class="mj-back" href="#/other">${ic('arrowLeft', 16)} Ещё</a>
       <div class="intro mj-intro"><span class="sched-eyebrow">М3102 · ЯГОДНЫЙ САД</span><h1>Маджонг</h1><p class="sub">Собирайте пары, освобождайте ярусы и помогайте ёжику собирать ягоды.</p></div>
@@ -73,15 +77,15 @@ export function renderMahjongPage() {
       ${confirm ? '<div class="mj-notice" role="alert">Завершить текущую партию без награды? <button class="btn2" data-action="confirm">Начать новую</button><button class="btn2" data-action="cancel">Продолжить текущую</button></div>' : ''}
       ${
         g
-          ? `<div class="mj-stats"><div><span>Осталось пар</span><b>${g.tiles.length / 2}</b></div><div><span>Доступно пар</span><b>${moves.length}</b></div><div><span>Лучшая серия</span><b>×${g.best}</b></div><div><span>${won ? 'Ваш урожай' : 'Награда сейчас'}</span><b>${won ? g.earned : rewardFor(g.level, g.best, g.assists)} ${sym('berry', 20)}</b></div></div>
+          ? `<div class="mj-progress"><span>Сад собран на ${completed}%</span><span data-streak></span><progress aria-label="Прогресс сада" max="${fullCount}" value="${fullCount - g.tiles.length}"></progress></div><div class="mj-stats"><div><span>Осталось пар</span><b>${g.tiles.length / 2}</b></div><div><span>Доступно пар</span><b>${moves.length}</b></div><div><span>Лучшая серия</span><b>×${g.best}</b></div><div><span>${won ? 'Ваш урожай' : 'Награда сейчас'}</span><b>${won ? g.earned : rewardFor(g.level, g.best, g.assists)} ${sym('berry', 20)}</b></div></div>
       ${
         won
-          ? `<div class="mj-victory"><div class="mj-mascot">${sym('hog', 100)}</div><h2>Сад собран!</h2><p><strong>+${g.earned} ягод</strong> уже в общем балансе с «Ёжиком» и казино.</p><p>Лучшая серия: ${g.best} · использовано помощи: ${g.assists}</p><button class="btn2 btn-primary" data-action="confirm">Ещё один сад</button></div>`
+          ? `<div class="mj-victory"><div class="mj-celebration"><div class="mj-mascot">${sym('hog', 100)}</div>${Array.from({length: 7}, () => sym('berry', 24, 'mj-prize')).join('')}</div><h2>Сад собран!</h2><p><strong>+${g.earned} ягод</strong> уже в общем балансе с «Ёжиком» и казино.</p><p>Лучшая серия: ${g.best} · использовано помощи: ${g.assists}</p><button class="btn2 btn-primary" data-action="confirm">Ещё один сад</button></div>`
           : `
-      <div class="mj-table"><div class="mj-board" role="group" aria-label="Игровое поле: ${LEVELS[g.level].name}" style="--rows:${g.rows ?? 8};--offset:${g.offset ?? 0}">${g.tiles
+      <div class="mj-boardHeading"><span>Открытый край → одинаковая пара</span><button type="button" data-action="zoom" aria-pressed="${zoom}">${zoom ? 'Всё поле' : 'Крупнее'}</button></div><div class="mj-table" data-zoom="${zoom}"><div class="mj-board" role="group" aria-label="Игровое поле: ${LEVELS[g.level].name}" style="--rows:${g.rows ?? 8};--offset:${g.offset ?? 0}">${g.tiles
         .map((t) => {
           const free = isFree(t, g.tiles);
-          return `<button type="button" class="mj-tile" data-tile="${t.id}" data-free="${free}" data-selected="${t.id === selected}" data-hint="${hinted.includes(t.id)}" ${free ? '' : 'disabled'} aria-pressed="${t.id === selected}" aria-label="${NAMES[t.kind]}, кость ${t.id + 1}, ${free ? 'свободна' : 'закрыта'}" style="--x:${t.x};--y:${t.y};--z:${t.z};z-index:${t.z * 200 + t.id}"><small aria-hidden="true">${t.kind + 1}</small>${sym(SYMBOLS[t.kind], 44)}<span aria-hidden="true">${NAMES[t.kind]}</span></button>`;
+          return `<button type="button" class="mj-tile" data-tile="${t.id}" data-free="${free}" data-selected="${t.id === selected}" data-hint="${hinted.includes(t.id)}" ${free ? '' : 'disabled'} aria-pressed="${t.id === selected}" aria-label="${NAMES[symbolKind(t.kind)]}, кость ${t.id + 1}, ${free ? 'свободна' : 'закрыта'}" style="--x:${t.x};--y:${t.y};--z:${t.z};z-index:${t.z * 200 + t.id}"><small aria-hidden="true">${symbolKind(t.kind) + 1}</small>${sym(SYMBOLS[symbolKind(t.kind)], 44).replace('role="img"', 'aria-hidden="true"')}<span aria-hidden="true">${NAMES[symbolKind(t.kind)]}</span></button>`;
         })
         .join('')}</div></div>
       <div class="mj-tools"><button class="btn2" data-action="hint" ${moves.length ? '' : 'disabled'}>${ic('bulb', 16)} Подсказка</button><button class="btn2" data-action="undo" ${g.history.length ? '' : 'disabled'}>${ic('undo', 16)} Отменить</button><button class="btn2" data-action="shuffle">${ic('refresh', 16)} Перемешать</button></div>`
@@ -91,6 +95,9 @@ export function renderMahjongPage() {
       <p class="mj-status" role="status">${g && !won && !moves.length ? 'Нет доступных пар. Отмените ход или перемешайте кости, чтобы продолжить.' : message}</p>
       <details class="mj-rules"><summary>Правила и награды</summary><p>Снимайте одинаковые кости парами. Кость свободна, если её не накрывает другая и открыт хотя бы один край: левый или правый. Затемнённые кости пока закрыты. Для клавиатуры используйте Tab и Enter.</p><p>Следующая пара за 12 секунд продолжает серию. Можно отдыхать сколько угодно — таймера проигрыша нет. Партия сохраняется после каждого хода.</p><p>За победу: 20 / 40 / 65 ягод по сложности. Бонус — 2 ягоды за шаг лучшей серии, максимум 20. Каждая подсказка, отмена или перемешивание уменьшает только бонус на 3 ягоды. Базовая награда остаётся. Перемешивание при необходимости перестраивает оставшиеся кости. Одна партия — одна выплата.</p></details>
     </section>`;
+    const table = content.querySelector('.mj-table');
+    if (table) table.scrollLeft = scrollLeft;
+    updateStreak();
     if (!reduceMotion()) {
       const current = [...content.querySelectorAll('.mj-tile')];
       const ids = new Set(current.map((node) => node.dataset.tile));
@@ -155,6 +162,11 @@ export function renderMahjongPage() {
       draw('new');
       return;
     }
+    if (action === 'zoom') {
+      zoom = !zoom;
+      draw('zoom');
+      return;
+    }
     if (!g || g.earned) return;
     if (action) {
       selected = null;
@@ -208,6 +220,12 @@ export function renderMahjongPage() {
       draw(id);
     }
   }
+  function updateStreak() {
+    const g = progress.game;
+    const label = content.querySelector('[data-streak]');
+    if (label) label.textContent = g && g.combo > 1 && Date.now() - g.lastMatch <= 12000 ? `Серия ×${g.combo}` : 'В своём темпе';
+  }
+  const streakTimer = window.setInterval(updateStreak, 1000);
   const onChange = (event) => {
     if (event.target.id === 'mj-level') level = Number(event.target.value);
   };
@@ -216,6 +234,7 @@ export function renderMahjongPage() {
       // Другая версия или вкладка продолжила ту же партию: перечитываем перед следующим действием.
       destroyed = true;
       clearMotion();
+      clearInterval(streakTimer);
       content.removeEventListener('click', onClick);
       content.removeEventListener('change', onChange);
       window.removeEventListener('storage', onStorage);
@@ -228,6 +247,7 @@ export function renderMahjongPage() {
   window.__hhDestroy = () => {
     destroyed = true;
     clearMotion();
+    clearInterval(streakTimer);
     content.removeEventListener('click', onClick);
     content.removeEventListener('change', onChange);
     window.removeEventListener('storage', onStorage);

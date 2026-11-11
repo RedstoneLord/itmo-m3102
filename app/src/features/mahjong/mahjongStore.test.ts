@@ -67,3 +67,20 @@ it('не начисляет ягоды повторно при восстано�
   expect(shared.berries).toBe(10);
   expect(saveAll).not.toHaveBeenCalled();
 });
+it('снимает ёжика со старым королём и возвращает прежние типы при отмене', () => {
+  const store = useMahjongStore;
+  store.getState().start(0);
+  const game = store.getState().game!;
+  const tiles = [
+    { id: 0, x: 0, y: 0, z: 0, kind: 9 },
+    { id: 1, x: 1, y: 0, z: 0, kind: 11 },
+    { id: 2, x: 0, y: 2, z: 0, kind: 0 },
+    { id: 3, x: 1, y: 2, z: 0, kind: 0 },
+  ];
+  store.setState({ game: { ...game, tiles } });
+  expect(store.getState().match(0, 1)).toBe(true);
+  expect(store.getState().game!.tiles).toHaveLength(2);
+  store.getState().undo();
+  expect(store.getState().game!.tiles).toEqual(tiles);
+  expect(saveAll).not.toHaveBeenCalled();
+});

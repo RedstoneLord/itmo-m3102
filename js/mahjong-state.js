@@ -1,4 +1,4 @@
-import { newBoard, isFree, deal, rewardFor } from './mahjong-math.js';
+import { symbolKind, newBoard, isFree, deal, rewardFor } from './mahjong-math.js';
 
 export const MAHJONG_KEY = 'm3102:mahjong';
 export const emptyProgress = () => ({ game: null, wins: 0, total: 0 });
@@ -23,7 +23,7 @@ export function matchPair(game, a, b, now = Date.now()) {
   if (!game || game.earned || a === b) return null;
   const first = game.tiles.find((t) => t.id === a),
     second = game.tiles.find((t) => t.id === b);
-  if (!first || !second || first.kind !== second.kind || !isFree(first, game.tiles) || !isFree(second, game.tiles)) return null;
+  if (!first || !second || symbolKind(first.kind) !== symbolKind(second.kind) || !isFree(first, game.tiles) || !isFree(second, game.tiles)) return null;
   const combo = now - game.lastMatch <= 12000 ? game.combo + 1 : 1;
   const next = {
     ...game,

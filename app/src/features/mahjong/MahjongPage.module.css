@@ -278,3 +278,283 @@
     height: 62%;
   }
 }
+
+/* Поле сада и панель касаний. */
+.table {
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--color-accent) 9%, transparent), transparent 75%), var(--surface-panel);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 24px 12px 16px;
+}
+.board {
+  isolation: isolate;
+}
+.table[data-zoom='true'] .board {
+  min-width: 460px;
+}
+.boardHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.boardHeading button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 99px;
+  color: var(--color-accent-text);
+  background: var(--surface);
+  font: inherit;
+  cursor: pointer;
+}
+.progress {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.progress > span:last-of-type {
+  color: var(--color-accent-text);
+  font-weight: 600;
+}
+.progress progress {
+  appearance: none;
+  border: 0;
+  border-radius: 99px;
+  overflow: hidden;
+  width: 100%;
+  height: 6px;
+  background: var(--color-border);
+  accent-color: var(--color-accent);
+}
+.progress progress::-webkit-progress-bar {
+  background: var(--color-border);
+}
+.progress progress::-webkit-progress-value {
+  background: var(--color-accent);
+  border-radius: 99px;
+  transition: width 0.25s ease;
+}
+.progress progress::-moz-progress-bar {
+  background: var(--color-accent);
+}
+.tile {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--color-bg-elevated) 94%, white), var(--color-bg-elevated));
+  border-color: color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  box-shadow:
+    0 3px 0 var(--color-border),
+    0 5px 9px #0002;
+  padding: 2px;
+  -webkit-tap-highlight-color: transparent;
+}
+.tile svg {
+  width: 62%;
+  height: 62%;
+  flex-shrink: 0;
+  pointer-events: none;
+  animation: mj-symbol 0.24s ease-out;
+}
+.tile[data-free='false'] svg {
+  opacity: 0.42;
+  filter: grayscale(0.55);
+}
+.tile[data-selected='true'] {
+  box-shadow:
+    0 3px 0 var(--color-border),
+    0 0 0 3px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+.tile[data-hint='true'] {
+  animation: mj-hint 1.2s ease-in-out 3;
+}
+.tile:focus-visible,
+.boardHeading button:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.tools {
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.tools > button {
+  flex: 1;
+  min-height: 46px;
+}
+.welcome > svg {
+  width: 100px;
+  height: 100px;
+  margin: auto;
+}
+.celebration {
+  position: relative;
+  width: 220px;
+  height: 140px;
+  margin: 0 auto 20px;
+}
+.celebration > svg:first-child {
+  width: 120px;
+  height: 120px;
+  position: absolute;
+  left: 50px;
+  bottom: 0;
+  animation: mj-happy 0.6s ease-out 2;
+}
+.prize {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  left: 98px;
+  top: 70px;
+  opacity: 0;
+  pointer-events: none;
+  animation: mj-berry 1s ease-out both;
+}
+.prize:nth-child(2) {
+  --dx: -88px;
+  --dy: -56px;
+  animation-delay: 0.05s;
+}
+.prize:nth-child(3) {
+  --dx: -60px;
+  --dy: -90px;
+  animation-delay: 0.1s;
+}
+.prize:nth-child(4) {
+  --dx: -28px;
+  --dy: -110px;
+  animation-delay: 0.15s;
+}
+.prize:nth-child(5) {
+  --dx: 10px;
+  --dy: -115px;
+  animation-delay: 0.2s;
+}
+.prize:nth-child(6) {
+  --dx: 50px;
+  --dy: -98px;
+  animation-delay: 0.25s;
+}
+.prize:nth-child(7) {
+  --dx: 85px;
+  --dy: -65px;
+  animation-delay: 0.3s;
+}
+.prize:nth-child(8) {
+  --dx: 100px;
+  --dy: -20px;
+  animation-delay: 0.35s;
+}
+@keyframes mj-symbol {
+  from {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes mj-hint {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 28%, transparent);
+  }
+}
+@keyframes mj-happy {
+  40% {
+    transform: translateY(-12px) rotate(-5deg);
+  }
+  70% {
+    transform: translateY(0) scale(1.04, 0.96);
+  }
+}
+@keyframes mj-berry {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(30deg);
+  }
+}
+@media (max-width: 600px) {
+  .playing {
+    display: none;
+  }
+  .page {
+    gap: 12px;
+  }
+  .setup {
+    gap: 8px;
+  }
+  .setup label {
+    flex: 1 1 100%;
+  }
+  .setup select {
+    width: 100%;
+    padding: 10px;
+  }
+  .stats {
+    margin-bottom: 0;
+  }
+  .stats span {
+    min-height: 2.4em;
+    font-size: 11px;
+  }
+  .stats strong {
+    font-size: 18px;
+  }
+  .table {
+    padding: 20px 4px 10px;
+  }
+  .tile svg {
+    width: 76%;
+    height: 76%;
+  }
+  .corner {
+    display: none;
+  }
+  .tools {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 6px;
+    box-shadow: 0 4px 18px #0001;
+  }
+  .tools > button {
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    height: auto;
+    padding: 8px 3px;
+    font-size: 11px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile svg,
+  .celebration > svg,
+  .celebration .mascot,
+  .progress progress::-webkit-progress-value {
+    animation: none;
+    transition: none;
+  }
+  .prize {
+    display: none;
+  }
+}
+
+.tools > button > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { loadAll, saveAll } from '../../../../js/casino-common.js';
 import { localStore, storageKey } from '../../lib/storage';
-import { deal, isFree, newBoard, rewardFor, type Tile } from './engine';
+import { deal, isFree, symbolKind, newBoard, rewardFor, type Tile } from './engine';
 
 interface Game {
   id: string;
@@ -54,7 +54,8 @@ export const useMahjongStore = create<MahjongStore>()(
         if (!g || a === b || g.earned) return false;
         const first = g.tiles.find((t) => t.id === a);
         const second = g.tiles.find((t) => t.id === b);
-        if (!first || !second || first.kind !== second.kind || !isFree(first, g.tiles) || !isFree(second, g.tiles)) return false;
+        if (!first || !second || symbolKind(first.kind) !== symbolKind(second.kind) || !isFree(first, g.tiles) || !isFree(second, g.tiles))
+          return false;
         const now = Date.now();
         const combo = now - g.lastMatch <= 12_000 ? g.combo + 1 : 1;
         const next = {

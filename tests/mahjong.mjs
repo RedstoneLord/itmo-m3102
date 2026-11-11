@@ -99,3 +99,12 @@ test('маджонг: маршрут, пункт «Ещё» и офлайн-об
   assert.match(html, /h==='mahjong'/);
   for (const file of ['js/mahjong.js', 'js/mahjong-math.js', 'js/mahjong-state.js', 'css/mahjong.css']) assert.ok(sw.includes(file));
 });
+
+test('маджонг: старый король совпадает с ёжиком, отмена сохраняет историю', () => {
+  const g = { ...newGame(0), tiles: [tile(0, 0, 0, 0, 9), tile(1, 1, 0, 0, 11), tile(2, 0, 2), tile(3, 1, 2)] };
+  assert.equal(pairs(g.tiles).length, 2);
+  const next = matchPair(g, 0, 1);
+  assert.equal(next.tiles.length, 2);
+  assert.deepEqual(undoMove(next).tiles, g.tiles);
+  for (const level of [0, 1, 2]) assert.ok(newBoard(level, seeded(1)).every((t) => t.kind !== 11));
+});

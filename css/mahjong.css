@@ -358,3 +358,70 @@
   .mj-victory { animation: none; }
   .mj-tile { transition: none; }
 }
+
+/* Поле сада и панель касаний. */
+.mj-table {
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 75%), var(--card);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 24px 12px 16px;
+}
+.mj-board { isolation: isolate; }
+.mj-table[data-zoom='true'] .mj-board { min-width: 460px; }
+.mj-boardHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .875rem; color: var(--muted); }
+.mj-boardHeading button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 99px; color: var(--accent); background: var(--card); font: inherit; cursor: pointer; }
+.mj-progress { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .875rem; }
+.mj-progress > span:last-of-type { color: var(--accent); font-weight: 600; }
+.mj-progress progress { appearance: none; border: 0; border-radius: 99px; overflow: hidden; width: 100%; height: 6px; background: var(--border); accent-color: var(--accent); }
+.mj-progress progress::-webkit-progress-bar { background: var(--border); }
+.mj-progress progress::-webkit-progress-value { background: var(--accent); border-radius: 99px; transition: width .25s ease; }
+.mj-progress progress::-moz-progress-bar { background: var(--accent); }
+.mj-tile { background: linear-gradient(160deg, color-mix(in srgb, var(--card) 94%, white), var(--card)); border-color: color-mix(in srgb, var(--accent) 28%, var(--border)); box-shadow: 0 3px 0 var(--border), 0 5px 9px #0002; padding: 2px; -webkit-tap-highlight-color: transparent; }
+.mj-tile svg { width: 62%; height: 62%; flex-shrink: 0; pointer-events: none; }
+.mj-tile[data-free='false'] svg { opacity: .42; filter: grayscale(.55); }
+.mj-tile[data-selected='true'] { box-shadow: 0 3px 0 var(--border), 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+.mj-tile[data-hint='true'] { animation: mj-hint 1.2s ease-in-out 3; }
+.mj-tile:focus-visible, .mj-boardHeading button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.mj-tools { padding: 10px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+.mj-tools > button { flex: 1; min-height: 46px; }
+.mj-welcome > svg { width: 100px; height: 100px; margin: auto; }
+.mj-celebration { position: relative; width: 220px; height: 140px; margin: 0 auto 20px; }
+.mj-celebration > .mj-mascot { width: 120px; height: 120px; position: absolute; left: 50px; bottom: 0; animation: mj-happy .6s ease-out 2; }
+.mj-prize { position: absolute; width: 24px; height: 24px; left: 98px; top: 70px; opacity: 0; pointer-events: none; animation: mj-berry 1s ease-out both; }
+.mj-prize:nth-child(2) { --dx: -88px; --dy: -56px; animation-delay: .05s; }
+.mj-prize:nth-child(3) { --dx: -60px; --dy: -90px; animation-delay: .1s; }
+.mj-prize:nth-child(4) { --dx: -28px; --dy: -110px; animation-delay: .15s; }
+.mj-prize:nth-child(5) { --dx: 10px; --dy: -115px; animation-delay: .2s; }
+.mj-prize:nth-child(6) { --dx: 50px; --dy: -98px; animation-delay: .25s; }
+.mj-prize:nth-child(7) { --dx: 85px; --dy: -65px; animation-delay: .3s; }
+.mj-prize:nth-child(8) { --dx: 100px; --dy: -20px; animation-delay: .35s; }
+@keyframes mj-hint { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 28%, transparent); } }
+@keyframes mj-happy { 40% { transform: translateY(-12px) rotate(-5deg); } 70% { transform: translateY(0) scale(1.04,.96); } }
+@keyframes mj-berry { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(30deg); } }
+@media (max-width: 600px) {
+  .mj-hero.mj-playing { display: none; }
+  .mj-page { gap: 12px; }
+  .mj-setup { gap: 8px; }
+  .mj-setup label { flex: 1 1 100%; }
+  .mj-setup select { width: 100%; padding: 10px; }
+  .mj-stats { margin-bottom: 0; }
+  .mj-stats span { min-height: 2.4em; font-size: .875rem; }
+  .mj-stats b { font-size: 18px; }
+  .mj-table { padding: 20px 4px 10px; }
+  .mj-tile svg { width: 76%; height: 76%; }
+  .mj-tile > small { display: none; }
+  .mj-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 6px; box-shadow: 0 4px 18px #0001; }
+  .mj-tools > button { flex-direction: column; gap: 4px; min-width: 0; padding: 8px 3px; font-size: .875rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mj-tile, .mj-tile svg, .mj-celebration > svg, .mj-celebration .mj-mascot, .mj-progress progress::-webkit-progress-value { animation: none; transition: none; }
+  .mj-prize { display: none; }
+}
+
+.mj-celebration .mj-mascot { width: 120px; height: 120px; }
+.mj-celebration .mj-mascot > svg { width: 100%; height: 100%; }
+@media (max-width: 600px) { .mj-page:has(.mj-board) .mj-intro .sub, .mj-page:has(.mj-board) .sched-eyebrow { display: none; } .mj-page:has(.mj-board) .mj-intro { margin: 8px 0; } .mj-tile > span { display: none; } }
+
+.mj-tools > button > svg { width: 18px; height: 18px; flex-shrink: 0; }
+:root[data-reduce-motion] .mj-tile, :root[data-reduce-motion] .mj-tile svg, :root[data-reduce-motion] .mj-victory, :root[data-reduce-motion] .mj-mascot, :root[data-reduce-motion] .mj-progress progress { animation: none; transition: none; }
+:root[data-reduce-motion] .mj-prize { display: none; }

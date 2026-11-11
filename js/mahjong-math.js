@@ -25,6 +25,11 @@ export const LEVELS = [
   },
 ];
 
+// Старый король и обычный ёжик совпадают без перезаписи сохранений и истории.
+export function symbolKind(kind) {
+  return kind === 11 ? 9 : kind;
+}
+
 /** Кость свободна, если сверху ничего нет и хотя бы одна длинная сторона открыта. */
 export function isFree(tile, tiles) {
   const above = tiles.some((t) => t.z > tile.z && Math.abs(t.x - tile.x) < 1 && Math.abs(t.y - tile.y) < 1);
@@ -36,7 +41,7 @@ export function pairs(tiles) {
   return free.flatMap((t, i) =>
     free
       .slice(i + 1)
-      .filter((b) => b.kind === t.kind)
+      .filter((b) => symbolKind(b.kind) === symbolKind(t.kind))
       .map((b) => [t, b]),
   );
 }
@@ -46,7 +51,7 @@ function pick(items, rng) {
 
 /** Сначала снимаем геометрию, затем раскладываем символы в обратном порядке: есть полный путь к победе. */
 export function deal(positions, rng = Math.random) {
-  const kinds = positions.filter((_, i) => i % 2 === 0).map((_, i) => i % 12);
+  const kinds = positions.filter((_, i) => i % 2 === 0).map((_, i) => symbolKind(i % 12));
   for (let attempt = 0; attempt < 200; attempt++) {
     let rest = [...positions];
     const result = [];
