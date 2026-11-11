@@ -112,3 +112,34 @@ for (const reduced of [false, true]) {
     await expect(page.getByRole('progressbar', { name: 'Прогресс сада' })).toHaveAttribute('value', '48');
   });
 }
+
+test('маджонг: одно поле, оформление и продолжение партии между версиями', async ({ page }) => {
+  // Проверяем сам классический модуль без загрузчика контента и внешних CDN классического сайта.
+  await page.route('**/mahjong-classic-test.html', (route) => route.fulfill({ contentType: 'text/html', body: `
+    <!doctype html><html lang="ru"><head><link rel="stylesheet" href="/css/mahjong.css"></head>
+    <body><div id="content"></div><script type="module">
+      import { renderMahjongPage } from '/js/mahjong.js'; renderMahjongPage();
+    </script></body></html>` }));
+  await page.goto('../mahjong-classic-test.html');
+  await page.getByRole('button', { name: 'Начать игру', exact: true }).click();
+  const tile = page.locator('[data-free="true"][data-tile]').first();
+  const appearance = await tile.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return [s.backgroundImage, s.boxShadow, s.borderRadius];
+  });
+  await page.getByRole('button', { name: 'Подсказка', exact: true }).click();
+  const ids = await page.locator('[data-hint="true"]').evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-tile')));
+  for (const id of ids) await page.locator(`[data-tile="${id}"]`).click();
+  const saved = await page.evaluate(() => localStorage.getItem('m3102:mahjong'));
+  await page.goto('./#/mahjong');
+  await expect(page.locator('[data-tile]')).toHaveCount(78);
+  expect(await page.evaluate(() => localStorage.getItem('m3102:mahjong'))).toBe(saved);
+  // Сравниваем свободную кость того же типа состояния, а не случайный символ раскладки.
+  const style = await page.locator('[data-free="true"][data-tile]').first().evaluate((el) => {
+    const s = getComputedStyle(el);
+    return [s.backgroundImage, s.boxShadow, s.borderRadius];
+  });
+  expect(style).toEqual(appearance);
+  await page.getByRole('button', { name: 'Отменить', exact: true }).click();
+  await expect(page.locator('[data-tile]')).toHaveCount(80);
+});

@@ -7,27 +7,31 @@ import { MAHJONG_KEY, emptyProgress, newGame, matchPair, undoMove, shuffleGame, 
 const SYMBOLS = ['berry', 'apple', 'mush', 'git', 'orange', 'itmo', 'cpp', 'rust', 'pi', 'hog', 'seven', 'hog'];
 const NAMES = ['Ягода', 'Яблоко', 'Гриб', 'Git', 'Апельсин', 'ИТМО', 'C++', 'Rust', 'Пи', 'Ёжик', 'Семёрка', 'Ёжик'];
 
-export function renderMahjongPage() {
-  const content = document.getElementById('content');
+export function renderMahjongPage(target, { backHref = '#/other' } = {}) {
+  const content = target ?? document.getElementById('content');
   if (!content) return;
   ensureSprite();
-  let progress = emptyProgress();
-  try {
-    const stored = JSON.parse(localStorage.getItem(MAHJONG_KEY) || 'null')?.state;
-    const g = stored?.game;
-    if (
-      stored &&
-      (!g ||
-        (Number.isInteger(g.level) &&
-          LEVELS[g.level] &&
-          Array.isArray(g.history) &&
-          Array.isArray(g.tiles) &&
-          g.tiles.every((t) => Number.isInteger(t.id) && SYMBOLS[t.kind] && [t.x, t.y, t.z].every(Number.isFinite))))
-    )
-      progress = stored;
-  } catch {
-    /* Повреждённая партия не мешает начать новую. */
+  function readProgress() {
+    let progress = emptyProgress();
+    try {
+      const stored = JSON.parse(localStorage.getItem(MAHJONG_KEY) || 'null')?.state;
+      const g = stored?.game;
+      if (
+        stored &&
+        (!g ||
+          (Number.isInteger(g.level) &&
+            LEVELS[g.level] &&
+            Array.isArray(g.history) &&
+            Array.isArray(g.tiles) &&
+            g.tiles.every((t) => Number.isInteger(t.id) && SYMBOLS[t.kind] && [t.x, t.y, t.z].every(Number.isFinite))))
+      )
+        progress = stored;
+    } catch {
+      /* Повреждённая партия не мешает начать новую. */
+    }
+    return progress;
   }
+  let progress = readProgress();
   let selected = null,
     hinted = [],
     message = 'Найдите две одинаковые свободные кости.',
@@ -70,7 +74,7 @@ export function renderMahjongPage() {
       fullCount = g ? LEVELS[g.level].layers.reduce((n, [w, h]) => n + w * h, 0) : 0,
       completed = g ? Math.round((1 - g.tiles.length / fullCount) * 100) : 0;
     content.innerHTML = `<section class="mj-page" data-no-icons>
-      <a class="mj-back" href="#/other">${ic('arrowLeft', 16)} Ещё</a>
+      <a class="mj-back" href="${backHref}">${ic('arrowLeft', 16)} Ещё</a>
       <div class="intro mj-intro"><span class="sched-eyebrow">М3102 · ЯГОДНЫЙ САД</span><h1>Маджонг</h1><p class="sub">Собирайте пары, освобождайте ярусы и помогайте ёжику собирать ягоды.</p></div>
       <div class="mj-hero ${g ? 'mj-playing' : ''}"><div><h2>Маленькая победа между парами</h2><p>Без ставок и ограничения времени. За полностью собранный сад — ягоды в общий баланс.</p></div><div class="mj-harvest">${sym('berry', 32)}<strong>${fmt(progress.total)}</strong><span>собрано · побед: ${fmt(progress.wins)}</span></div></div>
       <div class="mj-setup"><label>Раскладка<select id="mj-level">${LEVELS.map((l, i) => `<option value="${i}" ${i === level ? 'selected' : ''}>${l.name} · ${l.description}</option>`).join('')}</select></label><button class="btn2 btn-primary" data-action="new">${ic('play', 16)} ${g ? 'Новая партия' : 'Начать игру'}</button><a class="btn2" href="#/collection">${ic('trophy', 16)} Коллекция</a></div>
@@ -232,19 +236,19 @@ export function renderMahjongPage() {
   const onStorage = (event) => {
     if (event.key === MAHJONG_KEY) {
       // Другая версия или вкладка продолжила ту же партию: перечитываем перед следующим действием.
-      destroyed = true;
       clearMotion();
-      clearInterval(streakTimer);
-      content.removeEventListener('click', onClick);
-      content.removeEventListener('change', onChange);
-      window.removeEventListener('storage', onStorage);
-      renderMahjongPage();
+      progress = readProgress();
+      selected = null;
+      hinted = [];
+      level = progress.game?.level ?? level;
+      confirm = false;
+      draw();
     }
   };
   content.addEventListener('click', onClick);
   content.addEventListener('change', onChange);
   window.addEventListener('storage', onStorage);
-  window.__hhDestroy = () => {
+  const destroy = () => {
     destroyed = true;
     clearMotion();
     clearInterval(streakTimer);
@@ -252,5 +256,7 @@ export function renderMahjongPage() {
     content.removeEventListener('change', onChange);
     window.removeEventListener('storage', onStorage);
   };
+  if (!target) window.__hhDestroy = destroy;
   draw();
+  return destroy;
 }

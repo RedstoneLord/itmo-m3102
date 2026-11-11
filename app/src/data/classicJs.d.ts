@@ -153,3 +153,23 @@ declare module '*/js/slots-art.js' {
   /** SVG-разметка символа слотов (ёжик, ягода…) */
   export function sym(id: string, size?: number, cls?: string): string;
 }
+
+declare module '*/js/mahjong.js' {
+  export function renderMahjongPage(target?: HTMLElement, options?: { backHref?: string }): (() => void) | undefined;
+}
+declare module '*/js/mahjong-math.js' {
+  export interface Tile {
+    id: number;
+    x: number;
+    y: number;
+    z: number;
+    kind: number;
+  }
+  export const LEVELS: { name: string; description: string; layers: number[][]; reward: number }[];
+  export function symbolKind(kind: number): number;
+  export function isFree(tile: Tile, tiles: Tile[]): boolean;
+  export function pairs(tiles: Tile[]): [Tile, Tile][];
+  export function deal(positions: Tile[], rng?: () => number): Tile[];
+  export function newBoard(level: number, rng?: () => number): Tile[];
+  export function rewardFor(level: number, best: number, assists: number): number;
+}
