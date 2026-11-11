@@ -128,7 +128,8 @@ npm run build && npm run preview   # собранное приложение, к
 
 В корне (классический сайт): `npm test` — его тесты (`node --test tests/*.mjs`), запуск сайта — `python3 -m http.server`.
 
-**CI** (`.github/workflows/deploy-pages.yml`, пуш в `master` и раз в сутки в 05:00 МСК — ради свежего `.ics` и данных):
+**CI** (`.github/workflows/deploy-pages.yml`, пуш в `master` и раз в сутки в 05:00 МСК — ради свежего `.ics` и данных;
+сборка и проверки на закреплённом `ubuntu-24.04`, чтобы миграция `ubuntu-latest` не меняла окружение браузеров):
 Prettier → юнит-тесты → сборка → календарь `m3102.ics` → бюджет размера → готовый сайт (`npm run site -- --fresh`) →
 тесты в браузере → Lighthouse → GitHub Pages (Pages настроены на источник «GitHub Actions»). Упало — публикации нет;
 трассы упавших e2e — артефакт `e2e-traces`, отчёт Lighthouse — артефакт `lighthouse`. Приложение: `base: './'` +

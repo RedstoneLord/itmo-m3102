@@ -26,7 +26,8 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Фиксируем окружение браузерных проверок на время миграции ubuntu-latest.
+    runs-on: ubuntu-24.04
     # Проект сайта — в app/, в корне репозитория лежит классический сайт группы и документация
     defaults:
       run:
