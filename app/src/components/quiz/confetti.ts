@@ -1,3 +1,4 @@
+import { reducedMotionNow } from '../../lib/motion';
 /** Конфетти на canvas поверх страницы — за верные ответы и хороший результат теста, как на сайте группы */
 
 const COLORS = ['#5b5fef', '#7c7ffb', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
@@ -22,7 +23,7 @@ let context: CanvasRenderingContext2D | null = null;
 let particles: Particle[] = [];
 let frame = 0;
 
-const calm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const calm = reducedMotionNow;
 
 function stage() {
   if (!canvas) {

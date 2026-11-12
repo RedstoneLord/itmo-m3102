@@ -1,3 +1,4 @@
+import { reducedMotionNow } from '../../lib/motion';
 import { useEffect, useSyncExternalStore } from 'react';
 import { useSettingsStore } from './settingsStore';
 
@@ -38,7 +39,7 @@ export function useApplyTheme() {
       root.dataset.theme = resolvedTheme;
     };
     // Смена темы — плавным перетеканием (View Transitions), где браузер умеет и движение не выключено
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduceMotion = reducedMotionNow();
     if (root.dataset.theme && !reduceMotion && 'startViewTransition' in document) document.startViewTransition(apply);
     else apply();
   }, [resolvedTheme]);

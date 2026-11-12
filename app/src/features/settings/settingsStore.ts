@@ -23,10 +23,8 @@ interface LocalSettings {
   aurora: boolean;
   /** Свечение карточек: подсветка под курсором и светящиеся кнопки */
   glow: boolean;
-  /** Живой фон: пятна сияния плавно следуют за курсором и прокруткой */
-  liveBg: boolean;
-  /** Плавная прокрутка колёсиком мыши (lib/smoothScroll.ts) */
-  smoothScroll: boolean;
+  /** Анимации: все (с живым фоном и плавной прокруткой) / спокойные (фон и ёжик стоят) / минимум (без сдвигов, пружин и Lenis) / выкл (как «уменьшить движение» в системе). Заменила прежние переключатели «Живой фон» и «Плавная прокрутка» */
+  motion: MotionLevel;
   radius: RadiusPreference;
   /** PDF в тёмных тонах (кнопка в панели PDF); null — как тема сайта */
   pdfDark: boolean | null;
@@ -39,7 +37,7 @@ interface LocalSettings {
   density: Density;
   /** Боковое меню свёрнуто (кнопка в меню и шапке, Ctrl+B) */
   sidebarCollapsed: boolean;
-  /** Окно «первого входа» уже показывали (features/onboarding); false — покажется, «Настройки → Оформление» вернёт его снова */
+  /** Первый вход уже обработан (AppShell, LazyFirstRun: «Что нового» отмечено увиденным); false — новый посетитель. Окно быстрой настройки само не открывается */
   onboarded: boolean;
   /** «Дедлайны»: строки списка (по умолчанию) или карточки */
   deadlinesView: DeadlinesView;
@@ -50,6 +48,8 @@ export type DeadlinesView = 'list' | 'cards';
 export type DynamicTheme = 'off' | 'launch' | '15' | '60';
 
 export type AppStyle = 'minimal' | 'aurora' | 'glass';
+
+export type MotionLevel = 'full' | 'calm' | 'minimal' | 'off';
 
 export type Density = 'comfortable' | 'compact';
 
@@ -69,8 +69,7 @@ interface SettingsStore extends LocalSettings {
         | 'style'
         | 'aurora'
         | 'glow'
-        | 'liveBg'
-        | 'smoothScroll'
+        | 'motion'
         | 'radius'
         | 'pdfDark'
         | 'homeOrder'
@@ -94,8 +93,7 @@ const DEFAULT_SETTINGS: LocalSettings = {
   style: 'aurora',
   aurora: true,
   glow: true,
-  liveBg: true,
-  smoothScroll: true,
+  motion: 'full',
   radius: 'normal',
   pdfDark: null,
   homeOrder: [],

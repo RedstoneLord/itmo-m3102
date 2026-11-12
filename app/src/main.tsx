@@ -1,5 +1,5 @@
-import { MotionConfig } from 'framer-motion';
-import { StrictMode } from 'react';
+import { MotionConfig, MotionGlobalConfig } from 'framer-motion';
+import { StrictMode, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/onest';
 import '@fontsource-variable/unbounded';
@@ -11,21 +11,29 @@ import { App } from './app/App';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { startClassicMarksSync } from './features/settings/classicMarksSync';
 import { startClassicSync } from './features/settings/classicSync';
+import { useSettingsStore } from './features/settings/settingsStore';
 
 // Тема, палитра и скругления общие с классической версией: подхватываем её выбор до первой отрисовки, дальше — в обе стороны
 startClassicSync();
 // Выполненные ДЗ и дедлайны из классической версии тоже подхватываются сами (только чтение её ключей)
 startClassicMarksSync();
 
+/** «Уменьшить движение» в системе или «Анимации: Минимум / Выкл» — framer-motion сам отключает сдвиги и пружины везде */
+function AppMotion({ children }: { children: ReactNode }) {
+  const reduced = useSettingsStore((state) => state.motion === 'minimal' || state.motion === 'off');
+  // «Выкл» — и затухания тоже: reducedMotion оставляет у framer-motion смену прозрачности, а здесь движения не должно быть никакого
+  MotionGlobalConfig.instantAnimations = useSettingsStore((state) => state.motion === 'off');
+  return <MotionConfig reducedMotion={reduced ? 'always' : 'user'}>{children}</MotionConfig>;
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {/* «Уменьшить движение» в системе — framer-motion сам отключает сдвиги и пружины везде */}
-    <MotionConfig reducedMotion="user">
+    <AppMotion>
       {/* Последний рубеж: ошибка вне страниц (шапка, меню) — сообщение вместо белого экрана */}
       <ErrorBoundary>
         <App />
       </ErrorBoundary>
-    </MotionConfig>
+    </AppMotion>
   </StrictMode>,
 );
 

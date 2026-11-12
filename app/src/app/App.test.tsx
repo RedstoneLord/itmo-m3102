@@ -4,9 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it } from 'vitest';
 import { useSettingsStore } from '../features/settings/settingsStore';
 import { App } from './App';
+import { useMeStore } from '../features/group/meStore';
 
-// Хранилище в тестах пустое — без этого поверх страниц встало бы окно «первого входа»
-beforeEach(() => useSettingsStore.setState({ onboarded: true }));
+// Хранилище в тестах пустое — делаем посетителя, который уже заходил и выбрал «Я гость»: иначе встало бы окно «Кто вы?»
+beforeEach(() => {
+  useSettingsStore.setState({ onboarded: true });
+  useMeStore.setState({ login: null, guest: true });
+});
 
 const heading = (name: string | RegExp) => screen.findByRole('heading', { level: 1, name }, { timeout: 10_000 });
 

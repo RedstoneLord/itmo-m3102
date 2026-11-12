@@ -7,8 +7,9 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { AccentPicker } from './AccentPicker';
 import { Button } from '../../components/ui/Button';
 import { slotsAlbum } from '../../lib/slotsAlbum';
-import { ACCENTS, SHUFFLE_EVENT } from './appearance';
-import { FIRST_RUN_EVENT, useSettingsStore, type DynamicTheme, type RadiusPreference } from './settingsStore';
+import { ACCENTS, SHUFFLE_EVENT, accentColor } from './appearance';
+import { PALETTE_PAIRS } from '../onboarding/palettePairs';
+import { FIRST_RUN_EVENT, useSettingsStore, type DynamicTheme, type MotionLevel, type RadiusPreference } from './settingsStore';
 import styles from './settings.module.css';
 import { SettingsRow } from './SettingsRow';
 import { STYLE_OPTIONS, THEME_OPTIONS } from './themeOptions';
@@ -17,6 +18,21 @@ const ON_OFF: { value: 'on' | 'off'; label: string }[] = [
   { value: 'on', label: 'Вкл' },
   { value: 'off', label: 'Выкл' },
 ];
+
+/** «Анимации»: четыре уровня, от всего до ничего */
+const MOTION_OPTIONS: { value: MotionLevel; label: string }[] = [
+  { value: 'full', label: 'Все' },
+  { value: 'calm', label: 'Спокойные' },
+  { value: 'minimal', label: 'Минимум' },
+  { value: 'off', label: 'Выкл' },
+];
+
+const MOTION_HINTS: Record<MotionLevel, string> = {
+  full: 'Всё движение: плавная прокрутка, фон за курсором, бегающий ёжик, появление карточек.',
+  calm: 'Плавная прокрутка и переходы остаются, а фон и ёжик стоят, карточки появляются сразу.',
+  minimal: 'Без сдвигов, пружин и переходов страниц, прокрутка обычная. Только быстрые смены цвета.',
+  off: 'Никакого движения — как «уменьшить движение» в системе.',
+};
 
 const RADIUS_OPTIONS: { value: RadiusPreference; label: string }[] = [
   { value: 'sharp', label: 'Строгие' },
@@ -31,113 +47,38 @@ const DYNAMIC_OPTIONS: { value: DynamicTheme; label: string }[] = [
   { value: '60', label: 'Час' },
 ];
 
-/** Оформление: тема, акцент, эффекты. Хранится в браузере (settingsStore). */
+/**
+ * Оформление: сверху главное (стиль, тема, палитра, анимации, скругления), тонкая настройка цветов и эффектов — в свёрнутом
+ * «Свои цвета и эффекты» (владелец: настройки были перегружены). Хранится в браузере (settingsStore).
+ */
 export function AppearanceSettings() {
   const theme = useSettingsStore((state) => state.theme);
   const setTheme = useSettingsStore((state) => state.setTheme);
-  const { accent, accent2, dynamicTheme, style, aurora, glow, liveBg, smoothScroll, radius, setAppearance } = useSettingsStore();
+  const { accent, accent2, dynamicTheme, style, aurora, glow, motion, radius, setAppearance } = useSettingsStore();
   const album = slotsAlbum();
-  // Палитры классической версии: пять — всегда, остальные открывают капсулы «Колючего куша»
-  const groupPalettes = classicPalettes.palettes.filter((item) => item.base || album[`pal:${item.id}`]);
+  // Те же пары, что в окне быстрой настройки (по умолчанию, пять палитр группы, две готовые), и палитры группы из капсул «Колючего куша»
+  const palettes = [
+    ...PALETTE_PAIRS,
+    ...classicPalettes.palettes
+      .filter((item) => !item.base && album[`pal:${item.id}`])
+      .map(({ id, name, a, b }) => ({ id: `group-${id}`, name, a, b })),
+  ];
   const lockedNote = dynamicTheme === 'off' ? undefined : 'Сейчас цвета ведёт «Динамическая тема» — выключите её ниже, чтобы выбрать свои.';
 
   return (
     <>
-      <SettingsRow
-        label="Стиль"
-        description="Minimalism — чистые поверхности без фона и свечения. Aurora — мягкое сияние за страницей и подсветка карточек. Liquid Glass — прозрачное стекло с бликами. Компоновка и данные не меняются, а тема и палитра выбираются отдельно."
-      >
+      <SettingsRow label="Стиль" description="Minimalism — чистые поверхности, Aurora — мягкое сияние, Liquid Glass — стекло с бликами.">
         <SegmentedControl label="Стиль" options={STYLE_OPTIONS} value={style} onChange={(value) => setAppearance({ style: value })} />
       </SettingsRow>
 
-      <SettingsRow
-        label="Тема"
-        description="«Системная» повторяет оформление вашего устройства. Тема общая с классической версией: поменяли тут — поменяется и там."
-      >
+      <SettingsRow label="Тема" description="«Системная» — как на вашем устройстве. Общая с классической версией.">
         <SegmentedControl label="Тема" options={THEME_OPTIONS} value={theme} onChange={setTheme} />
       </SettingsRow>
 
-      <SettingsRow label="Акцент" description="Цвет кнопок, выделений и свечения. Можно выбрать свой." lockedNote={lockedNote}>
-        <div className={styles.swatches} role="radiogroup" aria-label="Цвет акцента">
-          {ACCENTS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="radio"
-              aria-checked={accent === item.id}
-              aria-label={item.name}
-              title={item.name}
-              className={styles.swatch}
-              style={{ '--swatch': item.color } as React.CSSProperties}
-              onClick={() => setAppearance({ accent: item.id })}
-            >
-              {accent === item.id && <Check size={14} strokeWidth={3} aria-hidden />}
-            </button>
-          ))}
-          <AccentPicker accent={accent} onChange={(value) => setAppearance({ accent: value })} />
-        </div>
-      </SettingsRow>
-
-      <SettingsRow
-        label="Второй акцент"
-        description="Вместе с первым даёт градиент на кнопках, выделениях и в сиянии. «Авто» — соседний по кругу оттенок, «Нет» — один сплошной цвет."
-        lockedNote={lockedNote}
-      >
-        <div className={styles.swatches} role="radiogroup" aria-label="Второй акцент">
-          <button
-            type="button"
-            role="radio"
-            aria-checked={accent2 === 'auto'}
-            aria-label="Авто"
-            title="Авто"
-            className={styles.swatch}
-            style={{ '--swatch': 'var(--accent-gradient)' } as React.CSSProperties}
-            onClick={() => setAppearance({ accent2: 'auto' })}
-          >
-            {accent2 === 'auto' && <Check size={14} strokeWidth={3} aria-hidden />}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={accent2 === 'none'}
-            aria-label="Без второго акцента"
-            title="Без второго акцента"
-            className={styles.swatch}
-            style={{ '--swatch': 'var(--color-bg-hover)' } as React.CSSProperties}
-            onClick={() => setAppearance({ accent2: 'none' })}
-          >
-            {accent2 === 'none' ? (
-              <Check size={14} strokeWidth={3} aria-hidden />
-            ) : (
-              <Ban size={14} strokeWidth={2} aria-hidden className={styles.pipette} />
-            )}
-          </button>
-          {ACCENTS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="radio"
-              aria-checked={accent2 === item.id}
-              aria-label={item.name}
-              title={item.name}
-              className={styles.swatch}
-              style={{ '--swatch': item.color } as React.CSSProperties}
-              onClick={() => setAppearance({ accent2: item.id })}
-            >
-              {accent2 === item.id && <Check size={14} strokeWidth={3} aria-hidden />}
-            </button>
-          ))}
-        </div>
-      </SettingsRow>
-
-      {groupPalettes.length > 0 && (
-        <SettingsRow
-          label="Палитры сайта группы"
-          description="Те же пары цветов, что в классической версии, и выбор общий: поменяли тут — поменяется и там, и наоборот. Золото, неон и аврору открывают капсулы «Колючего куша». Свои цвета остаются только в приложении."
-          lockedNote={lockedNote}
-        >
-          <div className={styles.swatches} role="radiogroup" aria-label="Палитры сайта группы">
-            {groupPalettes.map((item) => {
+      {palettes.length > 0 && (
+        <SettingsRow label="Палитра" description="Пара цветов кнопок и выделений. Свои цвета — ниже, в «Свои цвета и эффекты».">
+          <div className={styles.swatches} role="radiogroup" aria-label="Палитра">
+            {palettes.map((item) => {
               const on = accent === item.a && accent2 === item.b;
               return (
                 <button
@@ -148,8 +89,9 @@ export function AppearanceSettings() {
                   aria-label={item.name}
                   title={item.name}
                   className={styles.swatch}
-                  style={{ '--swatch': `linear-gradient(135deg, ${item.a}, ${item.b})` } as React.CSSProperties}
-                  onClick={() => setAppearance({ accent: item.a, accent2: item.b })}
+                  style={{ '--swatch': `linear-gradient(135deg, ${accentColor(item.a)}, ${accentColor(item.b)})` } as React.CSSProperties}
+                  // Явный выбор палитры выключает динамическую тему — иначе выбранная пара не была бы видна
+                  onClick={() => setAppearance({ accent: item.a, accent2: item.b, dynamicTheme: 'off' })}
                 >
                   {on && <Check size={14} strokeWidth={3} aria-hidden />}
                 </button>
@@ -159,45 +101,119 @@ export function AppearanceSettings() {
         </SettingsRow>
       )}
 
-      <SettingsRow
-        label="Динамическая тема"
-        description="Сама подбирает новую пару акцентов и плавно переходит к ней: при каждом открытии, раз в 15 минут или раз в час. Пока она включена, свои акценты выше не действуют."
-      >
-        <SegmentedControl
-          label="Динамическая тема"
-          options={DYNAMIC_OPTIONS}
-          value={dynamicTheme}
-          onChange={(value) => setAppearance({ dynamicTheme: value })}
-        />
-        {dynamicTheme !== 'off' && (
-          <Button variant="secondary" size="sm" onClick={() => dispatchEvent(new Event(SHUFFLE_EVENT))}>
-            Сменить сейчас
-          </Button>
-        )}
+      <SettingsRow label="Анимации" description={MOTION_HINTS[motion]}>
+        <SegmentedControl label="Анимации" options={MOTION_OPTIONS} value={motion} onChange={(value) => setAppearance({ motion: value })} />
       </SettingsRow>
 
-      {style === 'aurora' && (
-        <SettingsRow label="Фон-сияние" description="Мягкие пятна света в цвете акцента за страницей.">
-          <SegmentedControl
-            label="Фон-сияние"
-            options={ON_OFF}
-            value={aurora ? 'on' : 'off'}
-            onChange={(value) => setAppearance({ aurora: value === 'on' })}
-          />
-        </SettingsRow>
-      )}
+      <SettingsRow label="Скругления" description="Углы карточек, кнопок и полей. Общие с классической версией.">
+        <SegmentedControl label="Скругления" options={RADIUS_OPTIONS} value={radius} onChange={(value) => setAppearance({ radius: value })} />
+      </SettingsRow>
 
-      {style !== 'minimal' && (
-        <>
-          <SettingsRow label="Живой фон" description="Фон плавно смещается за курсором и при прокрутке.">
+      <details className={styles.more}>
+        <summary className={styles.moreSummary}>Свои цвета и эффекты</summary>
+
+        <SettingsRow label="Акцент" description="Цвет кнопок, выделений и свечения. Можно выбрать свой." lockedNote={lockedNote}>
+          <div className={styles.swatches} role="radiogroup" aria-label="Цвет акцента">
+            {ACCENTS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="radio"
+                aria-checked={accent === item.id}
+                aria-label={item.name}
+                title={item.name}
+                className={styles.swatch}
+                style={{ '--swatch': item.color } as React.CSSProperties}
+                onClick={() => setAppearance({ accent: item.id })}
+              >
+                {accent === item.id && <Check size={14} strokeWidth={3} aria-hidden />}
+              </button>
+            ))}
+            <AccentPicker accent={accent} onChange={(value) => setAppearance({ accent: value })} />
+          </div>
+        </SettingsRow>
+
+        <SettingsRow
+          label="Второй акцент"
+          description="Вместе с первым даёт градиент на кнопках, выделениях и в сиянии. «Авто» — соседний по кругу оттенок, «Нет» — один сплошной цвет."
+          lockedNote={lockedNote}
+        >
+          <div className={styles.swatches} role="radiogroup" aria-label="Второй акцент">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={accent2 === 'auto'}
+              aria-label="Авто"
+              title="Авто"
+              className={styles.swatch}
+              style={{ '--swatch': 'var(--accent-gradient)' } as React.CSSProperties}
+              onClick={() => setAppearance({ accent2: 'auto' })}
+            >
+              {accent2 === 'auto' && <Check size={14} strokeWidth={3} aria-hidden />}
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={accent2 === 'none'}
+              aria-label="Без второго акцента"
+              title="Без второго акцента"
+              className={styles.swatch}
+              style={{ '--swatch': 'var(--color-bg-hover)' } as React.CSSProperties}
+              onClick={() => setAppearance({ accent2: 'none' })}
+            >
+              {accent2 === 'none' ? (
+                <Check size={14} strokeWidth={3} aria-hidden />
+              ) : (
+                <Ban size={14} strokeWidth={2} aria-hidden className={styles.pipette} />
+              )}
+            </button>
+            {ACCENTS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="radio"
+                aria-checked={accent2 === item.id}
+                aria-label={item.name}
+                title={item.name}
+                className={styles.swatch}
+                style={{ '--swatch': item.color } as React.CSSProperties}
+                onClick={() => setAppearance({ accent2: item.id })}
+              >
+                {accent2 === item.id && <Check size={14} strokeWidth={3} aria-hidden />}
+              </button>
+            ))}
+          </div>
+        </SettingsRow>
+
+        <SettingsRow
+          label="Динамическая тема"
+          description="Сама подбирает новую пару акцентов и плавно переходит к ней: при каждом открытии, раз в 15 минут или раз в час. Пока она включена, свои акценты выше не действуют."
+        >
+          <SegmentedControl
+            label="Динамическая тема"
+            options={DYNAMIC_OPTIONS}
+            value={dynamicTheme}
+            onChange={(value) => setAppearance({ dynamicTheme: value })}
+          />
+          {dynamicTheme !== 'off' && (
+            <Button variant="secondary" size="sm" onClick={() => dispatchEvent(new Event(SHUFFLE_EVENT))}>
+              Сменить сейчас
+            </Button>
+          )}
+        </SettingsRow>
+
+        {style === 'aurora' && (
+          <SettingsRow label="Фон-сияние" description="Мягкие пятна света в цвете акцента за страницей.">
             <SegmentedControl
-              label="Живой фон"
+              label="Фон-сияние"
               options={ON_OFF}
-              value={liveBg ? 'on' : 'off'}
-              onChange={(value) => setAppearance({ liveBg: value === 'on' })}
+              value={aurora ? 'on' : 'off'}
+              onChange={(value) => setAppearance({ aurora: value === 'on' })}
             />
           </SettingsRow>
+        )}
 
+        {style !== 'minimal' && (
           <SettingsRow label="Свечение" description="Подсветка и светящаяся рамка под курсором, светящиеся кнопки.">
             <SegmentedControl
               label="Свечение"
@@ -206,37 +222,18 @@ export function AppearanceSettings() {
               onChange={(value) => setAppearance({ glow: value === 'on' })}
             />
           </SettingsRow>
-        </>
-      )}
+        )}
+      </details>
 
-      <SettingsRow
-        label="Плавная прокрутка"
-        description="Колёсико мыши прокручивает страницу мягко, с инерцией. На тачпаде и телефоне прокрутка своя."
-      >
-        <SegmentedControl
-          label="Плавная прокрутка"
-          options={ON_OFF}
-          value={smoothScroll ? 'on' : 'off'}
-          onChange={(value) => setAppearance({ smoothScroll: value === 'on' })}
-        />
-      </SettingsRow>
-
-      <SettingsRow label="Скругления" description="Углы карточек, кнопок и полей. Общие с классической версией.">
-        <SegmentedControl label="Скругления" options={RADIUS_OPTIONS} value={radius} onChange={(value) => setAppearance({ radius: value })} />
-      </SettingsRow>
-
-      <SettingsRow label="Быстрая настройка" description="Стиль, тема, палитра и «Кто вы?» в одном окне.">
+      <div className={styles.links}>
         <Button variant="secondary" size="sm" onClick={() => dispatchEvent(new Event(FIRST_RUN_EVENT))}>
-          Открыть
+          Быстрая настройка
         </Button>
-      </SettingsRow>
-
-      <SettingsRow label="Дизайн-система" description="Все компоненты интерфейса на одной странице.">
-        <Link to={SECTIONS.design.path} className={buttonClass('secondary', 'sm')}>
-          Открыть
+        <Link to={SECTIONS.design.path} className={buttonClass('ghost', 'sm')}>
+          Дизайн-система
           <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
         </Link>
-      </SettingsRow>
+      </div>
     </>
   );
 }

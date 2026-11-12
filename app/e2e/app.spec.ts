@@ -11,6 +11,7 @@ test.beforeEach(async ({ page }) => {
   // запись только если настроек ещё нет, иначе перезагрузка затёрла бы то, что тест выбрал
   await page.addInitScript(() => {
     if (!localStorage.getItem('m3102:settings')) localStorage.setItem('m3102:settings', JSON.stringify({ state: { onboarded: true }, version: 7 }));
+    if (!localStorage.getItem('m3102:me')) localStorage.setItem('m3102:me', JSON.stringify({ state: { login: null, guest: true }, version: 2 }));
   });
 });
 

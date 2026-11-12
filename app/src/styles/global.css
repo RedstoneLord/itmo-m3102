@@ -101,6 +101,31 @@ html {
   }
 }
 
+/* «Анимации» (Настройки → Оформление, data-motion на <html>). Спокойные — без фонового и каскадов; Минимум — без
+   keyframe-анимаций (остаются короткие переходы цвета); Выкл — как «уменьшить движение» в системе. Бесконечные анимации
+   при сжатых длительностях иначе мигали бы — поэтому iteration-count: 1 */
+:root[data-motion='calm'] :is(.stagger > *, .aurora i) {
+  animation: none;
+}
+
+/* Псевдоэлементы — отдельными селекторами: внутри :is() они не работают (а блики и пульсации живут в ::before/::after) */
+:root:is([data-motion='minimal'], [data-motion='off']) *,
+:root:is([data-motion='minimal'], [data-motion='off']) *::before,
+:root:is([data-motion='minimal'], [data-motion='off']) *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+:root[data-motion='off'] *,
+:root[data-motion='off'] *::before,
+:root[data-motion='off'] *::after {
+  transition-duration: 0.01ms !important;
+}
+
+:root:is([data-motion='minimal'], [data-motion='off']) {
+  scroll-behavior: auto;
+}
+
 /* Плавное колесо (lib/smoothScroll.ts, класс .lenis ставит Lenis): он сам двигает страницу каждый кадр —
    браузерное smooth поверх растягивало бы каждый шаг. Явные scrollIntoView({ behavior: 'smooth' }) остаются плавными */
 html.lenis {
@@ -254,6 +279,11 @@ html {
   html,
   body {
     background: #fff !important;
+  }
+
+  /* Разделы конспекта вне экрана не рисуются (useLazySections) — на бумаге нужны все */
+  [data-lazy-layout] > * {
+    content-visibility: visible !important;
   }
 
   /* Ничего не обрезается по краю листа: прокрутка вбок на бумаге не работает. Кроме формул: KaTeX прячет

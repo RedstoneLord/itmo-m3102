@@ -12,14 +12,14 @@ test.beforeEach(async ({ page }) => {
   await mockGithub(page);
 });
 
-test('первый вход без окна; «Быстрая настройка»: «Кто вы?» — «Я гость», потом студент; у студентов появляется «Это вы»', async ({ page }) => {
+test('первый вход: окно не закрыть, пока не выбрано «Кто вы?»; «Я гость», потом студент; у студентов появляется «Это вы»', async ({ page }) => {
   await page.goto('./');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  // Новому посетителю окно само не открывается — только из настроек
-  await expect(dialog(page)).toHaveCount(0);
-  await page.goto('./#/settings?tab=appearance');
-  await page.getByRole('button', { name: 'Открыть', exact: true }).click();
   await expect(page.getByText('Настройте сайт под себя')).toBeVisible();
+  // Пока не выбрано — ни крестика, ни Esc, «Готово» неактивна
+  await expect(dialog(page).getByRole('button', { name: 'Закрыть' })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(dialog(page)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Готово' })).toBeDisabled();
 
   await dialog(page).getByRole('button', { name: 'Кто вы' }).click();
   await page.getByRole('option', { name: /Я гость/ }).click();
@@ -137,6 +137,7 @@ test('битый файл копии отклоняется с понятным 
 test('«Что нового»: у «Настроек» горит тихая точка, пока вкладку не открыли; потом гаснет и не возвращается', async ({ page }) => {
   await page.addInitScript(() => {
     if (!localStorage.getItem('m3102:settings')) localStorage.setItem('m3102:settings', JSON.stringify({ state: { onboarded: true }, version: 7 }));
+    if (!localStorage.getItem('m3102:me')) localStorage.setItem('m3102:me', JSON.stringify({ state: { login: null, guest: true }, version: 2 }));
   });
   await page.goto('./#/today');
   const dot = page.getByRole('img', { name: 'есть новое' });

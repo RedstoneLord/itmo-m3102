@@ -1,3 +1,4 @@
+import { reducedMotionNow } from './motion';
 import { useEffect } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router';
@@ -25,7 +26,7 @@ export function useMorphLinks() {
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       // Только мышь: на телефоне снимок страницы для перехода тяжёл для видеокарты и картинка «залипала»
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+      if (reducedMotionNow() || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
       const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[data-morph]');
       const href = link?.getAttribute('href');
       if (!link || !href?.startsWith('#/') || href === location.hash) return;

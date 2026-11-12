@@ -135,20 +135,20 @@ export function useApplyAppearance() {
     style,
     aurora: auroraSetting,
     glow: glowSetting,
-    liveBg,
     radius,
     density,
+    motion,
   } = useSettingsStore(
-    useShallow(({ accent, accent2, dynamicTheme, style, aurora, glow, liveBg, radius, density }) => ({
+    useShallow(({ accent, accent2, dynamicTheme, style, aurora, glow, radius, density, motion }) => ({
       accent,
       accent2,
       dynamicTheme,
       style,
       aurora,
       glow,
-      liveBg,
       radius,
       density,
+      motion,
     })),
   );
   // Minimalism — без фона и свечения; Aurora — как включено в настройках; Liquid Glass — фон нужен всегда (стекло без картинки под ним — серая муть)
@@ -173,7 +173,8 @@ export function useApplyAppearance() {
     else delete root.dataset.practice;
     root.dataset.radius = radius;
     root.dataset.density = density;
-  }, [accent, accent2, pair, style, aurora, glow, radius, density]);
+    root.dataset.motion = motion;
+  }, [accent, accent2, pair, style, aurora, glow, radius, density, motion]);
 
   // Подсветка под курсором: один обработчик на всю страницу пишет координаты в ту карточку
   // [data-spot], над которой курсор, — никаких слушателей на каждой карточке
@@ -205,7 +206,8 @@ export function useApplyAppearance() {
   // «доезжают» до цели в цикле кадров, который сам останавливается, когда догнал, — без работы в покое
   useEffect(() => {
     const layer = document.querySelector<HTMLElement>('.aurora');
-    if (!liveBg || !aurora || !layer || matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    // Живой фон — только при «Анимации: Все»
+    if (!aurora || !layer || motion !== 'full' || matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
     const target = { x: 0, y: 0, s: 0 };
     const now = { x: 0, y: 0, s: 0 };
     let frame = 0;
@@ -251,5 +253,5 @@ export function useApplyAppearance() {
       cancelAnimationFrame(frame);
       for (const name of ['--bg-x', '--bg-y', '--bg-s']) layer.style.removeProperty(name);
     };
-  }, [liveBg, aurora]);
+  }, [aurora, motion]);
 }

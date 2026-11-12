@@ -9,6 +9,7 @@ test.beforeEach(async ({ page }) => {
   await mockGithub(page);
   await page.addInitScript(() => {
     if (!localStorage.getItem('m3102:settings')) localStorage.setItem('m3102:settings', JSON.stringify({ state: { onboarded: true }, version: 7 }));
+    if (!localStorage.getItem('m3102:me')) localStorage.setItem('m3102:me', JSON.stringify({ state: { login: null, guest: true }, version: 2 }));
   });
 });
 

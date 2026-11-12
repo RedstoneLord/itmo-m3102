@@ -5,11 +5,16 @@ import { GithubMark } from '../../components/ui/GithubMark';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { TelegramMark } from '../../components/ui/TelegramMark';
 import { cn } from '../../lib/cn';
+import { pluralize } from '../../lib/pluralize';
 import { M3102_STUDENTS } from '../../data/m3102';
 import { REPO_URL } from '../../services/github';
 import { useMeStore } from './meStore';
 import { useProfileStore } from './profileStore';
 import styles from './StudentsPage.module.css';
+
+/** 1 хинкалина, 2 хинкали, 5 хинкалей */
+const KHINKALI: [string, string, string] = ['хинкалина', 'хинкали', 'хинкалей'];
+const khinkaliWord = (count: number) => pluralize(count, KHINKALI).replace(/^\d+ /, '');
 
 type RawKhinkaliData = Record<string, unknown> | Array<{ nick?: string; github?: string; name?: string; count?: number; khinkali?: number }>;
 
@@ -102,22 +107,25 @@ export function StudentsPage() {
     <>
       <PageHeader
         title="Студенты группы М3102"
-        subtitle="Нажмите на карточку — откроется профиль. «Коммиты» — история правок студента в репозитории материалов группы. 🥟 у фото — сколько хинкали съел студент: счёт группа ведёт вручную в файле репозитория, сайт только показывает его."
+        subtitle="Нажмите на карточку — откроется профиль. «Коммиты» — история правок студента в репозитории материалов группы. 🥟 у фото — сколько хинкалей съел студент: счёт группа ведёт вручную в файле репозитория, сайт только показывает его."
         actions={
           <a
             className={styles.totalBadge}
             href={`${REPO_URL}/blob/master/data/khinkali.json`}
             target="_blank"
             rel="noreferrer"
-            title="Сколько хинкали съела вся группа — сумма по студентам. Счёт ведут вручную в data/khinkali.json; нажмите, чтобы открыть файл"
+            title={`Вся группа съела ${pluralize(total, KHINKALI)} — сумма по студентам. Счёт ведут вручную в data/khinkali.json; нажмите, чтобы открыть файл`}
             data-spot
           >
             <span className={styles.totalIcon} aria-hidden>
               🥟
             </span>
             <div className={styles.totalInfo}>
-              <span className={styles.totalCount}>{total}</span>
-              <span className={styles.totalLabel}>хинкали съела группа</span>
+              <span className={styles.totalLine}>
+                <span className={styles.totalCount}>{total}</span>
+                <span className={styles.totalWord}>{khinkaliWord(total)}</span>
+              </span>
+              <span className={styles.totalLabel}>съела вся группа</span>
             </div>
           </a>
         }
@@ -137,7 +145,11 @@ export function StudentsPage() {
                   loading="lazy"
                   onError={(event) => (event.currentTarget.style.visibility = 'hidden')}
                 />
-                <span className={styles.khinkaliBadge} title="Сколько хинкали съел студент (счёт группы в data/khinkali.json)">
+                <span
+                  className={styles.khinkaliBadge}
+                  title={`Съел ${pluralize(count, KHINKALI)} (счёт группы в data/khinkali.json)`}
+                  aria-label={pluralize(count, KHINKALI)}
+                >
                   <span aria-hidden>🥟</span>
                   {count}
                 </span>

@@ -31,6 +31,7 @@
           document.documentElement.dataset.style = style;
           document.documentElement.dataset.aurora = style === 'glass' || (style === 'aurora' && s.aurora !== false) ? 'on' : 'off';
           document.documentElement.dataset.glow = style !== 'minimal' && s.glow !== false ? 'on' : 'off';
+          if (s.motion) document.documentElement.dataset.motion = s.motion;
         } catch (e) {}
       })();
     </script>

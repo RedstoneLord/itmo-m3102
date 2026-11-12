@@ -15,6 +15,8 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'full';
   /** Без заголовка и отступов, ближе к верху экрана — для окон со своей раскладкой (поиск) */
   bare?: boolean;
+  /** false — окно нельзя закрыть мимо кнопок: нет крестика, Esc и клик по фону ничего не делают */
+  dismissible?: boolean;
 }
 
 const FOCUSABLE =
@@ -39,12 +41,14 @@ function scrollsInside(target: EventTarget | null, layer: HTMLElement): boolean 
  * Фокус: при открытии — первое поле (крестик последний), Tab не выходит из окна, при закрытии фокус
  * возвращается туда, откуда открыли. Содержимое создаётся заново при каждом открытии — формы сбрасываются сами.
  */
-export function Modal({ open, onClose, title, description, children, footer, size = 'md', bare = false }: ModalProps) {
+export function Modal({ open, onClose, title, description, children, footer, size = 'md', bare = false, dismissible = true }: ModalProps) {
   const layerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const pressedOnBackdrop = useRef(false);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  const dismissibleRef = useRef(dismissible);
+  dismissibleRef.current = dismissible;
   const titleId = useId();
   // «Закрывается» — в том же рендере, где пришло open=false: содержимое остаётся до конца анимации ухода
   // и не пересоздаётся (иначе окно мигало, а анимации внутри начинались заново)
@@ -73,7 +77,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
       if (stack[stack.length - 1] !== id) return;
       if (event.key === 'Escape') {
         event.preventDefault();
-        onCloseRef.current();
+        if (dismissibleRef.current) onCloseRef.current();
       } else if (event.key === 'Tab' && panel) {
         const items = [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((item) => item.offsetParent !== null);
         if (!items.length) return event.preventDefault();
@@ -123,7 +127,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
       <div
         className={styles.backdrop}
         onPointerDown={() => (pressedOnBackdrop.current = true)}
-        onClick={() => pressedOnBackdrop.current && onClose()}
+        onClick={() => pressedOnBackdrop.current && dismissible && onClose()}
         aria-hidden
       />
       <div
@@ -155,7 +159,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
           {footer && <footer className={styles.footer}>{footer}</footer>}
 
           {/* Кнопка закрытия идёт последней, чтобы при открытии фокус попал на первое поле */}
-          {!bare && <IconButton icon={X} label="Закрыть" size="sm" className={styles.close} onClick={onClose} />}
+          {!bare && dismissible && <IconButton icon={X} label="Закрыть" size="sm" className={styles.close} onClick={onClose} />}
         </div>
       </div>
     </div>,

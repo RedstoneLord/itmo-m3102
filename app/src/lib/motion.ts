@@ -1,4 +1,4 @@
-import { useReducedMotion as useFramerReducedMotion } from 'framer-motion';
+import { useReducedMotionConfig } from 'framer-motion';
 import type { Transition } from 'framer-motion';
 
 /**
@@ -13,5 +13,12 @@ export const SPRING_SNAPPY: Transition = { type: 'spring', stiffness: 520, dampi
 export const SPRING_SMOOTH: Transition = { type: 'spring', stiffness: 340, damping: 32, mass: 0.9 };
 export const SPRING_PLAYFUL: Transition = { type: 'spring', stiffness: 420, damping: 20, mass: 0.8 };
 
-/** Обёртка над useReducedMotion Framer Motion — единая точка для чтения настройки ОС. */
-export const usePrefersReducedMotion = useFramerReducedMotion;
+/**
+ * Движение уменьшено: «уменьшить движение» в системе или «Анимации: Минимум / Выкл» в настройках. Единая точка для React:
+ * MotionConfig в main.tsx ставит reducedMotion="always" для этих двух уровней, а этот хук читает именно его.
+ */
+export const usePrefersReducedMotion = () => useReducedMotionConfig() ?? false;
+
+/** То же вне React (конфетти, искры, переходы View Transitions): по системе и по data-motion на <html> */
+export const reducedMotionNow = () =>
+  matchMedia('(prefers-reduced-motion: reduce)').matches || /^(minimal|off)$/.test(document.documentElement.dataset.motion ?? '');

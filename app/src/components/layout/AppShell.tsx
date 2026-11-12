@@ -8,12 +8,13 @@ import { HomeworkDialog } from '../../features/homework/HomeworkDialog';
 import { useSearchShortcut } from '../../features/search/useSearchShortcut';
 import { useApplyAppearance } from '../../features/settings/appearance';
 import { FIRST_RUN_EVENT, useSettingsStore } from '../../features/settings/settingsStore';
+import { useMeStore } from '../../features/group/meStore';
 import { useChangelogStore } from '../../features/changelog/changelogStore';
 import { useApplyTheme } from '../../features/settings/theme';
 import { useMorphLinks } from '../../lib/morph';
 import { usePrefersReducedMotion } from '../../lib/motion';
 import { useScrollMemory } from '../../lib/useScrollMemory';
-import { smooth } from '../../lib/smoothScroll';
+import { smooth, useNoteSmooth } from '../../lib/smoothScroll';
 import { CelebrateHedgehog } from '../hedgehog/CelebrateHedgehog';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { PageSkeleton } from '../ui/PageSkeleton';
@@ -26,7 +27,7 @@ import styles from './AppShell.module.css';
 const StudentProfile = lazy(() => import('../../features/group/StudentProfile').then((module) => ({ default: module.StudentProfile })));
 // Плавное колесо и «Наверх» — отдельным куском: для первой отрисовки не нужны, а запас первой загрузки выбран
 const ScrollExtras = lazy(() => import('./ScrollExtras').then((module) => ({ default: module.ScrollExtras })));
-// Окно «первого входа» — тоже отдельным куском: нужно новому посетителю и по кнопке в настройках, остальным код не качается
+// Окно «Настройте сайт под себя» — тоже отдельным куском: открывается только по кнопке в настройках, остальным код не качается
 const FirstRun = lazy(() => import('../../features/onboarding/FirstRun').then((module) => ({ default: module.FirstRun })));
 
 /**
@@ -40,8 +41,10 @@ export function AppShell() {
   const location = useLocation();
   const reduceMotion = usePrefersReducedMotion();
   const reading = location.pathname.startsWith('/materials/notes/');
-  // В читалке конспекта — родная прокрутка: там при прокрутке дорисовываются разделы с формулами, и Lenis (главный поток) спотыкается
-  const smoothWheel = useSettingsStore((state) => state.smoothScroll) && !reduceMotion && !reading;
+  // В читалке — только когда конспект готов (useNoteSmooth): у PDF и пока разделы дорисовываются — родная прокрутка
+  const noteReady = useNoteSmooth((state) => state.ready);
+  // Плавное колесо — при «Анимации: Все / Спокойные» (у «Минимум» и «Выкл» reduceMotion)
+  const smoothWheel = !reduceMotion && (!reading || noteReady);
 
   useApplyTheme();
   useApplyAppearance();
@@ -110,14 +113,20 @@ export function AppShell() {
 }
 
 /**
- * Окно «Настройте сайт под себя» — только по кнопке в настройках (событие FIRST_RUN_EVENT). Новому посетителю оно само не
- * открывается: сразу как «Пропустить» — значения по умолчанию и все выпуски «Что нового» увиденными (ему нечего догонять).
+ * Окно «Настройте сайт под себя» открывается само, пока не выбрано «Кто вы?» (FirstRun его тогда не даёт закрыть), и по
+ * кнопке в настройках (событие FIRST_RUN_EVENT). Новому посетителю все выпуски «Что нового» — увиденные: ему нечего догонять.
+ * Закрывается только кнопкой: выбор в окне не должен его захлопнуть, пока человек смотрит палитры.
  * Загруженное окно остаётся в дереве: ему нужно доиграть анимацию закрытия
  */
 function LazyFirstRun() {
   const fresh = useSettingsStore((state) => !state.onboarded);
-  const [open, setOpen] = useState(false);
-  const [used, setUsed] = useState(false);
+  const needsWho = useMeStore((state) => state.login === null && !state.guest);
+  const [open, setOpen] = useState(needsWho);
+  const [used, setUsed] = useState(needsWho);
+  if (needsWho && !open) {
+    setOpen(true);
+    setUsed(true);
+  }
 
   useEffect(() => {
     if (!fresh) return;

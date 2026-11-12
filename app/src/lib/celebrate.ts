@@ -1,3 +1,4 @@
+import { reducedMotionNow } from './motion';
 import { useEffect, useRef } from 'react';
 
 /**
@@ -9,7 +10,7 @@ const COLORS = ['var(--color-accent)', 'var(--color-success)', 'var(--color-warn
 
 let lastCheck = { at: 0, x: innerWidth / 2, y: innerHeight / 2 };
 
-const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduced = reducedMotionNow;
 
 function piece(x: number, y: number, width: number, height: number, color: string) {
   const element = document.createElement('i');

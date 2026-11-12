@@ -2,6 +2,7 @@ import { motion, useAnimationControls } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePrefersReducedMotion } from '../../lib/motion';
+import { useSettingsStore } from '../../features/settings/settingsStore';
 import { Hedgehog, HEDGEHOG_RATIO } from './Hedgehog';
 import { backflip, gallop, HOG, skid, STRIDE, stridesFor, wait } from './moves';
 import styles from './RunawayHedgehog.module.css';
@@ -22,7 +23,9 @@ function nextPoint(from: { x: number; y: number }, width: number, height: number
  * Слой не перехватывает нажатия — только сам ёжик. «Уменьшить движение» — не появляется.
  */
 export function RunawayHedgehog() {
-  const reduceMotion = usePrefersReducedMotion();
+  // «Анимации: Спокойные» — ёжик не бегает (бесконечное и фоновое выключено), но стоит на месте и делает сальто по клику
+  const calm = useSettingsStore((state) => state.motion === 'calm');
+  const reduceMotion = usePrefersReducedMotion() || calm;
   const area = useRef<HTMLDivElement>(null);
   const travel = useAnimationControls();
   const jump = useAnimationControls();

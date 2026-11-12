@@ -1,6 +1,7 @@
 import { motion, useAnimationControls } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { usePrefersReducedMotion } from '../../lib/motion';
+import { useSettingsStore } from '../../features/settings/settingsStore';
 import { Hedgehog } from './Hedgehog';
 import styles from './HedgehogLane.module.css';
 import { backflip, HOG, HOP, hopsFor, runHops, wait } from './moves';
@@ -15,7 +16,9 @@ const IDLE_MS = 60_000;
  * вместе, без рывков. По клику — своё сальто с репликой. «Уменьшить движение» — стоит в начале дорожки.
  */
 export function HedgehogLane() {
-  const reduceMotion = usePrefersReducedMotion();
+  // «Анимации: Спокойные» — ёжик не бегает (бесконечное и фоновое выключено), но стоит на месте и делает сальто по клику
+  const calm = useSettingsStore((state) => state.motion === 'calm');
+  const reduceMotion = usePrefersReducedMotion() || calm;
   const lane = useRef<HTMLDivElement>(null);
   const travel = useAnimationControls();
   const jump = useAnimationControls();
