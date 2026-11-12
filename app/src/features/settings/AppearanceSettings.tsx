@@ -8,7 +8,7 @@ import { AccentPicker } from './AccentPicker';
 import { Button } from '../../components/ui/Button';
 import { slotsAlbum } from '../../lib/slotsAlbum';
 import { ACCENTS, SHUFFLE_EVENT } from './appearance';
-import { useSettingsStore, type DynamicTheme, type RadiusPreference } from './settingsStore';
+import { FIRST_RUN_EVENT, useSettingsStore, type DynamicTheme, type RadiusPreference } from './settingsStore';
 import styles from './settings.module.css';
 import { SettingsRow } from './SettingsRow';
 import { STYLE_OPTIONS, THEME_OPTIONS } from './themeOptions';
@@ -35,7 +35,7 @@ const DYNAMIC_OPTIONS: { value: DynamicTheme; label: string }[] = [
 export function AppearanceSettings() {
   const theme = useSettingsStore((state) => state.theme);
   const setTheme = useSettingsStore((state) => state.setTheme);
-  const { accent, accent2, dynamicTheme, style, aurora, glow, liveBg, radius, setAppearance } = useSettingsStore();
+  const { accent, accent2, dynamicTheme, style, aurora, glow, liveBg, smoothScroll, radius, setAppearance } = useSettingsStore();
   const album = slotsAlbum();
   // Палитры классической версии: пять — всегда, остальные открывают капсулы «Колючего куша»
   const groupPalettes = classicPalettes.palettes.filter((item) => item.base || album[`pal:${item.id}`]);
@@ -209,13 +209,25 @@ export function AppearanceSettings() {
         </>
       )}
 
+      <SettingsRow
+        label="Плавная прокрутка"
+        description="Колёсико мыши прокручивает страницу мягко, с инерцией. На тачпаде и телефоне прокрутка своя."
+      >
+        <SegmentedControl
+          label="Плавная прокрутка"
+          options={ON_OFF}
+          value={smoothScroll ? 'on' : 'off'}
+          onChange={(value) => setAppearance({ smoothScroll: value === 'on' })}
+        />
+      </SettingsRow>
+
       <SettingsRow label="Скругления" description="Углы карточек, кнопок и полей. Общие с классической версией.">
         <SegmentedControl label="Скругления" options={RADIUS_OPTIONS} value={radius} onChange={(value) => setAppearance({ radius: value })} />
       </SettingsRow>
 
-      <SettingsRow label="Приветствие" description="Короткое окно, которое видит новый посетитель: стиль, тема и палитра в одном месте.">
-        <Button variant="secondary" size="sm" onClick={() => setAppearance({ onboarded: false })}>
-          Показать приветствие ещё раз
+      <SettingsRow label="Быстрая настройка" description="Стиль, тема, палитра и «Кто вы?» в одном окне.">
+        <Button variant="secondary" size="sm" onClick={() => dispatchEvent(new Event(FIRST_RUN_EVENT))}>
+          Открыть
         </Button>
       </SettingsRow>
 

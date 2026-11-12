@@ -102,15 +102,24 @@ export function StudentsPage() {
     <>
       <PageHeader
         title="Студенты группы М3102"
-        subtitle="Нажмите на карточку — откроется профиль. «Коммиты» — история правок студента в репозитории материалов группы."
+        subtitle="Нажмите на карточку — откроется профиль. «Коммиты» — история правок студента в репозитории материалов группы. 🥟 у фото — сколько хинкали съел студент: счёт группа ведёт вручную в файле репозитория, сайт только показывает его."
         actions={
-          <div className={styles.totalBadge} title="Общий счётчик хинкали группы">
-            <span className={styles.totalIcon}>🥟</span>
+          <a
+            className={styles.totalBadge}
+            href={`${REPO_URL}/blob/master/data/khinkali.json`}
+            target="_blank"
+            rel="noreferrer"
+            title="Сколько хинкали съела вся группа — сумма по студентам. Счёт ведут вручную в data/khinkali.json; нажмите, чтобы открыть файл"
+            data-spot
+          >
+            <span className={styles.totalIcon} aria-hidden>
+              🥟
+            </span>
             <div className={styles.totalInfo}>
               <span className={styles.totalCount}>{total}</span>
-              <span className={styles.totalLabel}>хинкали всего</span>
+              <span className={styles.totalLabel}>хинкали съела группа</span>
             </div>
-          </div>
+          </a>
         }
       />
       <div className={`${styles.grid} stagger`}>
@@ -128,8 +137,9 @@ export function StudentsPage() {
                   loading="lazy"
                   onError={(event) => (event.currentTarget.style.visibility = 'hidden')}
                 />
-                <span className={styles.khinkaliBadge} title="Съедено хинкали">
-                  🥟 {count}
+                <span className={styles.khinkaliBadge} title="Сколько хинкали съел студент (счёт группы в data/khinkali.json)">
+                  <span aria-hidden>🥟</span>
+                  {count}
                 </span>
               </div>
               <div className={styles.info}>

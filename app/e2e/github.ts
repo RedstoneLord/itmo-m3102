@@ -15,7 +15,7 @@ export async function mockGithub(page: Page) {
   // На весь контекст, а не на страницу: PDF качает воркер pdf.js, его запросы page.route не видит
   const context = page.context();
   await context.route(
-    (url) => url.hostname !== 'localhost',
+    (url) => url.hostname !== '127.0.0.1' && url.hostname !== 'localhost',
     (route) => route.abort(),
   );
   await context.route('https://api.github.com/**', (route) => {

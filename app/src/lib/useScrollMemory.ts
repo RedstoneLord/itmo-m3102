@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigationType } from 'react-router';
+import { jumpTo } from './smoothScroll';
 
 const positions = new Map<string, number>();
 /** Запись истории, которой принадлежит текущая прокрутка. Меняется до scrollTo, чтобы сброс наверх не затёр прошлую */
@@ -23,7 +24,7 @@ export function useScrollMemory() {
   useLayoutEffect(() => {
     activeKey = location.key;
     if (navigationType !== 'POP') {
-      scrollTo({ top: 0, behavior: 'instant' });
+      jumpTo(0);
       return;
     }
     const target = positions.get(location.key) ?? 0;
@@ -33,7 +34,7 @@ export function useScrollMemory() {
     const started = performance.now();
     const restore = () => {
       const reachable = document.documentElement.scrollHeight - innerHeight >= target;
-      scrollTo({ top: target, behavior: 'instant' });
+      jumpTo(target);
       if (!reachable && performance.now() - started < 3000) frame = requestAnimationFrame(restore);
     };
     restore();

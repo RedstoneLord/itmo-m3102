@@ -5,23 +5,10 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { onRovingKeyDown } from '../../lib/rovingKeys';
 import { useMeChoice } from '../group/studentOptions';
 import { accentColor } from '../settings/appearance';
-import { useSettingsStore, type AppStyle } from '../settings/settingsStore';
+import { useSettingsStore } from '../settings/settingsStore';
 import { STYLE_OPTIONS, THEME_OPTIONS } from '../settings/themeOptions';
-import type { ThemePreference } from '../../types/models';
 import { PALETTE_PAIRS, type PalettePair } from './palettePairs';
 import styles from './FirstRun.module.css';
-
-const STYLE_HINTS: Record<AppStyle, string> = {
-  minimal: 'Чистые поверхности без фона и свечения.',
-  aurora: 'Мягкое сияние за страницей и подсветка карточек.',
-  glass: 'Прозрачное стекло с бликами.',
-};
-
-const THEME_HINTS: Record<ThemePreference, string> = {
-  light: 'Светлый фон.',
-  dark: 'Тёмный фон — мягче для глаз вечером.',
-  system: 'Повторяет оформление вашего устройства.',
-};
 
 // Каждый выбор применяется сразу, как только сделан, — окно само служит предпросмотром, кнопки только закрывают его
 
@@ -31,7 +18,6 @@ function StyleStep() {
   return (
     <>
       <SegmentedControl label="Стиль" options={STYLE_OPTIONS} value={style} onChange={(value) => setAppearance({ style: value })} />
-      <p className={styles.hint}>{STYLE_HINTS[style]}</p>
     </>
   );
 }
@@ -42,7 +28,6 @@ function ThemeStep() {
   return (
     <>
       <SegmentedControl label="Тема" options={THEME_OPTIONS} value={theme} onChange={setTheme} />
-      <p className={styles.hint}>{THEME_HINTS[theme]}</p>
     </>
   );
 }
@@ -82,7 +67,7 @@ function PaletteStep() {
           </button>
         ))}
       </div>
-      <p className={styles.hint}>{active ? active.name : 'Свои цвета — останутся как есть.'}</p>
+      <p className={styles.hint}>{active ? active.name : 'Свои цвета'}</p>
     </>
   );
 }
@@ -101,10 +86,7 @@ function WhoStep() {
         value={choice.value}
         onChange={choice.onChange}
       />
-      <p className={styles.hint}>
-        Ваши записи в очередях сдачи будут подсвечены, а в карточке — «Вы №3 из 7». Не из группы — выберите «Я гость». Без регистрации; выбор хранится
-        только в этом браузере.
-      </p>
+      <p className={styles.hint}>Подсветим ваши места в очередях сдачи. Не из группы — «Я гость».</p>
     </>
   );
 }

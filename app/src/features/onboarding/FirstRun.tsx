@@ -1,41 +1,25 @@
 import { useId } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
-import { useChangelogStore } from '../changelog/changelogStore';
-import { useSettingsStore } from '../settings/settingsStore';
 import { STEPS } from './steps';
 import styles from './FirstRun.module.css';
 
 /**
- * Окно «первого входа»: стиль, тема, палитра и «Кто вы?», выбор применяется сразу. Показывается, пока `onboarded` = false, —
- * новому посетителю и по кнопке «Показать приветствие ещё раз» в «Настройки → Оформление». «Готово», «Пропустить», крестик,
- * Esc и клик по фону делают одно и то же: выбор уже применён, окно закрывается и больше не появляется.
+ * Окно «Настройте сайт под себя»: стиль, тема, палитра и «Кто вы?», выбор применяется сразу. Само не открывается
+ * (владелец: мешало, хотелось сразу пропустить) — только по кнопке в настройках; «Кто вы?» и так спрашивают дедлайны и главная.
  */
-export function FirstRun() {
-  const onboarded = useSettingsStore((state) => state.onboarded);
-  const setAppearance = useSettingsStore((state) => state.setAppearance);
+export function FirstRun({ open, onClose }: { open: boolean; onClose: () => void }) {
   const base = useId();
-  // Новому посетителю «догонять» выпуски не нужно: всё, что было до его первого входа, считается увиденным
-  const finish = () => {
-    setAppearance({ onboarded: true });
-    useChangelogStore.getState().markSeen();
-  };
-
   return (
     <Modal
-      open={!onboarded}
-      onClose={finish}
+      open={open}
+      onClose={onClose}
       title="Настройте сайт под себя"
-      description="Выбор виден сразу и хранится только в этом браузере. Оформление можно поменять в «Настройки → Оформление», себя в очередях — на странице «Дедлайны»."
+      description="Всё применяется сразу и хранится в этом браузере."
       footer={
-        <>
-          <Button variant="ghost" onClick={finish}>
-            Пропустить
-          </Button>
-          <Button variant="primary" onClick={finish}>
-            Готово
-          </Button>
-        </>
+        <Button variant="primary" onClick={onClose}>
+          Готово
+        </Button>
       }
     >
       <div className={styles.steps}>

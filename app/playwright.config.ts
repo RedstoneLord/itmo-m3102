@@ -11,7 +11,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
-    baseURL: 'http://localhost:4173/app/',
+    baseURL: 'http://127.0.0.1:4173/app/',
     channel: process.env.CI ? undefined : 'msedge',
     locale: 'ru-RU',
     timezoneId: 'Europe/Moscow',
@@ -24,10 +24,11 @@ export default defineConfig({
   webServer: {
     // В CI сборка уже сделана предыдущим шагом
     // Собранный сайт целиком (npm run site: классический в корне, приложение в /app/) — как на Pages
+    // Хост задан явно: «localhost» на части машин разрешается в ::1, куда Node не подключается, и сервер «не поднимается» до таймаута
     command: process.env.CI
-      ? 'npx vite preview --outDir site --port 4173 --strictPort'
-      : 'npm run build && npm run ics && npm run site && npx vite preview --outDir site --port 4173 --strictPort',
-    url: 'http://localhost:4173/app/',
+      ? 'npx vite preview --outDir site --port 4173 --strictPort --host 127.0.0.1'
+      : 'npm run build && npm run ics && npm run site && npx vite preview --outDir site --port 4173 --strictPort --host 127.0.0.1',
+    url: 'http://127.0.0.1:4173/app/',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

@@ -1,6 +1,6 @@
 .steps {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
 }
 
 .step {
@@ -15,9 +15,9 @@
   font-weight: var(--weight-semibold);
 }
 
-/* Две строки места под подпись: при смене варианта окно не прыгает по высоте */
+/* Одна строка места под подпись: при смене пары окно не прыгает по высоте */
 .hint {
-  min-height: 2lh;
+  min-height: 1lh;
   font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
@@ -33,7 +33,7 @@
 .pair {
   display: grid;
   place-items: center;
-  height: 40px;
+  height: 36px;
   border: 0;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--from), var(--to));

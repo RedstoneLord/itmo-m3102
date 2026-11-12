@@ -12,8 +12,13 @@ test.beforeEach(async ({ page }) => {
   await mockGithub(page);
 });
 
-test('первый вход: «Кто вы?» — можно выбрать «Я гость», потом студента; у студентов появляется «Это вы»', async ({ page }) => {
+test('первый вход без окна; «Быстрая настройка»: «Кто вы?» — «Я гость», потом студент; у студентов появляется «Это вы»', async ({ page }) => {
   await page.goto('./');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  // Новому посетителю окно само не открывается — только из настроек
+  await expect(dialog(page)).toHaveCount(0);
+  await page.goto('./#/settings?tab=appearance');
+  await page.getByRole('button', { name: 'Открыть', exact: true }).click();
   await expect(page.getByText('Настройте сайт под себя')).toBeVisible();
 
   await dialog(page).getByRole('button', { name: 'Кто вы' }).click();
@@ -31,6 +36,7 @@ test('первый вход: «Кто вы?» — можно выбрать «Я
 
 test('телефон: список «Кто вы?» открывается, не закрывается от экранной клавиатуры и выбирает студента @phone', async ({ page }) => {
   await page.goto('./');
+  await page.evaluate(() => dispatchEvent(new Event('m3102:first-run')));
   await dialog(page).getByRole('button', { name: 'Кто вы' }).tap();
   const option = page.getByRole('option', { name: /@LazerProOk1/ });
   await expect(option).toBeVisible();
@@ -70,7 +76,8 @@ test('«Мои очереди» на главной и «Вы №1» в дедл
   const block = page
     .getByRole('region', { name: 'Мои очереди' })
     .or(page.locator('section', { has: page.getByRole('heading', { name: 'Мои очереди' }) }));
-  await expect(block.getByText('Карточки')).toBeVisible();
+  // Первое открытие под параллельными воркерами тянет ленивые куски дольше 5 с
+  await expect(block.getByText('Карточки')).toBeVisible({ timeout: 20_000 });
   await expect(block.getByText('№1')).toBeVisible();
 
   await page.goto('./#/deadlines');

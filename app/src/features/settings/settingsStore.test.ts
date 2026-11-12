@@ -15,7 +15,7 @@ it('у кого стор уже был (любая прежняя версия),
   }
 });
 
-it('в сторе новой версии сохранённое onboarded не трогаем: вернули приветствие — оно покажется', async () => {
+it('в сторе новой версии сохранённое onboarded не трогаем', async () => {
   localStorage.setItem('m3102:settings', JSON.stringify({ state: { onboarded: false }, version: 7 }));
   await useSettingsStore.persist.rehydrate();
   expect(useSettingsStore.getState().onboarded).toBe(false);

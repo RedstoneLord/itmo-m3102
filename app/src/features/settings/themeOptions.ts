@@ -1,7 +1,8 @@
-import { Droplets, Monitor, Moon, Sparkles, Square, Sun } from 'lucide-react';
+import { Monitor, Moon, Sun } from 'lucide-react';
 import type { SegmentedOption } from '../../components/ui/SegmentedControl';
 import type { ThemePreference } from '../../types/models';
 import type { AppStyle } from './settingsStore';
+import { STYLE_ICONS } from './styleIcons';
 
 /** Варианты темы — одни и те же в меню пользователя и в настройках */
 export const THEME_OPTIONS: SegmentedOption<ThemePreference>[] = [
@@ -12,7 +13,7 @@ export const THEME_OPTIONS: SegmentedOption<ThemePreference>[] = [
 
 /** Стили оформления — одни и те же в меню «Оформление» и в настройках */
 export const STYLE_OPTIONS: SegmentedOption<AppStyle>[] = [
-  { value: 'minimal', label: 'Minimalism', icon: Square },
-  { value: 'aurora', label: 'Aurora', icon: Sparkles },
-  { value: 'glass', label: 'Liquid Glass', icon: Droplets },
+  { value: 'minimal', label: 'Minimalism', icon: STYLE_ICONS.minimal },
+  { value: 'aurora', label: 'Aurora', icon: STYLE_ICONS.aurora },
+  { value: 'glass', label: 'Liquid Glass', icon: STYLE_ICONS.glass },
 ];

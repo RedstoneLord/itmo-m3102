@@ -25,6 +25,8 @@ interface LocalSettings {
   glow: boolean;
   /** Живой фон: пятна сияния плавно следуют за курсором и прокруткой */
   liveBg: boolean;
+  /** Плавная прокрутка колёсиком мыши (lib/smoothScroll.ts) */
+  smoothScroll: boolean;
   radius: RadiusPreference;
   /** PDF в тёмных тонах (кнопка в панели PDF); null — как тема сайта */
   pdfDark: boolean | null;
@@ -68,6 +70,7 @@ interface SettingsStore extends LocalSettings {
         | 'aurora'
         | 'glow'
         | 'liveBg'
+        | 'smoothScroll'
         | 'radius'
         | 'pdfDark'
         | 'homeOrder'
@@ -92,6 +95,7 @@ const DEFAULT_SETTINGS: LocalSettings = {
   aurora: true,
   glow: true,
   liveBg: true,
+  smoothScroll: true,
   radius: 'normal',
   pdfDark: null,
   homeOrder: [],
@@ -102,6 +106,9 @@ const DEFAULT_SETTINGS: LocalSettings = {
   onboarded: false,
   deadlinesView: 'list',
 };
+
+/** Открыть окно «Настройте сайт под себя» (кнопка в «Оформлении»; само окно не открывается — AppShell, LazyFirstRun) */
+export const FIRST_RUN_EVENT = 'm3102:first-run';
 
 export const useSettingsStore = create<SettingsStore>()(
   persist(

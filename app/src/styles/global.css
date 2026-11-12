@@ -101,6 +101,60 @@ html {
   }
 }
 
+/* Плавное колесо (lib/smoothScroll.ts, класс .lenis ставит Lenis): он сам двигает страницу каждый кадр —
+   браузерное smooth поверх растягивало бы каждый шаг. Явные scrollIntoView({ behavior: 'smooth' }) остаются плавными */
+html.lenis {
+  scroll-behavior: auto;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* Место под полосу прокрутки всегда занято: с короткой страницы на длинную вёрстка не сдвигается вбок */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Полоса прокрутки — тонкая линия в цветах акцента на прозрачной дорожке; под курсором толще и ярче.
+   Прозрачная рамка + background-clip сужают ползунок внутри 10px дорожки (ширину дорожки на наведение менять нельзя —
+   вёрстка дёрнулась бы). Firefox и браузеры без ::-webkit-scrollbar — стандартные scrollbar-width/color */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  /* В покое — тихая серая линия (цветная отвлекала при чтении конспектов), акцент — только под курсором */
+  background: color-mix(in oklab, var(--color-text) 18%, transparent) padding-box;
+  min-height: 40px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  border-width: 2px;
+  background: var(--accent-gradient) padding-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+  border-width: 2px;
+  background: var(--accent-gradient-hover) padding-box;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--color-text) 22%, transparent) transparent;
+  }
+}
+
 /* Каскад: карточки сетки проявляются по очереди. Тихо — сдвиг 4px без масштаба, шаг 30 мс, не дольше
    шести карточек: длинный список не должен «ползти» полсекунды. className="stagger" на сетке */
 .stagger > * {

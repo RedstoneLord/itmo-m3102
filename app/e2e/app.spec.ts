@@ -266,7 +266,7 @@ test('переключатель стиля: на классический са�
   );
   await openSynced(page);
   await page.getByRole('link', { name: 'Классическая версия' }).first().click();
-  await expect(page).toHaveURL(/localhost:4173\/$/);
+  await expect(page).toHaveURL(/:4173\/$/);
   // В классическом оформлении та же кнопка рисуется скриптом; слой перехода после прихода убирается
   const back = page.locator('[data-site-switch]');
   await expect(back).toHaveText('Новая версия');
