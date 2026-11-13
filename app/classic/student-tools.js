@@ -334,9 +334,10 @@ async function subjectsPage(node, subject = '') {
             l.files
               .flatMap((f) => f.headings || [])
               .filter((h) => !/^лекци[яи]|практика|содержание$/i.test(h))
+              .map(plainMathText)
               .slice(0, 3)
               .join(' · '),
-          )}</summary>${l.files.map((f) => `<p><a href="${esc(fileHref(f.path))}">${esc(f.name.replace(/_/g, ' '))}</a></p>`).join('')}</details>`,
+          )}</summary>${l.files.map((f) => `<p><a href="${esc(fileHref(f.path))}">${esc(plainMathText(f.name.replace(/_/g, ' ')))}</a></p>`).join('')}</details>`,
       )
       .join(''),
   )}${panel('Лабораторные, материалы и записи', files.map((e) => `<p><a href="${esc(/\.(mp3|wav|m4a|ogg|opus|flac)$/i.test(e.path) ? fileHref(e.path) : /\.(md|pdf)$/i.test(e.path) ? fileHref(e.path) : rawUrl(e.path))}">${esc(nice(e.path))}</a></p>`).join('') || '<p>Материалы пока не опубликованы.</p>')}${panel('Скоро сдавать', deadlineList(ds.upcoming))}${panel('Остались долги', deadlineList(ds.debts))}${panel('Преподаватели', teachers.map((t) => `<p>${esc(t)}</p>`).join('') || '<p>Уточняются</p>')}${panel(
@@ -466,10 +467,14 @@ async function folderTopics() {
     if (!card.isConnected) continue;
     const lecture = index.subjects?.flatMap((s) => s.lectures).find((l) => l.path === card.dataset.nav);
     if (!lecture) continue;
-    const topics = [...new Set(lecture.files.flatMap((f) => f.headings || []).filter((h) => !/^(лекци[яи]|практика|содержание)/i.test(h)))].slice(
-      0,
-      3,
-    );
+    const topics = [
+      ...new Set(
+        lecture.files
+          .flatMap((f) => f.headings || [])
+          .filter((h) => !/^(лекци[яи]|практика|содержание)/i.test(h))
+          .map(plainMathText),
+      ),
+    ].slice(0, 3);
     if (topics.length) {
       const desc = card.querySelector('.desc');
       if (desc) desc.textContent = topics.join(' · ');
