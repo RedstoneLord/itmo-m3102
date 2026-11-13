@@ -22,7 +22,7 @@ export function bookmarksPage(host) {
     Object.entries(entries)
       .map(
         ([id, e]) =>
-          `<article class="dash-panel"><a href="${esc(fileHref(e.path))}" data-jump-heading="${esc(e.heading || '')}" data-bookmark-open="${esc(id)}"><strong>${esc(e.heading || nice(e.path))}${e.page ? ` · страница ${e.page}` : ''}</strong></a><blockquote>${esc(e.quote || '')}</blockquote><p>${esc(e.note || '')}</p><small>${esc(nice(e.path))} · ${esc(stamp(e.at))}</small><div class="student-actions"><button class="btn2" data-bookmark-edit="${esc(id)}">Изменить</button><button class="btn2" data-bookmark-remove="${esc(id)}">Удалить</button></div></article>`,
+          `<article class="dash-panel"><a href="${esc(fileHref(e.path))}" data-jump-heading="${esc(e.heading || '')}" data-bookmark-open="${esc(id)}"><strong>${esc(e.heading || nice(e.path))}${e.page ? ` · страница ${e.page}` : ''}</strong></a>${e.quote?.trim() ? `<blockquote>${esc(e.quote)}</blockquote>` : ''}<p>${esc(e.note || '')}</p><small>${esc(nice(e.path))} · ${esc(stamp(e.at))}</small><div class="student-actions"><button class="btn2" data-bookmark-edit="${esc(id)}">Изменить</button><button class="btn2" data-bookmark-remove="${esc(id)}">Удалить</button></div></article>`,
       )
       .join('') || '<p>Откройте конспект, выделите текст и нажмите «Закладка / вопрос».</p>'
   }</div>`;
@@ -46,7 +46,7 @@ export function bookmarksPage(host) {
 function bookmarkForm(entry, id = crypto.randomUUID(), after = () => {}) {
   const dialog = showDialog(
     'Личная закладка и вопрос',
-    `<form><p>${esc(entry.heading || nice(entry.path))}</p><blockquote>${esc(entry.quote || '')}</blockquote><label class="sched-field">Моя пометка<textarea name="note" rows="4" maxlength="5000">${esc(entry.note || '')}</textarea></label><p>Только на этом устройстве. Переносится с резервной копией.</p><p data-error role="alert"></p><button class="btn2 btn-primary">Сохранить для меня</button></form>`,
+    `<form><p>${esc(entry.heading || nice(entry.path))}</p>${entry.quote?.trim() ? `<blockquote>${esc(entry.quote)}</blockquote>` : ''}<label class="sched-field">Моя пометка<textarea name="note" rows="4" maxlength="5000">${esc(entry.note || '')}</textarea></label><p>Только на этом устройстве. Переносится с резервной копией.</p><p data-error role="alert"></p><button class="btn2 btn-primary">Сохранить для меня</button></form>`,
   );
   dialog.querySelector('form').onsubmit = (event) => {
     event.preventDefault();
@@ -121,7 +121,56 @@ export function decorateReader(path) {
   const controls = document.createElement('div');
   controls.className = 'student-actions student-pdf-controls';
   controls.innerHTML = `<label>Страница <input aria-label="Страница PDF" type="number" min="1" max="${canvases.length}" value="${Math.min(state.page || 1, canvases.length)}"> из ${canvases.length}</label><label><input type="checkbox" data-pdf-dark ${state.dark !== false ? 'checked' : ''}> Тёмные страницы в тёмной теме</label>`;
-  pages.before(controls);
+  const shell = document.createElement('section');
+  shell.className = 'student-pdf-shell';
+  shell.setAttribute('aria-label', 'Просмотр PDF');
+  const viewport = document.createElement('div');
+  viewport.className = 'student-pdf-viewport';
+  viewport.tabIndex = 0;
+  viewport.setAttribute('aria-label', 'Страницы PDF — прокрутка и перемещение увеличенной страницы');
+  pages.before(shell);
+  viewport.append(pages);
+  shell.append(controls, viewport);
+  controls.insertAdjacentHTML(
+    'beforeend',
+    '<div class="student-actions"><button class="btn2" data-pdf-minus aria-label="Уменьшить PDF">−</button><output data-pdf-zoom aria-label="Масштаб PDF">100%</output><button class="btn2" data-pdf-plus>Крупнее</button><button class="btn2" data-pdf-fit>По ширине</button><button class="btn2" data-pdf-full>На весь экран</button></div><p data-pdf-status role="status"></p>',
+  );
+  let zoom = 1;
+  const applyZoom = () => {
+    pages.style.maxWidth = 'none';
+    pages.style.width = `${zoom * 100}%`;
+    controls.querySelector('[data-pdf-zoom]').textContent = `${Math.round(zoom * 100)}%`;
+    controls.querySelector('[data-pdf-minus]').disabled = zoom <= 1;
+    controls.querySelector('[data-pdf-plus]').disabled = zoom >= 3;
+    if (zoom === 1) viewport.scrollLeft = 0;
+  };
+  controls.querySelector('[data-pdf-minus]').onclick = () => {
+    zoom = Math.max(1, zoom - 0.25);
+    applyZoom();
+  };
+  controls.querySelector('[data-pdf-plus]').onclick = () => {
+    zoom = Math.min(3, zoom + 0.25);
+    applyZoom();
+  };
+  controls.querySelector('[data-pdf-fit]').onclick = () => {
+    zoom = 1;
+    applyZoom();
+  };
+  const fullscreen = controls.querySelector('[data-pdf-full]');
+  fullscreen.hidden = !shell.requestFullscreen;
+  fullscreen.onclick = async () => {
+    try {
+      if (document.fullscreenElement === shell) await document.exitFullscreen();
+      else await shell.requestFullscreen();
+    } catch {
+      controls.querySelector('[data-pdf-status]').textContent = 'Браузер не разрешил полноэкранный просмотр. Масштаб доступен в панели.';
+    }
+  };
+  const onFullscreen = () => {
+    fullscreen.textContent = document.fullscreenElement === shell ? 'Выйти из полного экрана' : 'На весь экран';
+  };
+  document.addEventListener('fullscreenchange', onFullscreen);
+  applyZoom();
   pages.classList.toggle('student-dark-pdf', state.dark !== false);
   const input = controls.querySelector('input[type=number]');
   const persist = (page) => {
@@ -151,10 +200,11 @@ export function decorateReader(path) {
         return;
       }
       if (restoring) return;
+      const bounds = viewport.getBoundingClientRect();
       const visible = canvases
         .map((canvas, index) => {
           const rect = canvas.getBoundingClientRect();
-          return { index, area: Math.max(0, Math.min(innerHeight, rect.bottom) - Math.max(0, rect.top)) };
+          return { index, area: Math.max(0, Math.min(innerHeight, bounds.bottom, rect.bottom) - Math.max(0, bounds.top, rect.top)) };
         })
         .sort((a, b) => b.area - a.area)[0];
       if (visible?.area) {
@@ -172,7 +222,10 @@ export function decorateReader(path) {
         restoring = false;
       });
     });
-  return () => observer.disconnect();
+  return () => {
+    observer.disconnect();
+    document.removeEventListener('fullscreenchange', onFullscreen);
+  };
 }
 export async function audioPage(host, path, tree) {
   const saved = read('m3102-audio-v1', {})[path] || {};

@@ -19,6 +19,8 @@ import { mountOfflinePanel, installOffline } from './offline.js';
 import { ensureSchedule, getSchedule } from './schedule-ui.js';
 import { lessonsOn, dateKey, addDays, mondayOf, parseDate } from './schedule.js';
 import { parseQuiz, quizPageSource } from './quiz.js';
+import { plainMathText } from './student-text.js';
+import { ic } from './icons.js';
 
 export { directoryResponse };
 let context,
@@ -34,6 +36,37 @@ const errors = (node, error) => {
 };
 function panel(title, body, cls = '') {
   return `<section class="dash-panel ${cls}"><h2>${esc(title)}</h2>${body}</section>`;
+}
+function quickAction(icon, label, short, attributes) {
+  const tag = attributes.startsWith('href=') ? 'a' : 'button';
+  return `<${tag}${tag === 'button' ? ' type="button"' : ''} class="btn2" ${attributes} aria-label="${esc(label)}" title="${esc(label)}">${ic(icon, 18)}<span class="student-action-label">${esc(short)}</span></${tag}>`;
+}
+function compactQuickActions() {
+  const specs = [
+    ['[data-ai-download]', 'download', 'Текст'],
+    ['[data-ai-link]', 'link', 'Ссылка'],
+    ['a[href^="#/review/"]', 'cap', 'Подготовка'],
+    ['[data-review-all]', 'refresh', 'Все вопросы'],
+    ['[data-review-wrong]', 'notes', 'Ошибки'],
+    ['[data-calendar]', 'calendar', 'Календарь'],
+    ['[data-backup-export]', 'download', 'Копия'],
+    ['[data-backup-choose]', 'folder', 'Восстановить'],
+    ['[data-prefs-action="export"]', 'download', 'Экспорт'],
+    ['[data-prefs-action="import"]', 'folder', 'Импорт'],
+    ['[data-prefs-action="reset"]', 'undo', 'Сброс'],
+    ['#student-work-tabs a[href="#/homework"]', 'pencil', 'ДЗ'],
+    ['#student-work-tabs a[href="#/deadlines"]', 'tasks', 'Дедлайны'],
+  ];
+  for (const [selector, icon, short] of specs) {
+    document.querySelectorAll(selector).forEach((button) => {
+      if (button.querySelector('.student-action-label')) return;
+      button.setAttribute('aria-label', button.textContent.trim());
+      button.title = button.textContent.trim();
+      button.classList.add('btn2');
+      button.innerHTML = `${ic(icon, 18)}<span class="student-action-label">${short}</span>`;
+      button.parentElement.classList.add('student-quick-actions');
+    });
+  }
 }
 function identityMarkup() {
   return `<label class="sched-field">Кто вы?<select data-student-me><option value="">Я гость</option>${context.students.map((s) => `<option value="${esc(s.nick)}" ${me() === s.nick ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label><p>Выбор хранится только у вас. Он нужен для выделения ваших мест в общих очередях.</p>`;
@@ -66,7 +99,7 @@ function settings() {
     panel('Мои данные', `${identityMarkup()}<a class="btn2" href="#/bookmarks">Мои закладки и вопросы</a>`) +
     panel(
       'Резервная копия личного прогресса',
-      '<p>Задачи, выполнение ДЗ, учебный план, закладки, ошибки тестов, позиции чтения и прослушивания, игровой прогресс и настройки. Токены и скачанные материалы в копию не входят.</p><div class="student-actions"><button class="btn2" data-backup-export>Скачать резервную копию</button><label class="btn2">Восстановить из файла<input type="file" accept="application/json,.json" data-backup-import></label></div><p data-backup-status role="status"></p>',
+      '<p>Перенести мои данные: задачи, выполнение ДЗ, учебный план, закладки, ошибки тестов, позиции чтения и прослушивания, игровой прогресс и настройки. Токены и скачанные материалы в копию не входят.</p><div class="student-actions"><button class="btn2" data-backup-export>Скачать резервную копию</button><button class="btn2" data-backup-choose>Выбрать резервную копию</button><input type="file" accept="application/json,.json" hidden data-backup-import></div><p data-backup-filename></p><p data-backup-status role="status"></p>',
     ) +
     '<div id="student-offline-settings"></div>';
   page.append(node);
@@ -131,7 +164,7 @@ function home() {
   tools.innerHTML =
     panel('Следующая пара', '<div id="student-next">Загружаем расписание…</div>', 'student-next-panel') +
     panel('Мои очереди', '<div id="student-my-queues">Загружаем очереди…</div>', 'student-queues-panel') +
-    '<div id="student-home-tools" class="student-actions"><a class="btn2" href="#/subjects">Все предметы</a><a class="btn2" href="#/bookmarks">Закладки и вопросы</a><button class="btn2" data-home-config>Настроить главную</button></div>';
+    `<nav id="student-home-tools" class="student-actions student-quick-actions" aria-label="Быстрые действия">${quickAction('book', 'Все предметы', 'Предметы', 'href="#/subjects"')}${quickAction('notes', 'Закладки и вопросы', 'Закладки', 'href="#/bookmarks"')}${quickAction('settings', 'Настроить главную', 'Настроить', 'data-home-config')}</nav>`;
   anchor.before(...tools.children);
   ensureSchedule()
     .then(nextClass)
@@ -489,6 +522,7 @@ export function decorateStudentPage({ mode, path }) {
   settings();
   home();
   scheduleLinks();
+  compactQuickActions();
   if (mode === 'note' || mode === 'view') {
     const dispose = decorateReader(path);
     if (dispose) cleanup = dispose;
@@ -600,6 +634,7 @@ export function installStudentTools(options) {
       return;
     }
     if (target.closest('[data-home-config]')) homeConfig();
+    if (target.closest('[data-backup-choose]')) document.querySelector('[data-backup-import]')?.click();
     if (target.closest('[data-calendar]')) calendarDialog();
     if (target.closest('[data-backup-export]')) {
       try {
@@ -640,6 +675,8 @@ export function installStudentTools(options) {
     }
   });
   document.addEventListener('change', async (event) => {
+    if (event.target.matches('[data-backup-import]'))
+      document.querySelector('[data-backup-filename]').textContent = event.target.files?.[0]?.name || '';
     if (event.target.matches('[data-student-me]')) {
       if (!save('m3102-student-v1', { login: event.target.value })) return;
       location.reload();

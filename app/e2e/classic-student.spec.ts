@@ -145,11 +145,120 @@ test('классика: закладка, вопрос, PDF с тёмными с
   const input = page.getByRole('spinbutton', { name: 'Страница PDF' });
   await expect(input).toBeVisible();
   await expect(page.locator('#pdf-pages canvas').first()).toHaveCSS('filter', 'invert(0.9) hue-rotate(180deg)');
+  await page.getByRole('button', { name: 'Крупнее', exact: true }).click();
+  await page.getByRole('button', { name: 'Крупнее', exact: true }).click();
+  await expect(page.locator('[data-pdf-zoom]')).toHaveText('150%');
+  expect(await page.locator('.student-pdf-viewport').evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+  await page.getByRole('button', { name: 'По ширине', exact: true }).click();
+  await expect(page.locator('[data-pdf-zoom]')).toHaveText('100%');
   await input.fill('3');
   await input.dispatchEvent('change');
   await expect.poll(() => page.evaluate((path) => JSON.parse(localStorage.getItem('m3102-reading-v1') || '{}')[path]?.page, pdf)).toBe(3);
   await page.reload();
   await expect(input).toHaveValue('3');
+});
+
+test('классика: поиск и мемы помещаются на промежуточных ширинах', async ({ page }) => {
+  await setup(page);
+  await page.goto('../#/memes');
+  for (const width of [760, 920, 1100]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.getByRole('combobox', { name: 'Поиск по сайту' }).fill('Теорема');
+    const results = page.locator('.ss-results');
+    await expect(results).toBeVisible();
+    const rect = await results.boundingBox();
+    expect(rect!.x).toBeGreaterThanOrEqual(0);
+    expect(rect!.x + rect!.width).toBeLessThanOrEqual(width);
+    await page.keyboard.press('Escape');
+    const card = page.locator('.meme-card').first();
+    await expect(card).toBeVisible();
+    expect((await card.boundingBox())!.width).toBeGreaterThan(240);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
+
+test('классика: 125% сохраняет мобильный поиск и нижнее меню @phone', async ({ page }) => {
+  await setup(page);
+  await page.addInitScript(() => localStorage.setItem('m3102-settings-v1', JSON.stringify({ theme: 'dark', reduceMotion: true, textScale: 125 })));
+  await page.goto('../');
+  const input = page.getByRole('combobox', { name: 'Поиск по сайту' });
+  await expect(input).toBeVisible();
+  expect((await input.boundingBox())!.width).toBeGreaterThan(70);
+  const home = page.locator('#bn-home span').last();
+  expect(await home.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+  await input.fill('Теорема');
+  await expect(page.locator('.ss-results')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('классика: быстрые действия в один ряд при 125% @phone', async ({ page }) => {
+  await setup(page);
+  await page.addInitScript(() => localStorage.setItem('m3102-settings-v1', JSON.stringify({ theme: 'dark', reduceMotion: true, textScale: 125 })));
+  for (const width of [320, 393]) {
+    await page.setViewportSize({ width, height: 852 });
+    for (const path of ['', '#/materials', '#/subject/' + encodeURIComponent(subject), '#/schedule/2026-11-14']) {
+      await page.goto('../' + path);
+      const row = path.startsWith('#/subject/')
+        ? page.locator('[data-ai-download]').locator('..')
+        : path.startsWith('#/schedule/')
+          ? page.locator('[data-schedule-links]')
+          : path
+            ? page.locator('nav.student-quick-actions:has(a[aria-label="Мои закладки"])')
+            : page.locator('#student-home-tools');
+      await expect(row).toHaveClass(/student-quick-actions/);
+      const buttons = row.locator(':scope > a, :scope > button');
+      await expect(buttons.first()).toBeVisible();
+      await buttons.first().click({ trial: true });
+      const rects = await buttons.evaluateAll((nodes) =>
+        nodes.map((node) => {
+          const r = node.getBoundingClientRect();
+          return { top: Math.round(r.top), left: r.left, right: r.right, height: r.height };
+        }),
+      );
+      expect(new Set(rects.map((r) => r.top)).size).toBe(1);
+      for (const rect of rects) {
+        expect(rect.left).toBeGreaterThanOrEqual(0);
+        expect(rect.right).toBeLessThanOrEqual(width);
+        expect(rect.height).toBeGreaterThanOrEqual(44);
+      }
+    }
+    await page.goto('../');
+    await page.getByRole('button', { name: 'Настроить главную', exact: true }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
+  }
+});
+
+test('классика: PDF-закладка без цитаты и оформленные настройки', async ({ page }) => {
+  await setup(page);
+  await page.addInitScript(
+    (path) => localStorage.setItem('m3102-bookmarks-v1', JSON.stringify({ one: { path, page: 3, quote: '', note: 'Повторить', at: '2026-11-14' } })),
+    pdf,
+  );
+  await page.goto('../#/bookmarks');
+  await expect(page.locator('#content')).toContainText('страница 3');
+  await expect(page.locator('#content blockquote')).toHaveCount(0);
+  await page.goto('../#/settings');
+  await expect(page.getByRole('button', { name: 'Выбрать резервную копию' })).toBeVisible();
+  await expect(page.locator('[data-backup-import]')).toBeHidden();
+  await expect(page.locator('[data-prefs-action="reset"]')).toHaveAccessibleName('Сбросить настройки оформления и чтения');
+  await expect(page.locator('[data-pref="textScale"]')).toHaveCSS('min-height', '44px');
+});
+
+test('классика: указатели в перегрузках C++ видны буквально', async ({ page }) => {
+  await setup(page);
+  await page.goto('../#/bookmarks');
+  await page.evaluate(async () => {
+    const { mountQuizPage } = await import(new URL('js/quiz.js', location.href).href);
+    mountQuizPage(
+      document.querySelector('#content'),
+      '? Какая пара задаёт разные перегрузки?\n- [ ] void F(int) и void F(const int)\n- [ ] int F(int) и double F(int)\n- [x] void F(int*) и void F(const int*)',
+    );
+  });
+  await page.getByRole('button', { name: 'Начать', exact: true }).click();
+  await expect(page.locator('.quiz-opt').filter({ hasText: 'void F(int*) и void F(const int*)' })).toBeVisible();
+  await expect(page.locator('.quiz-opt em')).toHaveCount(0);
+  await expect(page.locator('.quiz-opt code')).toHaveCount(6);
 });
 test('классика: резервная копия переносит прогресс и отвергает посторонний файл', async ({ page }) => {
   await setup(page);

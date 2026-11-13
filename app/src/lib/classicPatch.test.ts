@@ -5,6 +5,8 @@ import classicIndex from '../../../index.html?raw';
 import classicSchedule from '../../../js/schedule.js?raw';
 import classicHomework from '../../../js/homework.js?raw';
 import classicScheduleUi from '../../../js/schedule-ui.js?raw';
+import classicLectures from '../../../js/lectures.js?raw';
+import classicQuiz from '../../../js/quiz.js?raw';
 
 const SOURCE = `<!DOCTYPE html><html><head><link rel="manifest" href="manifest.webmanifest">
 <title>M3102</title></head><body><script>
@@ -58,9 +60,23 @@ it('подключения дополнений совместимы с наст
     ['js/schedule.js', classicSchedule],
     ['js/homework.js', classicHomework],
     ['js/schedule-ui.js', classicScheduleUi],
+    ['js/lectures.js', classicLectures],
+    ['js/quiz.js', classicQuiz],
   ]) {
     const patched = patchClassicModule(path!, source!);
     expect(patched).not.toBe(source);
   }
   expect(() => patchClassicIndex(original.replace('updateActiveTab(mode,path);', 'changedUpstream();'))).toThrow(/integration changed/);
+});
+
+it('C++ указатели в ответах не становятся курсивом; Markdown, код и HTML остаются безопасными', () => {
+  const source = patchClassicModule('js/quiz.js', classicQuiz)
+    .replace(/^import[^\n]+\n/gm, '')
+    .replaceAll('export function', 'function');
+  const inline = new Function('window', source + '\nreturn inline;')({}) as (text: string) => string;
+  expect(inline('void F(int*) и void F(const int*)')).toBe('<code>void F(int*)</code> и <code>void F(const int*)</code>');
+  expect(inline('void F(int) и void F(const int)')).not.toContain('*');
+  expect(inline('`void F(int*)`')).toBe('<code>void F(int*)</code>');
+  expect(inline('**Важно** и *курсив*')).toBe('<strong>Важно</strong> и <em>курсив</em>');
+  expect(inline('void F(int* <img>)')).toBe('<code>void F(int* &lt;img&gt;)</code>');
 });

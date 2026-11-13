@@ -118,7 +118,7 @@ function studentAssets(out: string): void {
   }
   copyFileSync(join(APP, 'classic', 'sw.js'), join(out, 'sw.js'));
   copyFileSync(join(APP, 'classic', 'student-tools.css'), join(out, 'css', 'student-tools.css'));
-  for (const path of ['js/schedule.js', 'js/schedule-ui.js', 'js/homework.js']) writeFileSync(join(out, path), patchClassicModule(path, readFileSync(join(out, path), 'utf8')));
+  for (const path of ['js/schedule.js', 'js/schedule-ui.js', 'js/homework.js', 'js/lectures.js', 'js/quiz.js', 'js/prefs.js']) writeFileSync(join(out, path), patchClassicModule(path, readFileSync(join(out, path), 'utf8')));
 }
 
 function shellManifest(out: string): void {

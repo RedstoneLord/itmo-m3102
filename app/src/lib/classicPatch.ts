@@ -36,6 +36,7 @@ export function patchClassicIndex(html: string): string {
     '    installScheduleEditor();',
     '    installStudentTools({ students: STUDENTS, parseHash, studentMatches, resolveQueueEntry, renderNotes, runNoteExtras });\n    installScheduleEditor();',
   );
+  patched = replaceRequired(patched, 'page.getViewport({scale:cw/vp0.width})', 'page.getViewport({scale:Math.min(900,2*cw)/vp0.width})');
   patched = replaceRequired(patched, '  updateActiveTab(mode,path);', '  updateActiveTab(mode,path);\n  if(renderStudentRoute(mode,path))return;');
   patched = replaceRequired(
     patched,
@@ -81,7 +82,7 @@ export function patchClassicIndex(html: string): string {
   patched = replaceRequired(
     patched,
     "if(!path)intro='<div",
-    'if(!path)intro=\'<nav class="student-actions"><a class="btn2" href="#/subjects">Все предметы</a><a class="btn2" href="#/bookmarks">Мои закладки</a></nav><div',
+    'if(!path)intro=\'<nav class="student-actions student-quick-actions" aria-label="Быстрые действия"><a class="btn2" href="#/subjects" aria-label="Все предметы" title="Все предметы">\'+ic(\'book\',18)+\'<span class="student-action-label">Предметы</span></a><a class="btn2" href="#/bookmarks" aria-label="Мои закладки" title="Мои закладки">\'+ic(\'notes\',18)+\'<span class="student-action-label">Закладки</span></a></nav><div',
   );
   patched = replaceRequired(
     patched,
@@ -98,11 +99,55 @@ function replaceRequired(source: string, before: string, after: string): string 
 
 /** Only assembled copies of upstream modules change. Missing integration points fail the build. */
 export function patchClassicModule(path: string, source: string): string {
+  if (path === 'js/lectures.js') {
+    let result = "import { plainMathText } from './student-text.js';\n" + source;
+    result = replaceRequired(result, 'displayNames[nfc(path)] || unslug(fallback);', 'plainMathText(displayNames[nfc(path)] || unslug(fallback));');
+    result = replaceRequired(
+      result,
+      'item.name = displayNames[nfc(item.path)] || unslug(item.name);',
+      'item.name = plainMathText(displayNames[nfc(item.path)] || unslug(item.name));',
+    );
+    result = replaceRequired(result, 'file.name = original ?', 'file.name = plainMathText(original ?');
+    result = replaceRequired(result, ': unslug(file.name);', ': unslug(file.name));');
+    result = replaceRequired(
+      result,
+      "text: copy.textContent.replace(/\\s+/g, ' ').trim()",
+      "text: plainMathText(copy.textContent.replace(/\\s+/g, ' ').trim())",
+    );
+    result = replaceRequired(result, 'const jump = norm(takeJump());', 'const jump = norm(plainMathText(takeJump()));');
+    result = replaceRequired(result, 'title: heading, sub:', 'title: plainMathText(heading), sub:');
+    result = replaceRequired(result, "if (!matchMedia('(max-width: 760px)').matches) { list.style.left = list.style.width = ''; return; }", '');
+    result = replaceRequired(
+      result,
+      'list.style.left = `${12 - rect.left}px`; list.style.width = `${innerWidth - 24}px`;',
+      'const width = Math.min(480, innerWidth - 24); list.style.left = `${Math.max(12, Math.min(rect.left, innerWidth - width - 12)) - rect.left}px`; list.style.width = `${width}px`;',
+    );
+    result = replaceRequired(result, 'const heading = section.h ? ` › ${section.h}`', 'const heading = section.h ? ` › ${plainMathText(section.h)}`');
+    return result;
+  }
+  if (path === 'js/quiz.js') {
+    // An unmarked C++ declaration is code too: int* must never become Markdown emphasis.
+    return replaceRequired(
+      source,
+      '  s=s.replace(/\\$([^$\\n]+?)\\$/g,',
+      "  s=s.replace(/\\b(?:void|int|char|double|float|bool|auto|long|short|unsigned|signed)\\s+\\w+\\([^()\\n]*\\)/g,c=>keep('<code>'+esc(c)+'</code>'));\n  s=s.replace(/\\$([^$\\n]+?)\\$/g,",
+    );
+  }
+  if (path === 'js/prefs.js') {
+    let result = replaceRequired(source, '>Сбросить всё</button>', '>Сбросить настройки оформления и чтения</button>');
+    result = replaceRequired(
+      result,
+      '<div class="prefs-actions">',
+      '<p class="settings-note">Экспорт и импорт ниже переносят только оформление и настройки чтения. Для переноса задач, закладок и игрового прогресса используйте «Резервную копию личного прогресса».</p><div class="prefs-actions">',
+    );
+    return result;
+  }
   if (path === 'js/schedule-ui.js') return replaceRequired(source, '＋ Домашнее задание</button>', '＋ Добавить ДЗ</button>');
   if (path === 'js/schedule.js' || path === 'js/homework.js') {
     let result = "import { studentFetch } from './student-data.js';\n" + source;
     result = result.replaceAll("fetch('./data/", "studentFetch('./data/");
     if (path === 'js/homework.js') {
+      result = "import { ic } from './icons.js';\n" + result;
       result = replaceRequired(result, '>Сохранить задание</button>', '>Сохранить только для меня</button>');
       result = replaceRequired(
         result,
@@ -118,6 +163,16 @@ export function patchClassicModule(path: string, source: string): string {
         result,
         'data-hw-delete="${esc(item.id)}" aria-label="Удалить задание"',
         'data-hw-delete="${esc(item.id)}" title="Удалить в моей копии; для группы — после публикации в GitHub" aria-label="Удалить задание в моей копии"',
+      );
+      result = replaceRequired(
+        result,
+        '${esc(dueStatus(item.due))}</span>',
+        "${esc(dueStatus(item.due))}${item.due ? ` · ${esc(dateLabel(item.due))}` : ''}</span>",
+      );
+      result = replaceRequired(
+        result,
+        'aria-label="Удалить задание в моей копии">×</button>',
+        'aria-label="Удалить задание в моей копии">${ic(\'trash\', 20)}</button>',
       );
     }
     return result;
