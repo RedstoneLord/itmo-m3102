@@ -1,5 +1,10 @@
 import { expect, it } from 'vitest';
 import { patchClassicIndex } from './classicPatch';
+import { patchClassicModule } from './classicPatch';
+import classicIndex from '../../../index.html?raw';
+import classicSchedule from '../../../js/schedule.js?raw';
+import classicHomework from '../../../js/homework.js?raw';
+import classicScheduleUi from '../../../js/schedule-ui.js?raw';
 
 const SOURCE = `<!DOCTYPE html><html><head><link rel="manifest" href="manifest.webmanifest">
 <title>M3102</title></head><body><script>
@@ -37,4 +42,25 @@ it('светлая тема встраивается после исходных
   expect(html).toContain(':root:not([data-theme="dark"])');
   expect(html).toContain(':root[data-theme="light"]');
   expect(html).not.toContain('& .');
+});
+
+it('подключения дополнений совместимы с настоящими исходниками классики', () => {
+  const original = classicIndex;
+  const html = patchClassicIndex(original);
+  expect(html).toContain('renderStudentRoute(mode,path)');
+  expect(html).toContain('directoryResponse(path)');
+  expect(html).toContain("'output','node_modules'");
+  const script = html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];
+  expect(script).toBeTruthy();
+  // Parse the complete patched page, not just replacement snippets.
+  expect(() => new Function(script!.replace(/^\s*import\s+[^;\n]+;[^\n]*/gm, ''))).not.toThrow();
+  for (const [path, source] of [
+    ['js/schedule.js', classicSchedule],
+    ['js/homework.js', classicHomework],
+    ['js/schedule-ui.js', classicScheduleUi],
+  ]) {
+    const patched = patchClassicModule(path!, source!);
+    expect(patched).not.toBe(source);
+  }
+  expect(() => patchClassicIndex(original.replace('updateActiveTab(mode,path);', 'changedUpstream();'))).toThrow(/integration changed/);
 });

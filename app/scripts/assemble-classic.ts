@@ -7,21 +7,22 @@
 //   … -- --fresh                к любому из них: самые свежие data/ и Дедлайны/ с их репозитория (в CI — всегда)
 //   npm run classic -- --pull   скачать файлы сайта с их репозитория (master) в корень — обновить закоммиченную копию
 //
-// В собранной копии правится только index.html (classicPatch.ts) и подкладывается общий переключатель стиля
-// (switch/site-switch.js). Список файлов — один запрос к GitHub API, файлы — с raw.githubusercontent.com (без git и без
+// В собранной копии подключаются дополнения app/classic (classicPatch.ts) и общий переключатель стиля
+// (switch/site-switch.js). Список файлов при --pull — один запрос к GitHub API, файлы — с raw.githubusercontent.com (без git и без
 // fs.cpSync: на Windows оба ломают кириллицу в путях). Конспекты и записи лекций не берём: оба сайта читают их с GitHub.
 // Нет сети или лимит API — предупреждение и выход без ошибки: остаётся то, что лежит в корне.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { patchClassicIndex } from '../src/lib/classicPatch';
+import { createHash } from 'node:crypto';
+import { patchClassicIndex, patchClassicModule } from '../src/lib/classicPatch';
 
 const REPO = 'RedstoneLord/itmo-m3102';
 const APP = fileURLToPath(new URL('..', import.meta.url));
 const ROOT = join(APP, '..');
 // Что их сайт отдаёт посетителю (читает data/ и Дедлайны/ по относительным путям) и что ещё лежит у них рядом с сайтом
 const SERVED_FILES = ['index.html', 'site.css', 'sw.js'];
-const SERVED_DIRS = ['css', 'js', 'img', 'data', 'Дедлайны'];
+const SERVED_DIRS = ['css', 'js', 'img', 'data', 'Дедлайны', 'fonts'];
 const DATA_DIRS = ['data', 'Дедлайны'];
 const PULL_FILES = [...SERVED_FILES, 'manifest.webmanifest', 'package.json'];
 const PULL_DIRS = [...SERVED_DIRS, 'tests'];
@@ -80,6 +81,61 @@ function copyTree(from: string, to: string): void {
   }
 }
 
+function pathsBelow(root: string, prefix = ''): string[] {
+  if (!existsSync(join(root, prefix))) return [];
+  return readdirSync(join(root, prefix)).flatMap((name) => {
+    const path = prefix ? `${prefix}/${name}` : name;
+    return statSync(join(root, path)).isDirectory() ? pathsBelow(root, path) : [path];
+  });
+}
+
+/** A complete build-time listing avoids one GitHub API request per opened folder. */
+function studentAssets(out: string): void {
+  const learningRoots = ['Конспекты', 'Материалы', 'Лабораторные', 'Записи лекций'];
+  const content = [...learningRoots, 'img', 'data', 'Дедлайны'].flatMap((dir) => pathsBelow(ROOT, dir)).filter((p) => !p.split('/').includes('output'));
+  const dirs = new Set<string>();
+  const tree: { path: string; type: string; sha: string; size?: number }[] = content.map((path) => {
+    const data = readFileSync(join(ROOT, path));
+    const parts = path.split('/');
+    for (let i = 1; i < parts.length; i++) dirs.add(parts.slice(0, i).join('/'));
+    return { path, type: 'blob', size: data.length, sha: createHash('sha1').update(`blob ${data.length}\0`).update(data).digest('hex') };
+  });
+  tree.push(...[...dirs].map((path) => ({ path, type: 'tree', sha: '' })));
+  writeFileSync(join(out, 'data', 'tree.json'), JSON.stringify({ tree, truncated: false }));
+  const subjectFiles: Record<string, { ai: string }> = {};
+  const lectures = JSON.parse(readFileSync(join(ROOT, 'data', 'lectures.json'), 'utf8')) as { subjects: { name: string }[] };
+  mkdirSync(join(out, 'ai'), { recursive: true });
+  for (const subject of lectures.subjects) {
+    const paths = content.filter((path) => path.startsWith(`Конспекты/${subject.name}/`) && path.endsWith('.md'));
+    const text = [`# ${subject.name.replaceAll('_', ' ')}\n`, ...paths.map((path) => `\n\n---\n\nИсточник: ${path}\n\n${readFileSync(join(ROOT, path), 'utf8')}`)].join('');
+    const ai = `ai/${encodeURIComponent(subject.name)}.md`;
+    writeFileSync(join(out, 'ai', `${subject.name}.md`), text);
+    subjectFiles[subject.name] = { ai };
+  }
+  writeFileSync(join(out, 'data', 'student-subjects.json'), JSON.stringify(subjectFiles));
+  for (const name of readdirSync(join(APP, 'classic'))) {
+    if (name.endsWith('.js') && name !== 'sw.js') copyFileSync(join(APP, 'classic', name), join(out, 'js', name));
+  }
+  copyFileSync(join(APP, 'classic', 'sw.js'), join(out, 'sw.js'));
+  copyFileSync(join(APP, 'classic', 'student-tools.css'), join(out, 'css', 'student-tools.css'));
+  for (const path of ['js/schedule.js', 'js/schedule-ui.js', 'js/homework.js']) writeFileSync(join(out, path), patchClassicModule(path, readFileSync(join(out, path), 'utf8')));
+}
+
+function shellManifest(out: string): void {
+  const paths = ['index.html', 'site.css', ...['js', 'css', 'img', 'fonts', 'switch', 'ai'].flatMap((dir) => pathsBelow(out, dir))];
+  if (existsSync(join(out, 'm3102.ics'))) paths.push('m3102.ics');
+  const files = paths.map((url) => ({ url: encodePath(url), revision: createHash('sha256').update(readFileSync(join(out, url))).digest('hex'), size: statSync(join(out, url)).size }));
+  const html = readFileSync(join(out, 'index.html'), 'utf8');
+  const vendors = [...new Set(html.match(/https:\/\/cdnjs\.cloudflare\.com\/[^"'\s)<>]+/g) || [])];
+  files.push(...vendors.map((url) => ({ url, revision: url, size: 0 })));
+  // Both addresses can be used to reopen the application offline.
+  files.push({ url: './', revision: files[0]!.revision, size: 0 });
+  writeFileSync(join(out, 'shell-manifest.json'), JSON.stringify({ files }));
+  // Make browser update detection notice shell changes even when worker logic is unchanged.
+  const revision = createHash('sha256').update(JSON.stringify(files)).digest('hex');
+  writeFileSync(join(out, 'sw.js'), readFileSync(join(APP, 'classic', 'sw.js'), 'utf8') + `\n// Build: ${revision}\n`);
+}
+
 /** Классический сайт из корня репозитория → папка `out`, с правкой index.html и переключателем стиля */
 function assemble(out: string): void {
   // Папку может держать dev-сервер (Windows не даёт её удалить) — тогда просто перезаписываем файлы поверх
@@ -94,6 +150,8 @@ function assemble(out: string): void {
   }
   copyTree(join(APP, 'public', 'switch'), join(out, 'switch'));
   writeFileSync(join(out, 'index.html'), patchClassicIndex(readFileSync(join(ROOT, 'index.html'), 'utf8')));
+  studentAssets(out);
+  shellManifest(out);
 }
 
 /** Готовый сайт: классический — в корне, приложение (уже собранное в app/dist) — в /app/, выгрузки предметов для ИИ — в /app/ai/ */
@@ -106,6 +164,7 @@ async function assembleSite(out: string): Promise<void> {
   rmSync(join(out, 'app', 'classic'), { recursive: true, force: true });
   // Подписка на календарь живёт по старому адресу (в корне) — у подписчиков он уже прописан
   if (existsSync(join(dist, 'm3102.ics'))) copyFileSync(join(dist, 'm3102.ics'), join(out, 'm3102.ics'));
+  shellManifest(out);
   // «Для ИИ» по ссылке: кнопка на странице предмета отдаёт адрес /app/ai/<предмет>.md. Не получилось — сайт всё равно собран
   try {
     const { writeAiFiles } = await import('./build-ai');
@@ -141,4 +200,5 @@ try {
   }
 } catch (error) {
   console.warn('Классический сайт не обновлён:', error instanceof Error ? error.message : error);
+  process.exitCode = 1;
 }
