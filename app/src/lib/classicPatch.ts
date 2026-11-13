@@ -98,6 +98,26 @@ function replaceRequired(source: string, before: string, after: string): string 
 
 /** Only assembled copies of upstream modules change. Missing integration points fail the build. */
 export function patchClassicModule(path: string, source: string): string {
+  if (path === 'js/lectures.js') {
+    let result = "import { plainMathText } from './student-text.js';\n" + source;
+    result = replaceRequired(result, 'displayNames[nfc(path)] || unslug(fallback);', 'plainMathText(displayNames[nfc(path)] || unslug(fallback));');
+    result = replaceRequired(
+      result,
+      'item.name = displayNames[nfc(item.path)] || unslug(item.name);',
+      'item.name = plainMathText(displayNames[nfc(item.path)] || unslug(item.name));',
+    );
+    result = replaceRequired(result, 'file.name = original ?', 'file.name = plainMathText(original ?');
+    result = replaceRequired(result, ': unslug(file.name);', ': unslug(file.name));');
+    result = replaceRequired(
+      result,
+      "text: copy.textContent.replace(/\\s+/g, ' ').trim()",
+      "text: plainMathText(copy.textContent.replace(/\\s+/g, ' ').trim())",
+    );
+    result = replaceRequired(result, 'const jump = norm(takeJump());', 'const jump = norm(plainMathText(takeJump()));');
+    result = replaceRequired(result, 'title: heading, sub:', 'title: plainMathText(heading), sub:');
+    result = replaceRequired(result, 'const heading = section.h ? ` › ${section.h}`', 'const heading = section.h ? ` › ${plainMathText(section.h)}`');
+    return result;
+  }
   if (path === 'js/schedule-ui.js') return replaceRequired(source, '＋ Домашнее задание</button>', '＋ Добавить ДЗ</button>');
   if (path === 'js/schedule.js' || path === 'js/homework.js') {
     let result = "import { studentFetch } from './student-data.js';\n" + source;

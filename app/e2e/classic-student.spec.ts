@@ -22,7 +22,14 @@ const lectures = {
         {
           name: 'Лекция_1',
           path: 'Конспекты/Тест/Лекция_1',
-          files: [{ name: 'Теорема', path: note, type: 'md', headings: ['Теорема о производной'] }],
+          files: [
+            {
+              name: 'Теорема',
+              path: note,
+              type: 'md',
+              headings: ['Теорема о производной', String.raw`Теорема о последовательности x_n = \left(1 + \frac{1}{n}\right)^n`],
+            },
+          ],
         },
         { name: 'Лекция_2', path: 'Конспекты/Тест/Лекция_2', files: [{ name: 'Чтение', path: pdf, type: 'pdf', headings: [] }] },
       ],
@@ -118,9 +125,16 @@ test('классика: список файлов при лимите API, те�
   await expect(page.locator('[data-nav="output"]')).toHaveCount(0);
   await page.goto('../#/' + encodeURI('Конспекты/Тест'));
   await expect(page.locator('[data-nav="Конспекты/Тест/Лекция_1"] .desc')).toContainText('производной');
+  await expect(page.locator('[data-nav="Конспекты/Тест/Лекция_1"] .desc')).toContainText('xₙ = (1 + (1/n))ⁿ');
+  await expect(page.locator('[data-nav="Конспекты/Тест/Лекция_1"] .desc')).not.toContainText('\\frac');
   await page.goto('../#/subject/' + encodeURIComponent(subject));
   await expect(page.getByRole('button', { name: 'Для ИИ: скачать текст' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Подготовка к контрольной' })).toBeVisible();
+  await expect(page.locator('summary').filter({ hasText: 'Теорема о последовательности' })).toContainText('xₙ = (1 + (1/n))ⁿ');
+  await page.getByRole('combobox', { name: 'Поиск по сайту' }).fill('последовательности');
+  const result = page.locator('.ss-item').filter({ hasText: 'Теорема о последовательности' });
+  await expect(result).toContainText('xₙ = (1 + (1/n))ⁿ');
+  await expect(result).not.toContainText('\\frac');
 });
 test('классика: недели и месяцы, отдельная подписка и разовая выгрузка', async ({ page }) => {
   await setup(page);

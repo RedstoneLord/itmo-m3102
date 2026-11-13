@@ -5,6 +5,7 @@ import classicIndex from '../../../index.html?raw';
 import classicSchedule from '../../../js/schedule.js?raw';
 import classicHomework from '../../../js/homework.js?raw';
 import classicScheduleUi from '../../../js/schedule-ui.js?raw';
+import classicLectures from '../../../js/lectures.js?raw';
 
 const SOURCE = `<!DOCTYPE html><html><head><link rel="manifest" href="manifest.webmanifest">
 <title>M3102</title></head><body><script>
@@ -58,6 +59,7 @@ it('подключения дополнений совместимы с наст
     ['js/schedule.js', classicSchedule],
     ['js/homework.js', classicHomework],
     ['js/schedule-ui.js', classicScheduleUi],
+    ['js/lectures.js', classicLectures],
   ]) {
     const patched = patchClassicModule(path!, source!);
     expect(patched).not.toBe(source);

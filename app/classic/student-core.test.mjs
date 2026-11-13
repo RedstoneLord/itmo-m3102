@@ -1,6 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { deadlineGroups, exportPersonal, parsePersonal, restorePersonal, listing, validTree, shuffled } from './student-core.js';
+import { plainMathText } from './student-text.js';
+import { readFileSync } from 'node:fs';
+
+test('plain headings keep formulas readable without TeX commands', () => {
+  const examples = [
+    [String.raw`Теорема о последовательности x_n = \left(1 + \frac{1}{n}\right)^n`, 'Теорема о последовательности xₙ = (1 + (1/n))ⁿ'],
+    [String.raw`Поле $\mathbb{C}$ и \mathbb{R}^2`, 'Поле ℂ и ℝ²'],
+    [String.raw`Оценка \Theta(n^2 \log n)`, 'Оценка Θ(n² log n)'],
+    [String.raw`x \in \{1,2,3\} \Rightarrow x \geq 1`, 'x ∈ {1,2,3} ⇒ x ≥ 1'],
+    [String.raw`\frac{a+b}{c+d}`, '((a+b)/(c+d))'],
+    [String.raw`\frac{1}{\frac{a}{b}}`, '(1/((a/b)))'],
+    [String.raw`\sqrt{x^2} и a_{ij}`, '√(x²) и aᵢⱼ'],
+    [String.raw`\textbf{Теорема} \unknown{A}`, 'Теорема unknownA'],
+    ['Лекция 7 — второй замечательный предел', 'Лекция 7 — второй замечательный предел'],
+  ];
+  for (const [source, expected] of examples) assert.equal(plainMathText(source), expected);
+});
+
+test('every indexed lecture heading is free of raw TeX commands after formatting', () => {
+  const index = JSON.parse(readFileSync(new URL('../../data/lectures.json', import.meta.url), 'utf8'));
+  for (const subject of index.subjects)
+    for (const lecture of subject.lectures)
+      for (const file of lecture.files)
+        for (const heading of file.headings || []) {
+          assert.doesNotMatch(plainMathText(heading), /\\[A-Za-z]+|[\^_]\{|\$/);
+        }
+});
 
 test('future, debts and group archive stay separate from personal completion', () => {
   const items = [
