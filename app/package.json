@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:classic": "node classic/student-core.test.mjs",
     "test:e2e": "playwright test",
     "size": "node scripts/check-size.mjs",
     "ics": "tsx scripts/build-ics.ts",
