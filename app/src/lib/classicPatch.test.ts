@@ -26,3 +26,15 @@ it('патч классического сайта группы: список с
 it('патч классического сайта группы: разметка без </head> — понятная ошибка, а не тихо сломанная копия', () => {
   expect(() => patchClassicIndex('<html></html>')).toThrow(/patchClassicIndex/);
 });
+
+it('светлая тема встраивается после исходных стилей в кешируемый HTML, без отдельной загрузки CSS', () => {
+  const html = patchClassicIndex(SOURCE.replace('</head>', '<link rel="stylesheet" href="css/reading.css"></head>'));
+  const start = html.indexOf('<style id="classic-light-theme">');
+  expect(start).toBeGreaterThan(html.indexOf('css/reading.css'));
+  expect(start).toBeLessThan(html.indexOf('</head>'));
+  // Переключение на светлую тему должно работать и поверх системной тёмной, и без явной настройки.
+  expect(html).toContain('@media screen and (prefers-color-scheme: light)');
+  expect(html).toContain(':root:not([data-theme="dark"])');
+  expect(html).toContain(':root[data-theme="light"]');
+  expect(html).not.toContain('& .');
+});

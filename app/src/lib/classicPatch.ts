@@ -1,3 +1,5 @@
+import { CLASSIC_LIGHT_THEME } from './classicLightTheme';
+
 /**
  * Правки в index.html классического сайта группы при сборке сайта (scripts/assemble-classic.ts): сам его файл в корне
  * репозитория не меняем, все отличия — только в собранной копии. Что и зачем:
@@ -6,6 +8,8 @@
  *    свои названия кешей, а страницы /app/ он не перехватывает, пока их ведёт воркер приложения);
  *  - список скрытых файлов его «Материалов» приводим к нижнему регистру: он сравнивает с `base.toLowerCase()`, поэтому
  *    записи «AGENTS.md» и «CLAUDE.md» никогда не совпадали и эти файлы показывались как материалы;
+ *  - светлая тема: логотип, герой, фон, текст, статусы и код (classicLightTheme.ts). Встроенный CSS после его стилей
+ *    попадает в тот же офлайн-кеш HTML; работает и при явном выборе темы, и по настройке устройства;
  *  - помечаем сторону (data-site-style) и подключаем общий переключатель стиля (switch/site-switch.js, лежит рядом) — в
  *    <head>, чтобы слой перехода появился до первой отрисовки.
  */
@@ -16,5 +20,8 @@ export function patchClassicIndex(html: string): string {
     .replace(/<link[^>]*rel=["']manifest["'][^>]*>\s*/g, '')
     .replace(/(HIDDEN_FILE_NAMES\s*=\s*\[)([^\]]*)(\])/, (_all, open: string, list: string, close: string) => open + list.toLowerCase() + close)
     .replace(/<html(\s|>)/, '<html data-site-style="classic"$1')
-    .replace('</head>', '    <script src="./switch/site-switch.js" charset="utf-8"></script>\n  </head>');
+    .replace(
+      '</head>',
+      `    <style id="classic-light-theme">${CLASSIC_LIGHT_THEME}</style>\n    <script src="./switch/site-switch.js" charset="utf-8"></script>\n  </head>`,
+    );
 }
