@@ -138,7 +138,6 @@ export function patchClassicIndex(html: string): string {
   patched = replaceRequired(patched, 'data-icon="folder"></span>Материалы', 'data-icon="folder"></span>Учёба');
   patched = replaceRequired(patched, 'data-icon="calendar"></span>Расписание', 'data-icon="calendar"></span>Пары');
   patched = patched.replace(/(<a class="tab" id="tab-homework"[^>]*>[\s\S]*?<\/span>)[^<]+/, '$1Задания');
-  patched = replaceRequired(patched, '    installBackdrop();', '    /* Статичный фон рабочего пространства. */');
   patched = replaceRequired(
     patched,
     "        mountOfflinePanel(c.querySelector('#offline-panel'));",

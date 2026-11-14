@@ -15,6 +15,7 @@ html:root[data-site-style] .dashboard-grid .dash-panel {
   height: 100%;
   box-sizing: border-box;
   grid-column: span 1;
+  grid-row: span 1 !important;
 }
 html:root[data-site-style] .dashboard-grid .dash-panel[data-span='2'],
 html:root[data-site-style] :is(.student-next-panel, .notes-panel, .plan-panel) {
