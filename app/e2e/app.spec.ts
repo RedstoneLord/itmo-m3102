@@ -77,7 +77,9 @@ test('«Для ИИ»: ссылка на предмет копируется и 
   expect(text).toMatch(/\(ИТМО\) \d+ \S+, \d{2}:\d{2} МСК\./);
 
   // По частям: оглавление маленькое и ведёт на файлы конспектов — ИИ открывает только нужные, а не обрезает сотни тысяч токенов
-  await page.getByRole('button', { name: /Для ИИ|Ссылка скопирована/ }).click();
+  // Следующее открытие ждёт завершения обратной связи от копирования.
+  await expect(page.getByRole('button', { name: 'Для ИИ', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Для ИИ', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Скопировать ссылку — по частям' }).click();
   expect((await copied())[1]).toBe('https://redstonelord.github.io/itmo-m3102/app/ai/dm/index.md');
   const index = await (await page.request.get(new URL('ai/dm/index.md', page.url()).href)).text();

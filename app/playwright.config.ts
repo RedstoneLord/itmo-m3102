@@ -12,14 +12,14 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://127.0.0.1:4173/app/',
-    channel: process.env.CI ? undefined : 'msedge',
+    channel: process.env.CI || process.env.PLAYWRIGHT_CHROMIUM ? undefined : 'msedge',
     locale: 'ru-RU',
     timezoneId: 'Europe/Moscow',
     trace: 'retain-on-failure',
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'], channel: process.env.CI ? undefined : 'msedge' }, grepInvert: /@phone/ },
-    { name: 'phone', use: { ...devices['Pixel 7'], channel: process.env.CI ? undefined : 'msedge' }, grep: /@phone/ },
+    { name: 'desktop', use: { ...devices['Desktop Chrome'], channel: process.env.CI || process.env.PLAYWRIGHT_CHROMIUM ? undefined : 'msedge' }, grepInvert: /@phone/ },
+    { name: 'phone', use: { ...devices['Pixel 7'], channel: process.env.CI || process.env.PLAYWRIGHT_CHROMIUM ? undefined : 'msedge' }, grep: /@phone/ },
   ],
   webServer: {
     // В CI сборка уже сделана предыдущим шагом

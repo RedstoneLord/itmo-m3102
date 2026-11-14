@@ -17,24 +17,33 @@ export function patchClassicIndex(html: string): string {
   if (!html.includes('</head>'))
     throw new Error('В index.html классического сайта группы нет </head> — разметка изменилась, нужно поправить patchClassicIndex.');
   let patched = html
+    .replace(/<link[^>]+href="https:\/\/fonts\.googleapis\.com\/css2\?family=Noto[^"]+"[^>]*>/, '<link rel="stylesheet" href="./css/home-fonts.css">')
     .replace(/<link[^>]*rel=["']manifest["'][^>]*>\s*/g, '')
     .replace(/(HIDDEN_FILE_NAMES\s*=\s*\[)([^\]]*)(\])/, (_all, open: string, list: string, close: string) => open + list.toLowerCase() + close)
     .replace(/<html(\s|>)/, '<html data-site-style="classic"$1')
     .replace(
       '</head>',
-      `    <style id="classic-light-theme">${CLASSIC_LIGHT_THEME}</style>\n    <link rel="stylesheet" href="./css/student-tools.css">\n    <script src="./switch/site-switch.js" charset="utf-8"></script>\n  </head>`,
+      `    <style id="classic-light-theme">${CLASSIC_LIGHT_THEME}</style>\n    <link rel="stylesheet" href="./css/student-tools.css">\n    <link rel="stylesheet" href="./css/home-dashboard.css">\n    <script src="./switch/site-switch.js" charset="utf-8"></script>\n  </head>`,
     );
   // Small fixtures and upstream pages without our supported router only receive the appearance patch.
   if (!html.includes('function renderRoute()')) return patched;
+  for (const panel of ['schedule-panel', 'deadline-panel', 'homework-panel', 'materials-panel', 'plan-panel', 'notes-panel']) {
+    if (!html.includes(`dash-panel ${panel}`)) throw new Error(`Classic integration changed: home panel ${panel}`);
+  }
   patched = replaceRequired(
     patched,
     '    import { dateKey,',
-    "    import { installStudentTools, renderStudentRoute, decorateStudentPage, directoryResponse, renderHomeDeadlines } from './js/student-tools.js';\n    import { queues, studentFetch } from './js/student-data.js';\n    import { groupArchived } from './js/student-core.js';\n    import { dateKey,",
+    "    import { installStudentTools, renderStudentRoute, decorateStudentPage, directoryResponse, renderHomeDeadlines } from './js/student-tools.js';\n    import { loadRecentNotes, updateHomeTime } from './js/home-dashboard.js';\n    import { queues, studentFetch } from './js/student-data.js';\n    import { groupArchived, read as readClassicPreference } from './js/student-core.js';\n    import { dateKey,",
   );
   patched = replaceRequired(
     patched,
     '    installScheduleEditor();',
-    '    installStudentTools({ students: STUDENTS, parseHash, studentMatches, resolveQueueEntry, renderNotes, runNoteExtras });\n    installScheduleEditor();',
+    '    installStudentTools({ students: STUDENTS, parseHash, studentMatches, resolveQueueEntry, renderNotes, runNoteExtras, retryRoute: renderRoute, refreshHome: async () => { await Promise.all([loadHomeDeadlines(), reloadHomework()]); } });\n    installScheduleEditor();',
+  );
+  patched = replaceRequired(
+    patched,
+    'import { installHomework, renderHomeHomework, renderHomeworkPage }',
+    'import { reloadHomework, installHomework, renderHomeHomework, renderHomeworkPage }',
   );
   patched = replaceRequired(patched, 'page.getViewport({scale:cw/vp0.width})', 'page.getViewport({scale:Math.min(900,2*cw)/vp0.width})');
   patched = replaceRequired(patched, '  updateActiveTab(mode,path);', '  updateActiveTab(mode,path);\n  if(renderStudentRoute(mode,path))return;');
@@ -75,7 +84,7 @@ export function patchClassicIndex(html: string): string {
   patched = replaceRequired(
     patched,
     '    const DEADLINES_QUEUE_LABEL=',
-    "    function readStudentLogin(){try{return (JSON.parse(localStorage.getItem('m3102-student-v1'))?.login||'').toLowerCase();}catch{return '';}}\n    const DEADLINES_QUEUE_LABEL=",
+    "    function readStudentLogin(){return (readClassicPreference('m3102-student-v1',{}).login||'').toLowerCase();}\n    const DEADLINES_QUEUE_LABEL=",
   );
   patched = patched.replaceAll("fetch('./Дедлайны/deadlines.json'", "studentFetch('./Дедлайны/deadlines.json'");
   patched = replaceRequired(patched, 'deadlinesQueueError=true;deadlinesQueueCache={};', 'deadlinesQueueError=true;');
@@ -88,6 +97,21 @@ export function patchClassicIndex(html: string): string {
     patched,
     '            }else{\n              grid+=`<div class="card"',
     '            }else if([\'mp3\',\'wav\',\'m4a\',\'ogg\',\'opus\',\'flac\'].includes(e)){\n              grid+=`<a class="card" href="#/audio/${encodePath(it.path)}"><div class="ic">${ic(\'audio\',22)}</div><div class="meta"><div class="name">${title}</div><div class="desc">${fmtSize(it.size)} · слушать с сохранением позиции</div></div></a>`;\n            }else{\n              grid+=`<div class="card"',
+  );
+  const recentStart = patched.indexOf('    async function fetchRecentNotes(){');
+  const recentEnd = patched.indexOf('    /* ---------- мини-игра', recentStart);
+  if (recentStart < 0 || recentEnd < 0) throw new Error('Classic recent notes integration changed');
+  patched = patched.slice(0, recentStart) + '    async function fetchRecentNotes(){ return loadRecentNotes(); }\n\n' + patched.slice(recentEnd);
+  const scheduleStart = patched.indexOf('  ensureSchedule().then(()=>{', patched.indexOf('function renderHome(){'));
+  const scheduleEnd = patched.indexOf('\n}\n    const RECENT_NOTES_LIMIT', scheduleStart);
+  if (scheduleStart < 0 || scheduleEnd < 0) throw new Error('Classic home schedule integration changed');
+  patched = patched.slice(0, scheduleStart) + '  ensureSchedule().then(updateHomeTime).catch(()=>{});' + patched.slice(scheduleEnd);
+  patched = replaceRequired(patched, '<span>Файлы</span>', '<span>Материалы</span>');
+  patched = replaceRequired(patched, '<span>Пары</span>', '<span>Расписание</span>');
+  patched = replaceRequired(
+    patched,
+    '\'<p class="empty-line">Пока задач нет. Добавьте первую задачу.</p>\'',
+    '\'<div class="home-empty"><span aria-hidden="true">◇</span><div><strong>План пока свободен</strong><p>Добавьте личную задачу, когда понадобится.</p></div></div>\'',
   );
   return patched;
 }
@@ -133,6 +157,7 @@ export function patchClassicModule(path: string, source: string): string {
       "  s=s.replace(/\\b(?:void|int|char|double|float|bool|auto|long|short|unsigned|signed)\\s+\\w+\\([^()\\n]*\\)/g,c=>keep('<code>'+esc(c)+'</code>'));\n  s=s.replace(/\\$([^$\\n]+?)\\$/g,",
     );
   }
+  if (path === 'js/settings.js') return replaceRequired(source, 'Подгружается из Google Fonts', 'Локальный шрифт с поддержкой кириллицы');
   if (path === 'js/prefs.js') {
     let result = replaceRequired(source, '>Сбросить всё</button>', '>Сбросить настройки оформления и чтения</button>');
     result = replaceRequired(
@@ -142,11 +167,31 @@ export function patchClassicModule(path: string, source: string): string {
     );
     return result;
   }
-  if (path === 'js/schedule-ui.js') return replaceRequired(source, '＋ Домашнее задание</button>', '＋ Добавить ДЗ</button>');
+  if (path === 'js/schedule-ui.js') {
+    let result = replaceRequired(source, '＋ Домашнее задание</button>', '＋ Добавить ДЗ</button>');
+    result = replaceRequired(
+      result,
+      'export async function ensureSchedule() {',
+      'export async function reloadSchedule() { data = null; loading = null; return ensureSchedule(); }\nexport async function ensureSchedule() {',
+    );
+    return replaceRequired(result, '}).catch(error => {', '}).catch(error => { loading = null;');
+  }
   if (path === 'js/schedule.js' || path === 'js/homework.js') {
     let result = "import { studentFetch } from './student-data.js';\n" + source;
     result = result.replaceAll("fetch('./data/", "studentFetch('./data/");
     if (path === 'js/homework.js') {
+      result = "import { emptyState } from './home-dashboard.js';\n" + result;
+      result = replaceRequired(
+        result,
+        '\'<p class="empty-line">Актуальных заданий пока нет.</p>\'',
+        "emptyState('Актуальных домашних заданий нет', 'Здесь появятся новые задания группы.', '#/homework', 'Открыть задания')",
+      );
+      result = replaceRequired(
+        result,
+        'export async function ensureHomework() {',
+        'export async function reloadHomework() { homework = null; loading = null; await ensureHomework(); renderAll(); }\nexport async function ensureHomework() {',
+      );
+      result = replaceRequired(result, '})().catch(error => {', '})().catch(error => { loading = null;');
       result = "import { ic } from './icons.js';\n" + result;
       result = replaceRequired(result, '>Сохранить задание</button>', '>Сохранить только для меня</button>');
       result = replaceRequired(
@@ -175,6 +220,7 @@ export function patchClassicModule(path: string, source: string): string {
         'aria-label="Удалить задание в моей копии">${ic(\'trash\', 20)}</button>',
       );
     }
+    if (path === 'js/schedule.js') result = replaceRequired(result, 'stale: false', "stale: response.headers.has('X-M3102-Saved')");
     return result;
   }
   return source;

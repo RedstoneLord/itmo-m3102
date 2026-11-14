@@ -1,0 +1,12 @@
+
+> itmo-m3102@0.1.0 test
+> vitest run --maxWorkers=2 src/lib/classicHomeAssets.test.ts
+
+
+ RUN  v5.0.3 /home/theodor/Документы/itmo-m3102/app
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  15:34:01
+   Duration  220ms (setup 61%, transform 31%, worker 3%, import 3%, tests 2%)

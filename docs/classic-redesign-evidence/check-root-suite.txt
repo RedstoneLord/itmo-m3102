@@ -1,0 +1,30 @@
+
+> test
+> node --test tests/*.mjs
+
+✔ tests/blackjack-math.mjs (422.329626ms)
+✔ tests/blackjack.mjs (310.84447ms)
+✔ tests/casino-art.mjs (140.70116ms)
+✔ tests/casino-pages.mjs (243.726243ms)
+✔ tests/casino-perks.mjs (963.421915ms)
+✔ tests/casino-themes.mjs (983.82097ms)
+✔ tests/casino.mjs (20838.742288ms)
+✔ tests/diagrams.mjs (180.149715ms)
+✔ tests/github.mjs (305.93823ms)
+✔ tests/homework.mjs (131.496972ms)
+✔ tests/mahjong.mjs (2632.968152ms)
+✔ tests/roulette-math.mjs (246.907121ms)
+✔ tests/roulette.mjs (514.092901ms)
+✔ tests/schedule.mjs (277.376492ms)
+✔ tests/slots-casino.mjs (610.381316ms)
+✔ tests/slots-ui.mjs (989.718378ms)
+✔ tests/slots.mjs (188628.421929ms)
+✔ tests/smoke.mjs (176.760259ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 192872.312677

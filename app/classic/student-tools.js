@@ -1,3 +1,5 @@
+import { installHomeSetup, mountHomeSettings } from './home-setup.js';
+import { mountHome, leaveHome, updateHomeTime, renderFreshness, refreshHomeData, installHomeDashboard, emptyState } from './home-dashboard.js';
 import {
   esc,
   read,
@@ -13,7 +15,7 @@ import {
   download,
   shuffled,
 } from './student-core.js';
-import { directoryResponse, json, loadTree, queues, freshnessMarkup, markFresh } from './student-data.js';
+import { directoryResponse, json, loadTree, queues, markFresh, freshnessSnapshot } from './student-data.js';
 import { bookmarksPage, decorateReader, audioPage, memeDialog, showDialog } from './student-reader.js';
 import { mountOfflinePanel, installOffline } from './offline.js';
 import { ensureSchedule, getSchedule } from './schedule-ui.js';
@@ -35,7 +37,7 @@ const errors = (node, error) => {
     node.innerHTML = `<p role="alert">Не удалось загрузить: ${esc(error.message)}</p><button class="btn2" data-student-retry>Повторить попытку</button>`;
 };
 function panel(title, body, cls = '') {
-  return `<section class="dash-panel ${cls}"><h2>${esc(title)}</h2>${body}</section>`;
+  return `<section class="dash-panel ${cls}"><div class="panel-head"><h2>${esc(title)}</h2></div>${body}</section>`;
 }
 function quickAction(icon, label, short, attributes) {
   const tag = attributes.startsWith('href=') ? 'a' : 'button';
@@ -69,14 +71,14 @@ function compactQuickActions() {
   }
 }
 function identityMarkup() {
-  return `<label class="sched-field">Кто вы?<select data-student-me><option value="">Я гость</option>${context.students.map((s) => `<option value="${esc(s.nick)}" ${me() === s.nick ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label><p>Выбор хранится только у вас. Он нужен для выделения ваших мест в общих очередях.</p>`;
+  return `<p>${me() ? `Вы: ${esc(context.students.find((s) => s.nick === me())?.name || me())}` : 'Вы просматриваете сайт как гость'}. <a href="#/settings">Изменить профиль в настройках</a></p>`;
 }
 function deadlineList(entries, limit = Infinity) {
   return (
     entries
       .slice(0, limit)
       .map((d) => `<p><a href="#/deadlines"><strong>${esc(d.name)}</strong></a> · ${esc(stamp(d.deadline))}</p>`)
-      .join('') || '<p>Нет работ в этом списке.</p>'
+      .join('') || emptyState('Ближайших работ нет', 'Прошедшие сроки проверьте в разделе долгов.')
   );
 }
 export function renderHomeDeadlines(items) {
@@ -96,18 +98,24 @@ function settings() {
   node.id = 'student-settings';
   node.className = 'student-stack';
   node.innerHTML =
-    panel('Мои данные', `${identityMarkup()}<a class="btn2" href="#/bookmarks">Мои закладки и вопросы</a>`) +
+    '<h2>Данные и офлайн</h2>' +
     panel(
       'Резервная копия личного прогресса',
       '<p>Перенести мои данные: задачи, выполнение ДЗ, учебный план, закладки, ошибки тестов, позиции чтения и прослушивания, игровой прогресс и настройки. Токены и скачанные материалы в копию не входят.</p><div class="student-actions"><button class="btn2" data-backup-export>Скачать резервную копию</button><button class="btn2" data-backup-choose>Выбрать резервную копию</button><input type="file" accept="application/json,.json" hidden data-backup-import></div><p data-backup-filename></p><p data-backup-status role="status"></p>',
     ) +
     '<div id="student-offline-settings"></div>';
   page.append(node);
+  mountHomeSettings();
   mountOfflinePanel(node.querySelector('#student-offline-settings'));
 }
 async function personalQueues(node) {
   if (!me()) {
-    node.innerHTML = identityMarkup();
+    node.innerHTML = emptyState(
+      'Вы выбрали гостевой режим',
+      'Для личных мест в очередях выберите студента в настройках.',
+      '#/settings',
+      'Настроить профиль',
+    );
     return;
   }
   try {
@@ -121,90 +129,19 @@ async function personalQueues(node) {
       .flatMap((d) => {
         const q = data[d.id] || [],
           pos = q.findIndex((e) => e.login.toLowerCase() === me().toLowerCase());
-        return pos < 0 ? [] : [`<p><a href="#/deadlines"><strong>${esc(d.name)}</strong> — вы №${pos + 1} из ${q.length}</a></p>`];
+        return pos < 0 ? [] : [`<p><a href="#/deadlines"><strong>${esc(d.name)}</strong> · вы №${pos + 1} из ${q.length}</a></p>`];
       });
-    node.innerHTML = mine.join('') || '<p>Вы пока не записаны в открытые очереди.</p>';
+    node.innerHTML =
+      mine.join('') || emptyState('Вы пока не в очередях', 'Здесь появятся ваши места после записи.', '#/deadlines', 'Открыть дедлайны');
   } catch (error) {
     errors(node, error);
   }
 }
-function nextClass() {
-  const node = document.querySelector('#student-next');
-  if (!node) return;
-  const schedule = getSchedule();
-  if (!schedule) return;
-  const now = new Date();
-  let found;
-  for (let offset = 0; offset < 30 && !found; offset++) {
-    const date = addDays(now, offset);
-    for (const lesson of lessonsOn(date, schedule).filter((l) => !l.break)) {
-      const start = new Date(`${dateKey(date)}T${lesson.start}`),
-        end = new Date(`${dateKey(date)}T${lesson.end}`);
-      if (end > now) {
-        found = { lesson, date, start, end };
-        break;
-      }
-    }
-  }
-  if (!found) {
-    node.textContent = 'В ближайшие 30 дней занятий нет.';
-    return;
-  }
-  const { lesson, date, start, end } = found,
-    minutes = Math.ceil(((start > now ? start : end) - now) / 60000);
-  node.innerHTML = `<strong>${esc(lesson.subject)}</strong><p>${start > now ? `До начала ${minutes < 120 ? `${minutes} мин` : `${Math.floor(minutes / 60)} ч ${minutes % 60} мин`}` : `Сейчас идёт · осталось ${minutes} мин`} · ${esc(date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }))}, ${esc(lesson.start)}–${esc(lesson.end)}</p><p>Ауд. ${esc(lesson.room || 'уточняется')} · ${esc(lesson.location || schedule.defaultLocation || '')}</p><a class="btn2" href="#/schedule/${dateKey(date)}">Открыть день</a>`;
-}
 function home() {
-  const grid = document.querySelector('.dashboard-grid');
-  const anchor = document.querySelector('.schedule-panel');
-  if (!anchor || document.querySelector('#student-home-tools')) return;
-  const tools = document.createElement('div');
-  tools.id = 'student-home-tools';
-  tools.className = 'student-stack';
-  tools.innerHTML =
-    panel('Следующая пара', '<div id="student-next">Загружаем расписание…</div>', 'student-next-panel') +
-    panel('Мои очереди', '<div id="student-my-queues">Загружаем очереди…</div>', 'student-queues-panel') +
-    `<nav id="student-home-tools" class="student-actions student-quick-actions" aria-label="Быстрые действия">${quickAction('book', 'Все предметы', 'Предметы', 'href="#/subjects"')}${quickAction('notes', 'Закладки и вопросы', 'Закладки', 'href="#/bookmarks"')}${quickAction('settings', 'Настроить главную', 'Настроить', 'data-home-config')}</nav>`;
-  anchor.before(...tools.children);
-  ensureSchedule()
-    .then(nextClass)
-    .catch((e) => errors(document.querySelector('#student-next'), e));
-  personalQueues(document.querySelector('#student-my-queues'));
-  const parent = grid || anchor.parentElement;
-  const panels = [...parent.children].filter((e) => e.matches('section.dash-panel'));
-  panels.forEach((p, i) => {
-    p.dataset.homeBlock = p.id || [...p.classList].find((c) => c !== 'dash-panel' && c.endsWith('-panel')) || `block-${i}`;
-  });
-  const order = read('m3102-home-layout-v1', {}).order || [];
-  [...panels]
-    .sort(
-      (a, b) =>
-        (order.indexOf(a.dataset.homeBlock) < 0 ? 99 : order.indexOf(a.dataset.homeBlock)) -
-        (order.indexOf(b.dataset.homeBlock) < 0 ? 99 : order.indexOf(b.dataset.homeBlock)),
-    )
-    .forEach((p) => parent.append(p));
-}
-function homeConfig() {
-  const nodes = [...document.querySelectorAll('[data-home-block]')];
-  const dialog = showDialog(
-    'Порядок блоков главной',
-    `<p>Выберите, что видеть первым. Порядок сохраняется только для вас.</p><div data-order>${nodes.map((n) => `<div class="student-order" data-block="${esc(n.dataset.homeBlock)}"><span>${esc(n.querySelector('h2')?.textContent || 'Следующая пара и мои очереди')}</span><button class="btn2" data-up aria-label="Поднять блок">↑</button><button class="btn2" data-down aria-label="Опустить блок">↓</button></div>`).join('')}</div><button class="btn2 btn-primary" data-order-save>Сохранить порядок</button>`,
-  );
-  dialog.onclick = (event) => {
-    const row = event.target.closest('[data-block]');
-    if (row && event.target.closest('[data-up]') && row.previousElementSibling) row.previousElementSibling.before(row);
-    if (row && event.target.closest('[data-down]') && row.nextElementSibling) row.nextElementSibling.after(row);
-    if (event.target.closest('[data-order-save]')) {
-      const order = [...dialog.querySelectorAll('[data-block]')].map((n) => n.dataset.block);
-      if (save('m3102-home-layout-v1', { order })) {
-        for (const key of order) {
-          const node = nodes.find((n) => n.dataset.homeBlock === key);
-          node.parentElement.append(node);
-        }
-        dialog.close();
-      }
-    }
-  };
+  const fresh = !document.querySelector('.dashboard-grid')?.dataset.homeMounted;
+  mountHome();
+  const node = document.querySelector('#student-my-queues');
+  if (fresh && node && !node.closest('[hidden]')) personalQueues(node);
 }
 function tabs(mode) {
   if (!['homework', 'deadlines'].includes(mode)) return;
@@ -483,6 +420,7 @@ async function folderTopics() {
   }
 }
 export function renderStudentRoute(mode, path) {
+  leaveHome();
   cleanup();
   cleanup = () => {};
   const hash = location.hash.slice(2),
@@ -534,7 +472,7 @@ export function decorateStudentPage({ mode, path }) {
   }
   folderTopics().catch(() => {});
   const title = document.querySelector('.deadline-panel h2');
-  if (title) title.textContent = 'Скоро сдавать';
+  if (title && title.textContent !== 'Скоро сдавать') title.textContent = 'Скоро сдавать';
   if (mode === 'deadlines') {
     const grid = document.querySelector('.dl-grid');
     if (grid && !grid.dataset.studentGrouped) {
@@ -596,20 +534,18 @@ export function decorateStudentPage({ mode, path }) {
   refreshFreshness();
 }
 function refreshFreshness() {
-  let node = document.getElementById('student-freshness');
-  if (!node) {
-    node = document.createElement('aside');
-    node.id = 'student-freshness';
-    node.className = 'student-freshness';
-    node.setAttribute('aria-label', 'Свежесть данных');
-    document.querySelector('main')?.after(node);
-    if (!node.isConnected) document.body.append(node);
-  }
-  const markup = `${freshnessMarkup()}<button class="btn2" data-student-retry>Повторить обновление</button>`;
-  if (node.innerHTML !== markup) node.innerHTML = markup;
+  renderFreshness();
 }
 export function installStudentTools(options) {
   context = options;
+  installHomeSetup(options.students);
+  installHomeDashboard({
+    queues: async () => {
+      const node = document.querySelector('#student-my-queues');
+      if (node && !node.closest('[hidden]')) await personalQueues(node);
+    },
+    refresh: options.refreshHome,
+  });
   installOffline();
   const schedule = () => {
     queued = false;
@@ -623,22 +559,23 @@ export function installStudentTools(options) {
     }
   });
   observer.observe(host(), { childList: true, subtree: true });
-  document.addEventListener('student:freshness', refreshFreshness);
   document.addEventListener('schedule:ready', (event) => {
-    const result = event.detail,
-      cachedAt = read('m3102-data-dates-v1', {}).schedule;
-    const at = result.stale ? cachedAt : new Date().toISOString();
-    if (!result.stale) save('m3102-data-dates-v1', { ...read('m3102-data-dates-v1'), schedule: at });
-    if (result.stale) markFresh('Расписание', at, true);
-    nextClass();
+    if (event.detail.stale) markFresh('Расписание', freshnessSnapshot()['Расписание']?.at || read('m3102-data-dates-v1', {}).schedule, true);
+    updateHomeTime();
   });
   document.addEventListener('click', async (event) => {
     const target = event.target;
-    if (target.closest('[data-student-retry]')) {
-      location.reload();
+    const retry = target.closest('[data-student-retry]');
+    if (retry) {
+      await refreshHomeData();
+      if (!retry.classList.contains('home-refresh') && !document.querySelector('.dashboard-grid')) {
+        const position = scrollY;
+        context.retryRoute();
+        document.querySelector('.home-refresh')?.focus({ preventScroll: true });
+        requestAnimationFrame(() => scrollTo(0, position));
+      }
       return;
     }
-    if (target.closest('[data-home-config]')) homeConfig();
     if (target.closest('[data-backup-choose]')) document.querySelector('[data-backup-import]')?.click();
     if (target.closest('[data-calendar]')) calendarDialog();
     if (target.closest('[data-backup-export]')) {
@@ -682,10 +619,6 @@ export function installStudentTools(options) {
   document.addEventListener('change', async (event) => {
     if (event.target.matches('[data-backup-import]'))
       document.querySelector('[data-backup-filename]').textContent = event.target.files?.[0]?.name || '';
-    if (event.target.matches('[data-student-me]')) {
-      if (!save('m3102-student-v1', { login: event.target.value })) return;
-      location.reload();
-    }
     if (event.target.matches('[data-backup-import]')) {
       const file = event.target.files[0],
         status = document.querySelector('[data-backup-status]');
@@ -713,5 +646,4 @@ export function installStudentTools(options) {
       event.target.value = '';
     }
   });
-  setInterval(nextClass, 30000);
 }

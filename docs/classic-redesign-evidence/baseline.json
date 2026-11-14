@@ -1,0 +1,1910 @@
+[
+  {
+    "width": 1440,
+    "theme": "light",
+    "hog": {
+      "x": 523.697998046875,
+      "y": 257.342529296875,
+      "width": 35.82269287109375,
+      "height": 33.33734130859375,
+      "top": 257.342529296875,
+      "right": 559.5206909179688,
+      "bottom": 290.67987060546875,
+      "left": 523.697998046875
+    },
+    "cls": 0.5828367659094815,
+    "resources": [
+      {
+        "url": "https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400..800;1,400..800&family=Ubuntu+Sans:ital,wght@0,100..800;1,100..800&family=Arimo:ital,wght@0,400..700;1,400..700&display=swap",
+        "size": 1562,
+        "type": "link"
+      },
+      {
+        "url": "https://fonts.googleapis.com/css2?family=Comfortaa:wght@500..700&family=Exo+2:wght@500..800&family=IBM+Plex+Mono:wght@500;700&family=Playfair+Display:wght@600..800&family=Press+Start+2P&family=Oswald:wght@500..700&display=swap",
+        "size": 1506,
+        "type": "link"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css",
+        "size": 0,
+        "type": "link"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css",
+        "size": 0,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/site.css",
+        "size": 5025,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/schedule.css",
+        "size": 3428,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/homework.css",
+        "size": 1571,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/diagrams.css",
+        "size": 1741,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/memes.css",
+        "size": 1157,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/deadlines.css",
+        "size": 1804,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/lectures.css",
+        "size": 3597,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/browse.css",
+        "size": 734,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/quiz.css",
+        "size": 3002,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/links.css",
+        "size": 1805,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/shell.css",
+        "size": 3224,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/transitions.css",
+        "size": 968,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/backdrop.css",
+        "size": 1690,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/glass.css",
+        "size": 2874,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/settings.css",
+        "size": 3566,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/appearance.css",
+        "size": 1638,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/slots.css",
+        "size": 7209,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/casino.css",
+        "size": 6300,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/mahjong.css",
+        "size": 3408,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/casino-themes.css",
+        "size": 5289,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/palettes-special.css",
+        "size": 3518,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/prefs.css",
+        "size": 876,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/reading.css",
+        "size": 2286,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/prefs.js",
+        "size": 2961,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/student-tools.css",
+        "size": 3227,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/switch/site-switch.js",
+        "size": 6048,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/logo-t.png",
+        "size": 112283,
+        "type": "img"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/github.png",
+        "size": 3345,
+        "type": "img"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/logo.png",
+        "size": 640056,
+        "type": "img"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-tools.js",
+        "size": 12351,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-data.js",
+        "size": 2602,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-core.js",
+        "size": 3267,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule.js",
+        "size": 2609,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule-ui.js",
+        "size": 5718,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule-editor.js",
+        "size": 7799,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/github.js",
+        "size": 2168,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/homework.js",
+        "size": 7478,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/index.js",
+        "size": 22765,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/array-player.js",
+        "size": 9377,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/greetings.js",
+        "size": 2455,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/editor.js",
+        "size": 12858,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/links.js",
+        "size": 3122,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/memes.js",
+        "size": 4164,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/quiz.js",
+        "size": 8738,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/offline.js",
+        "size": 5034,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/lectures.js",
+        "size": 9664,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/backdrop.js",
+        "size": 1863,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/icons.js",
+        "size": 3919,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots.js",
+        "size": 14488,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/rewards.js",
+        "size": 4820,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-collection.js",
+        "size": 6675,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino.js",
+        "size": 2979,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-themes.js",
+        "size": 7633,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/blackjack.js",
+        "size": 7257,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/roulette.js",
+        "size": 8963,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong.js",
+        "size": 6311,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-math.js",
+        "size": 14528,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/settings.js",
+        "size": 2956,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-reader.js",
+        "size": 5741,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-text.js",
+        "size": 2292,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/homework-text.js",
+        "size": 1035,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/expression.js",
+        "size": 1651,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/array-code.js",
+        "size": 11909,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-art.js",
+        "size": 8730,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-common.js",
+        "size": 7450,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-audio.js",
+        "size": 4508,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong-math.js",
+        "size": 1787,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong-state.js",
+        "size": 1348,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/blackjack-math.js",
+        "size": 5645,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/appearance.js",
+        "size": 2136,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/roulette-math.js",
+        "size": 5612,
+        "type": "script"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits?sha=master&path=%D0%9A%D0%BE%D0%BD%D1%81%D0%BF%D0%B5%D0%BA%D1%82%D1%8B&per_page=10",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/%D0%94%D0%B5%D0%B4%D0%BB%D0%B0%D0%B9%D0%BD%D1%8B/deadlines.json",
+        "size": 787,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/homework.json",
+        "size": 773,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/schedule.json",
+        "size": 1685,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/257a6df4472a70acfdbb2d2e89585e36f3ba11a6",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/92fffc0fdbdd5e2eceaabb432b3e2e1bcca67468",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/f4be7552dd53fb52b1cea7ce3e40226c31aee241",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/b1c966d9d2dcade66ee7a0730c07cfb06c4e4f7b",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/145423d1fe02ad087a6ed9c84a7973726e313f03",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/display-names.json",
+        "size": 3678,
+        "type": "fetch"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "hog": {
+      "x": 506.42462158203125,
+      "y": 258.5959167480469,
+      "width": 35.9007568359375,
+      "height": 33.254058837890625,
+      "top": 258.5959167480469,
+      "right": 542.3253784179688,
+      "bottom": 291.8499755859375,
+      "left": 506.42462158203125
+    },
+    "cls": 0.5802563606583045,
+    "resources": [
+      {
+        "url": "https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400..800;1,400..800&family=Ubuntu+Sans:ital,wght@0,100..800;1,100..800&family=Arimo:ital,wght@0,400..700;1,400..700&display=swap",
+        "size": 1562,
+        "type": "link"
+      },
+      {
+        "url": "https://fonts.googleapis.com/css2?family=Comfortaa:wght@500..700&family=Exo+2:wght@500..800&family=IBM+Plex+Mono:wght@500;700&family=Playfair+Display:wght@600..800&family=Press+Start+2P&family=Oswald:wght@500..700&display=swap",
+        "size": 1506,
+        "type": "link"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css",
+        "size": 0,
+        "type": "link"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css",
+        "size": 0,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/site.css",
+        "size": 5025,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/schedule.css",
+        "size": 3428,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/homework.css",
+        "size": 1571,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/memes.css",
+        "size": 1157,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/diagrams.css",
+        "size": 1741,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/deadlines.css",
+        "size": 1804,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/browse.css",
+        "size": 734,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/lectures.css",
+        "size": 3597,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/links.css",
+        "size": 1805,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/transitions.css",
+        "size": 968,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/quiz.css",
+        "size": 3002,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/shell.css",
+        "size": 3224,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/backdrop.css",
+        "size": 1690,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/settings.css",
+        "size": 3566,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/glass.css",
+        "size": 2874,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/appearance.css",
+        "size": 1638,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/slots.css",
+        "size": 7209,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/casino.css",
+        "size": 6300,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/mahjong.css",
+        "size": 3408,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/casino-themes.css",
+        "size": 5289,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/palettes-special.css",
+        "size": 3518,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/reading.css",
+        "size": 2286,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/prefs.css",
+        "size": 876,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/prefs.js",
+        "size": 2961,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/student-tools.css",
+        "size": 3227,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/logo-t.png",
+        "size": 112283,
+        "type": "img"
+      },
+      {
+        "url": "http://127.0.0.1:4173/switch/site-switch.js",
+        "size": 6048,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/github.png",
+        "size": 3345,
+        "type": "img"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/logo.png",
+        "size": 640056,
+        "type": "img"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-tools.js",
+        "size": 12351,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule.js",
+        "size": 2609,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-core.js",
+        "size": 3267,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-data.js",
+        "size": 2602,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule-ui.js",
+        "size": 5718,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule-editor.js",
+        "size": 7799,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/github.js",
+        "size": 2168,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/homework.js",
+        "size": 7478,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/greetings.js",
+        "size": 2455,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/array-player.js",
+        "size": 9377,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/index.js",
+        "size": 22765,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/editor.js",
+        "size": 12858,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/memes.js",
+        "size": 4164,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/quiz.js",
+        "size": 8738,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/links.js",
+        "size": 3122,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/offline.js",
+        "size": 5034,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/icons.js",
+        "size": 3919,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/lectures.js",
+        "size": 9664,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/backdrop.js",
+        "size": 1863,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino.js",
+        "size": 2979,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-collection.js",
+        "size": 6675,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/rewards.js",
+        "size": 4820,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots.js",
+        "size": 14488,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-themes.js",
+        "size": 7633,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong.js",
+        "size": 6311,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/blackjack.js",
+        "size": 7257,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-math.js",
+        "size": 14528,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/roulette.js",
+        "size": 8963,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/settings.js",
+        "size": 2956,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-reader.js",
+        "size": 5741,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-text.js",
+        "size": 2292,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/homework-text.js",
+        "size": 1035,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/expression.js",
+        "size": 1651,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/array-code.js",
+        "size": 11909,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-art.js",
+        "size": 8730,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-common.js",
+        "size": 7450,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-audio.js",
+        "size": 4508,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong-math.js",
+        "size": 1787,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong-state.js",
+        "size": 1348,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/appearance.js",
+        "size": 2136,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/blackjack-math.js",
+        "size": 5645,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/roulette-math.js",
+        "size": 5612,
+        "type": "script"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits?sha=master&path=%D0%9A%D0%BE%D0%BD%D1%81%D0%BF%D0%B5%D0%BA%D1%82%D1%8B&per_page=10",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/%D0%94%D0%B5%D0%B4%D0%BB%D0%B0%D0%B9%D0%BD%D1%8B/deadlines.json",
+        "size": 787,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/homework.json",
+        "size": 773,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/schedule.json",
+        "size": 1685,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/257a6df4472a70acfdbb2d2e89585e36f3ba11a6",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/92fffc0fdbdd5e2eceaabb432b3e2e1bcca67468",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/f4be7552dd53fb52b1cea7ce3e40226c31aee241",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/b1c966d9d2dcade66ee7a0730c07cfb06c4e4f7b",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/145423d1fe02ad087a6ed9c84a7973726e313f03",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/display-names.json",
+        "size": 3678,
+        "type": "fetch"
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "hog": {
+      "x": 128.3188934326172,
+      "y": 147.96946716308594,
+      "width": 226.3934783935547,
+      "height": 25.1138916015625,
+      "top": 147.96946716308594,
+      "right": 354.7123718261719,
+      "bottom": 173.08335876464844,
+      "left": 128.3188934326172
+    },
+    "cls": 0.15575908691473875,
+    "resources": [
+      {
+        "url": "https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400..800;1,400..800&family=Ubuntu+Sans:ital,wght@0,100..800;1,100..800&family=Arimo:ital,wght@0,400..700;1,400..700&display=swap",
+        "size": 1562,
+        "type": "link"
+      },
+      {
+        "url": "https://fonts.googleapis.com/css2?family=Comfortaa:wght@500..700&family=Exo+2:wght@500..800&family=IBM+Plex+Mono:wght@500;700&family=Playfair+Display:wght@600..800&family=Press+Start+2P&family=Oswald:wght@500..700&display=swap",
+        "size": 1506,
+        "type": "link"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css",
+        "size": 0,
+        "type": "link"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css",
+        "size": 0,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/site.css",
+        "size": 5025,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/schedule.css",
+        "size": 3428,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/homework.css",
+        "size": 1571,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/diagrams.css",
+        "size": 1741,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/memes.css",
+        "size": 1157,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/deadlines.css",
+        "size": 1804,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/browse.css",
+        "size": 734,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/lectures.css",
+        "size": 3597,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/links.css",
+        "size": 1805,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/shell.css",
+        "size": 3224,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/quiz.css",
+        "size": 3002,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/transitions.css",
+        "size": 968,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/backdrop.css",
+        "size": 1690,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/glass.css",
+        "size": 2874,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/appearance.css",
+        "size": 1638,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/settings.css",
+        "size": 3566,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/slots.css",
+        "size": 7209,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/mahjong.css",
+        "size": 3408,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/casino.css",
+        "size": 6300,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/palettes-special.css",
+        "size": 3518,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/casino-themes.css",
+        "size": 5289,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/prefs.css",
+        "size": 876,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/reading.css",
+        "size": 2286,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/prefs.js",
+        "size": 2961,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/student-tools.css",
+        "size": 3227,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/switch/site-switch.js",
+        "size": 6048,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/logo-t.png",
+        "size": 112283,
+        "type": "img"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/github.png",
+        "size": 3345,
+        "type": "img"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/logo.png",
+        "size": 640056,
+        "type": "img"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-tools.js",
+        "size": 12351,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-data.js",
+        "size": 2602,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule-ui.js",
+        "size": 5718,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-core.js",
+        "size": 3267,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule.js",
+        "size": 2609,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/github.js",
+        "size": 2168,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule-editor.js",
+        "size": 7799,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/homework.js",
+        "size": 7478,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/index.js",
+        "size": 22765,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/array-player.js",
+        "size": 9377,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/greetings.js",
+        "size": 2455,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/editor.js",
+        "size": 12858,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/memes.js",
+        "size": 4164,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/links.js",
+        "size": 3122,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/quiz.js",
+        "size": 8738,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/lectures.js",
+        "size": 9664,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/icons.js",
+        "size": 3919,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/offline.js",
+        "size": 5034,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/backdrop.js",
+        "size": 1863,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/rewards.js",
+        "size": 4820,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino.js",
+        "size": 2979,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots.js",
+        "size": 14488,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-collection.js",
+        "size": 6675,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-themes.js",
+        "size": 7633,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/blackjack.js",
+        "size": 7257,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/roulette.js",
+        "size": 8963,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong.js",
+        "size": 6311,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-math.js",
+        "size": 14528,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/settings.js",
+        "size": 2956,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-reader.js",
+        "size": 5741,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-text.js",
+        "size": 2292,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/homework-text.js",
+        "size": 1035,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/expression.js",
+        "size": 1651,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/array-code.js",
+        "size": 11909,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/blackjack-math.js",
+        "size": 5645,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-common.js",
+        "size": 7450,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-art.js",
+        "size": 8730,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/roulette-math.js",
+        "size": 5612,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-audio.js",
+        "size": 4508,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong-state.js",
+        "size": 1348,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong-math.js",
+        "size": 1787,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/appearance.js",
+        "size": 2136,
+        "type": "script"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits?sha=master&path=%D0%9A%D0%BE%D0%BD%D1%81%D0%BF%D0%B5%D0%BA%D1%82%D1%8B&per_page=10",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/%D0%94%D0%B5%D0%B4%D0%BB%D0%B0%D0%B9%D0%BD%D1%8B/deadlines.json",
+        "size": 787,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/homework.json",
+        "size": 773,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/schedule.json",
+        "size": 1685,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/257a6df4472a70acfdbb2d2e89585e36f3ba11a6",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/92fffc0fdbdd5e2eceaabb432b3e2e1bcca67468",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/f4be7552dd53fb52b1cea7ce3e40226c31aee241",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/b1c966d9d2dcade66ee7a0730c07cfb06c4e4f7b",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/145423d1fe02ad087a6ed9c84a7973726e313f03",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/display-names.json",
+        "size": 3678,
+        "type": "fetch"
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "hog": {
+      "x": 112.68061828613281,
+      "y": 159.03021240234375,
+      "width": 255.21690368652344,
+      "height": 21.789337158203125,
+      "top": 159.03021240234375,
+      "right": 367.89752197265625,
+      "bottom": 180.81954956054688,
+      "left": 112.68061828613281
+    },
+    "cls": 0.15547578347578347,
+    "resources": [
+      {
+        "url": "https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400..800;1,400..800&family=Ubuntu+Sans:ital,wght@0,100..800;1,100..800&family=Arimo:ital,wght@0,400..700;1,400..700&display=swap",
+        "size": 1562,
+        "type": "link"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css",
+        "size": 0,
+        "type": "link"
+      },
+      {
+        "url": "https://fonts.googleapis.com/css2?family=Comfortaa:wght@500..700&family=Exo+2:wght@500..800&family=IBM+Plex+Mono:wght@500;700&family=Playfair+Display:wght@600..800&family=Press+Start+2P&family=Oswald:wght@500..700&display=swap",
+        "size": 1506,
+        "type": "link"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css",
+        "size": 0,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/site.css",
+        "size": 5025,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/schedule.css",
+        "size": 3428,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/homework.css",
+        "size": 1571,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/diagrams.css",
+        "size": 1741,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/memes.css",
+        "size": 1157,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/deadlines.css",
+        "size": 1804,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/lectures.css",
+        "size": 3597,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/browse.css",
+        "size": 734,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/links.css",
+        "size": 1805,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/quiz.css",
+        "size": 3002,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/shell.css",
+        "size": 3224,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/settings.css",
+        "size": 3566,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/transitions.css",
+        "size": 968,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/backdrop.css",
+        "size": 1690,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/glass.css",
+        "size": 2874,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/appearance.css",
+        "size": 1638,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/slots.css",
+        "size": 7209,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/casino.css",
+        "size": 6300,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/mahjong.css",
+        "size": 3408,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/casino-themes.css",
+        "size": 5289,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/prefs.css",
+        "size": 876,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/palettes-special.css",
+        "size": 3518,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/reading.css",
+        "size": 2286,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/prefs.js",
+        "size": 2961,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/css/student-tools.css",
+        "size": 3227,
+        "type": "link"
+      },
+      {
+        "url": "http://127.0.0.1:4173/switch/site-switch.js",
+        "size": 6048,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/logo-t.png",
+        "size": 112283,
+        "type": "img"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/github.png",
+        "size": 3345,
+        "type": "img"
+      },
+      {
+        "url": "http://127.0.0.1:4173/img/icons/logo.png",
+        "size": 640056,
+        "type": "img"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+        "size": 0,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-tools.js",
+        "size": 12351,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-core.js",
+        "size": 3267,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-data.js",
+        "size": 2602,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule.js",
+        "size": 2609,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/github.js",
+        "size": 2168,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule-ui.js",
+        "size": 5718,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/schedule-editor.js",
+        "size": 7799,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/homework.js",
+        "size": 7478,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/greetings.js",
+        "size": 2455,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/index.js",
+        "size": 22765,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/array-player.js",
+        "size": 9377,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/editor.js",
+        "size": 12858,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/memes.js",
+        "size": 4164,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/links.js",
+        "size": 3122,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/quiz.js",
+        "size": 8738,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/lectures.js",
+        "size": 9664,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/offline.js",
+        "size": 5034,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/icons.js",
+        "size": 3919,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/backdrop.js",
+        "size": 1863,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/rewards.js",
+        "size": 4820,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots.js",
+        "size": 14488,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino.js",
+        "size": 2979,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-collection.js",
+        "size": 6675,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-themes.js",
+        "size": 7633,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/roulette.js",
+        "size": 8963,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/blackjack.js",
+        "size": 7257,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong.js",
+        "size": 6311,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-math.js",
+        "size": 14528,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/settings.js",
+        "size": 2956,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-reader.js",
+        "size": 5741,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/student-text.js",
+        "size": 2292,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/homework-text.js",
+        "size": 1035,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/expression.js",
+        "size": 1651,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/diagrams/array-code.js",
+        "size": 11909,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-art.js",
+        "size": 8730,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/casino-common.js",
+        "size": 7450,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/slots-audio.js",
+        "size": 4508,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/roulette-math.js",
+        "size": 5612,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/blackjack-math.js",
+        "size": 5645,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong-math.js",
+        "size": 1787,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/mahjong-state.js",
+        "size": 1348,
+        "type": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/js/appearance.js",
+        "size": 2136,
+        "type": "script"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits?sha=master&path=%D0%9A%D0%BE%D0%BD%D1%81%D0%BF%D0%B5%D0%BA%D1%82%D1%8B&per_page=10",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/%D0%94%D0%B5%D0%B4%D0%BB%D0%B0%D0%B9%D0%BD%D1%8B/deadlines.json",
+        "size": 787,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/homework.json",
+        "size": 773,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/schedule.json",
+        "size": 1685,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/257a6df4472a70acfdbb2d2e89585e36f3ba11a6",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/92fffc0fdbdd5e2eceaabb432b3e2e1bcca67468",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/f4be7552dd53fb52b1cea7ce3e40226c31aee241",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/b1c966d9d2dcade66ee7a0730c07cfb06c4e4f7b",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "https://api.github.com/repos/RedstoneLord/itmo-m3102/commits/145423d1fe02ad087a6ed9c84a7973726e313f03",
+        "size": 0,
+        "type": "fetch"
+      },
+      {
+        "url": "http://127.0.0.1:4173/data/display-names.json",
+        "size": 3678,
+        "type": "fetch"
+      }
+    ]
+  }
+]

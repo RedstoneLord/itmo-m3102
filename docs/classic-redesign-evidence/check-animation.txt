@@ -1,0 +1,12 @@
+
+> itmo-m3102@0.1.0 test:e2e
+> playwright test e2e/classic-home.spec.ts --grep ёжик: два цикла --project=phone --workers=1
+
+
+Running 1 test using 1 worker
+
+(node:110720) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [phone] › e2e/classic-home.spec.ts:218:1 › ёжик: два цикла на телефоне и компьютере, пауза и уменьшение движения @phone (21.7s)
+
+  1 passed (22.7s)

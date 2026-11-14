@@ -1,0 +1,78 @@
+{
+  "http://127.0.0.1:4173/": {
+    "runs": [
+      {
+        "scores": {
+          "performance": 0.49,
+          "accessibility": 1,
+          "best-practices": 1,
+          "seo": 0.8
+        },
+        "cls": 0.00288417339871847
+      },
+      {
+        "scores": {
+          "performance": 0.48,
+          "accessibility": 1,
+          "best-practices": 1,
+          "seo": 0.8
+        },
+        "cls": 0.002517148239629486
+      },
+      {
+        "scores": {
+          "performance": 0.47,
+          "accessibility": 1,
+          "best-practices": 1,
+          "seo": 0.8
+        },
+        "cls": 0.002517148239629486
+      }
+    ],
+    "medianScores": {
+      "performance": 0.48,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.8
+    },
+    "medianCLS": 0.002517148239629486
+  },
+  "http://127.0.0.1:4173/app/": {
+    "runs": [
+      {
+        "scores": {
+          "performance": 0.55,
+          "accessibility": 1,
+          "best-practices": 0.96,
+          "seo": 0.82
+        },
+        "cls": 0.05427972670549872
+      },
+      {
+        "scores": {
+          "performance": 0.48,
+          "accessibility": 1,
+          "best-practices": 0.96,
+          "seo": 0.82
+        },
+        "cls": 0.05696818157248646
+      },
+      {
+        "scores": {
+          "performance": 0.5,
+          "accessibility": 1,
+          "best-practices": 0.96,
+          "seo": 0.82
+        },
+        "cls": 0.05689539065690739
+      }
+    ],
+    "medianScores": {
+      "performance": 0.5,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 0.82
+    },
+    "medianCLS": 0.05689539065690739
+  }
+}

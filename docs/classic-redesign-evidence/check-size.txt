@@ -1,0 +1,11 @@
+
+> itmo-m3102@0.1.0 size
+> node scripts/check-size.mjs
+
+✓ первая загрузка, JS: 215 КБ gzip (порог 215)
+✓ первая загрузка, CSS: 24 КБ gzip (порог 25)
+✓ LectureNoteViewPage.tsx: 208 КБ gzip (порог 220)
+✓ DesignSystemPage.tsx: 200 КБ gzip (порог 220)
+✓ ReviewPage.tsx: 189 КБ gzip (порог 220)
+✓ ExamPage.tsx: 189 КБ gzip (порог 220)
+✓ DiagramEditorPage.tsx: 153 КБ gzip (порог 220)

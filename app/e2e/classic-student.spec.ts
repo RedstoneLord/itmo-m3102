@@ -102,11 +102,12 @@ async function setup(page: Page, identity = false) {
   await page.context().route('**/%D0%94%D0%B5%D0%B4%D0%BB%D0%B0%D0%B9%D0%BD%D1%8B/deadlines.json', (route) => route.fulfill({ json: deadlines }));
   await page.addInitScript((login) => {
     localStorage.setItem('m3102-settings-v1', JSON.stringify({ theme: 'dark', reduceMotion: true }));
-    if (login) localStorage.setItem('m3102-student-v1', JSON.stringify({ login: 'RedstoneLord' }));
+    localStorage.setItem('m3102-student-v1', JSON.stringify({ login: login ? 'RedstoneLord' : '' }));
   }, identity);
 }
 test('классика: главная разделяет сроки и долги, выделяет очередь записанного другим студента', async ({ page }) => {
   await setup(page, true);
+  await page.addInitScript(() => localStorage.setItem('m3102-home-layout-v1', JSON.stringify({order:[], visible:['student-queues-panel','deadline-panel']})));
   await page.goto('../');
   await expect(page.locator('#student-my-queues')).toContainText('вы №1');
   await expect(page.locator('#home-deadlines')).toContainText('Остались долги · 1');
@@ -319,19 +320,21 @@ test('классика: личный порядок главной сохран�
   await page.goto('../');
   await page.getByRole('button', { name: 'Настроить главную' }).click();
   await page.locator('[data-block="student-queues-panel"] [data-up]').click();
-  await page.getByRole('button', { name: 'Сохранить порядок' }).click();
+  await page.locator('[data-block="student-queues-panel"] input').check();
+  for(let i=0;i<8;i++) await page.locator('[data-block="student-queues-panel"] [data-up]').click();
+  await page.getByRole('button', { name: 'Сохранить', exact:true }).click();
   await page.reload();
   await expect(page.locator('[data-home-block]').first()).toHaveAttribute('data-home-block', 'student-queues-panel');
 });
 test('классика: сохранённые данные имеют дату успеха при ошибке обновления', async ({ page, context }) => {
   await setup(page);
   await page.goto('../#/homework');
-  await expect(page.locator('#student-freshness')).toContainText('ДЗ: 14.11.2026');
+  await expect(page.locator('#student-freshness')).toContainText('14.11.2026');
   const original = await page.evaluate(() => JSON.parse(localStorage.getItem('m3102-data-freshness-v1') || '{}')['ДЗ'].at);
   await page.clock.fastForward(60_000);
   await context.route('**/data/homework.json', (route) => route.fulfill({ status: 403 }));
   await page.reload();
-  await expect(page.locator('#student-freshness')).toContainText('ДЗ: сохранённые данные');
+  await expect(page.locator('#student-freshness')).toContainText('сохранённые данные');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('m3102-data-freshness-v1') || '{}')['ДЗ'].at)).toBe(original);
   await expect(page.locator('#homework-list .hw-item').first()).toBeVisible();
 });
