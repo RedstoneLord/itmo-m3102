@@ -2,9 +2,17 @@ import { CONTENT, esc, validTree, listing, stamp, read, save } from './student-c
 
 const freshness = new Map(Object.entries({ Расписание: {}, ДЗ: {}, Очереди: {}, ...read('m3102-data-freshness-v1', {}) }));
 const responseInfo = new Map();
+async function contentCache() {
+  try {
+    return 'caches' in globalThis ? await caches.open(CONTENT) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function studentFetch(url, options = {}) {
   const label = String(url).includes('schedule.json') ? 'Расписание' : String(url).includes('homework.json') ? 'ДЗ' : 'Дедлайны';
-  const cache = 'caches' in globalThis ? await caches.open(CONTENT) : null,
+  const cache = await contentCache(),
     key = new URL(url, location.href).href;
   let response;
   try {
@@ -20,15 +28,18 @@ export async function studentFetch(url, options = {}) {
     return response;
   } catch (error) {
     const hit = await cache?.match(key);
-    if (!hit) throw error;
+    if (!hit) {
+      if (label) markFresh(label, freshness.get(label)?.at, true, true);
+      throw error;
+    }
     const headers = new Headers(hit.headers);
     headers.set('X-M3102-Saved', '1');
     markFresh(label, headers.get('X-M3102-At'), true);
     return new Response(hit.body, { headers });
   }
 }
-export function markFresh(key, at, saved) {
-  freshness.set(key, { at: at || freshness.get(key)?.at, saved });
+export function markFresh(key, at, saved, error = false) {
+  freshness.set(key, { at: at || freshness.get(key)?.at, saved, error });
   save('m3102-data-freshness-v1', Object.fromEntries(freshness));
   document.dispatchEvent(new CustomEvent('student:freshness'));
 }
@@ -42,7 +53,7 @@ export function freshnessMarkup() {
 }
 export async function json(url, label = '') {
   const key = new URL(url, location.href).href;
-  const cache = 'caches' in globalThis ? await caches.open(CONTENT) : null;
+  const cache = await contentCache();
   try {
     const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -60,7 +71,10 @@ export async function json(url, label = '') {
     return data;
   } catch (error) {
     const hit = await cache?.match(key);
-    if (!hit) throw error;
+    if (!hit) {
+      if (label) markFresh(label, freshness.get(label)?.at, true, true);
+      throw error;
+    }
     responseInfo.set(key, { at: hit.headers.get('X-M3102-At'), saved: true });
     if (label) markFresh(label, hit.headers.get('X-M3102-At'), true);
     return hit.json();
@@ -139,4 +153,14 @@ export async function queues(students, { matches: matchStudents, resolve } = {})
     });
   }
   return result;
+}
+
+export const freshnessSnapshot = () => Object.fromEntries(freshness);
+export async function refreshSources() {
+  // Только уже использованные источники, иначе гость получит ложную ошибку очередей.
+  const jobs = [];
+  if (freshness.get('ДЗ')?.at) jobs.push(json('./data/homework.json', 'ДЗ'));
+  if (freshness.get('Дедлайны')?.at) jobs.push(json('./Дедлайны/deadlines.json', 'Дедлайны'));
+  const results = await Promise.allSettled(jobs);
+  if (results.some((r) => r.status === 'rejected')) throw new Error('Часть источников недоступна');
 }

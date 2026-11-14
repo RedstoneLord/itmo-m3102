@@ -1,0 +1,1 @@
+Local interface font subsets (Cyrillic and Latin), downloaded 2026-11-14 from Google Fonts. Noto Sans and Arimo use the SIL Open Font License. Ubuntu Sans uses the Ubuntu Font Licence; licenses are adjacent. CSS is in ../home-fonts.css. Original URW Gothic files continue to come from the root fonts/ directory. No font download is required during assembly.

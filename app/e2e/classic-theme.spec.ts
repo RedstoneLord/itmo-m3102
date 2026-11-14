@@ -10,6 +10,7 @@ async function openClassic(page: Page, theme: 'auto' | 'light' | 'dark') {
     return route.abort();
   });
   await page.addInitScript(value => {
+    localStorage.setItem('m3102-student-v1', JSON.stringify({login:''}));
     localStorage.setItem('m3102-settings-v1', JSON.stringify({ theme: value, reduceMotion: true }));
   }, theme);
   await page.goto('../');
@@ -50,7 +51,7 @@ test('светлая классическая тема: контраст во в
     await page.goto('../');
     await expect(page.locator('.home-hero')).toBeVisible();
     await expect(page.locator('.bgfx')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
-    const ratio = await page.locator('.plan-form button').evaluate(button => {
+    const ratio = await page.locator('#student-next .btn-primary').evaluate(button => {
       const style = getComputedStyle(button);
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d')!;

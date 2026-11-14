@@ -1,0 +1,25 @@
+
+> itmo-m3102@0.1.0 test:classic
+> node --test classic/*.test.mjs
+
+✔ four defaults, explicit none, legacy relative order, invalid IDs (1.368912ms)
+✔ missing identity differs from explicit guest; old completion never nags (0.176244ms)
+✔ notes: supported current files, no title-based merging, honest dates (6.858755ms)
+✔ campus date across midnight and readable duration (9.810242ms)
+✔ plain headings keep formulas readable without TeX commands (3.486628ms)
+✔ every indexed lecture heading is free of raw TeX commands after formatting (10.804318ms)
+✔ future, debts and group archive stay separate from personal completion (1.373958ms)
+✔ backup roundtrip includes plan, marks and games and excludes credentials and caches (1.793715ms)
+✔ backup rejects future versions, foreign keys, malformed JSON and wrong plan schema before writing (0.699909ms)
+✔ failed restore rolls back personal data (0.318234ms)
+✔ directory lists direct children and rejects truncated trees (0.55666ms)
+✔ shuffle keeps source array and question membership (0.344799ms)
+✔ full backup preserves setup completion, explicit guest and block visibility; legacy remains valid (0.70428ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 97.81638

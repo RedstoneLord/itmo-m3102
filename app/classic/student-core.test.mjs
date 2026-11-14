@@ -110,3 +110,12 @@ test('shuffle keeps source array and question membership', () => {
   );
   assert.deepEqual(original, [1, 2, 3, 4]);
 });
+test('full backup preserves setup completion, explicit guest and block visibility; legacy remains valid',()=>{
+ const source=memory({'m3102-setup-v1':'{"version":1,"completed":true}','m3102-student-v1':'{"login":""}','m3102-home-layout-v1':'{"version":2,"order":["notes-panel"],"visible":[]}'});
+ const backup=parsePersonal(JSON.stringify(exportPersonal(source)));const target=memory({});restorePersonal(target,backup);
+ assert.equal(target.getItem('m3102-setup-v1'),source.getItem('m3102-setup-v1'));
+ assert.equal(target.getItem('m3102-home-layout-v1'),source.getItem('m3102-home-layout-v1'));
+ assert.throws(()=>parsePersonal(JSON.stringify({...backup,data:{'m3102-setup-v1':'{"completed":"yes"}'}})));
+ assert.throws(()=>parsePersonal(JSON.stringify({...backup,data:{'m3102-home-layout-v1':'{"order":[],"visible":"all"}'}})));
+ assert.doesNotThrow(()=>parsePersonal(JSON.stringify({...backup,data:{'m3102-home-layout-v1':'{"order":["notes-panel"]}'}})));
+});

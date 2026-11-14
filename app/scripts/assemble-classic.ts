@@ -15,6 +15,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync,
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { writeHomeAssets } from './classic-home-assets';
 import { patchClassicIndex, patchClassicModule } from '../src/lib/classicPatch';
 
 const REPO = 'RedstoneLord/itmo-m3102';
@@ -117,8 +118,10 @@ function studentAssets(out: string): void {
     if (name.endsWith('.js') && name !== 'sw.js') copyFileSync(join(APP, 'classic', name), join(out, 'js', name));
   }
   copyFileSync(join(APP, 'classic', 'sw.js'), join(out, 'sw.js'));
-  copyFileSync(join(APP, 'classic', 'student-tools.css'), join(out, 'css', 'student-tools.css'));
-  for (const path of ['js/schedule.js', 'js/schedule-ui.js', 'js/homework.js', 'js/lectures.js', 'js/quiz.js', 'js/prefs.js']) writeFileSync(join(out, path), patchClassicModule(path, readFileSync(join(out, path), 'utf8')));
+  for (const name of readdirSync(join(APP, 'classic')).filter(n => n.endsWith('.css'))) copyFileSync(join(APP, 'classic', name), join(out, 'css', name));
+  copyTree(join(APP, 'classic', 'fonts'), join(out, 'fonts'));
+  writeHomeAssets(ROOT, out, content);
+  for (const path of ['js/schedule.js', 'js/schedule-ui.js', 'js/homework.js', 'js/lectures.js', 'js/quiz.js', 'js/prefs.js', 'js/settings.js']) writeFileSync(join(out, path), patchClassicModule(path, readFileSync(join(out, path), 'utf8')));
 }
 
 function shellManifest(out: string): void {

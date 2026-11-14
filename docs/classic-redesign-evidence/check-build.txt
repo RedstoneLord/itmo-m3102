@@ -1,0 +1,9 @@
+dist/assets/chunk-NGNAAXSQ-DqoPQk1a.js                                                                                                                                629.05 kB │ gzip: 127.32 kB
+dist/assets/elk-IJKZMXRS-Bec_u29d.js                                                                                                                                1,462.93 kB │ gzip: 455.82 kB
+
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.42s

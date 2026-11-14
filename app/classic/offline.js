@@ -19,7 +19,7 @@ const emit = () => {
   }
 };
 async function catalog(fresh = false) {
-  const [tree, manifest] = await Promise.all([loadTree({ fresh }), json('./shell-manifest.json')]);
+  const [tree, manifest] = await Promise.all([loadTree({ fresh }), json('./shell-manifest.json'), json('./data/recent-notes.json', 'Конспекты')]);
   inventory = tree.filter(
     (e) => e.type === 'blob' && (roots.test(e.path) || /^(img\/|data\/|Дедлайны\/)/.test(e.path)) && !e.path.split('/').includes('output'),
   );

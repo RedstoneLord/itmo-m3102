@@ -1,0 +1,6 @@
+
+> itmo-m3102@0.1.0 site
+> tsx scripts/assemble-classic.ts --site
+
+Для ИИ: 154 файлов в app/ai
+Сайт собран в app/site (классический в корне, приложение в /app/) из корня репозитория

@@ -1,0 +1,5 @@
+
+> itmo-m3102@0.1.0 ics
+> tsx scripts/build-ics.ts
+
+dist/m3102.ics: 368 событий (2026-10-15 + 200 дней)

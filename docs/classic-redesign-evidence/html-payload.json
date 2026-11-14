@@ -1,0 +1,11 @@
+{
+  "baseline": {
+    "htmlBodyBytes": 282627,
+    "inlineScriptBytes": 225050
+  },
+  "after": {
+    "htmlBodyBytes": 279595,
+    "inlineScriptBytes": 222109
+  },
+  "method": "UTF-8 bytes of assembled HTML and inline script bodies; baseline reconstructed from unchanged root HTML and HEAD assembly patch."
+}

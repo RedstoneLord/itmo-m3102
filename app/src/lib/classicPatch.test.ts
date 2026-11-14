@@ -80,3 +80,9 @@ it('C++ указатели в ответах не становятся курс�
   expect(inline('**Важно** и *курсив*')).toBe('<strong>Важно</strong> и <em>курсив</em>');
   expect(inline('void F(int* <img>)')).toBe('<code>void F(int* &lt;img&gt;)</code>');
 });
+
+it('обязательные панели главной проверяются при сборке, а не ломаются в браузере', () => {
+  expect(() => patchClassicIndex(classicIndex.replace('class="dash-panel schedule-panel"', 'class="dash-panel changed-upstream"'))).toThrow(
+    /home panel schedule-panel/,
+  );
+});

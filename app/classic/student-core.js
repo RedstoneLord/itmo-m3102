@@ -4,7 +4,11 @@ export const esc = (value) =>
   String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const rawUrl = (path) => `https://raw.githubusercontent.com/RedstoneLord/itmo-m3102/master/${enc(path)}`;
 export const fileHref = (path) => `#/${/\.pdf$/i.test(path) ? 'view' : /\.md$/i.test(path) ? 'note' : 'audio'}/${enc(path)}`;
+const session = new Map();
+export const remember = (key, value) => session.set(key, value);
+export const forget = (key) => session.delete(key);
 export const read = (key, fallback = {}) => {
+  if (session.has(key)) return session.get(key);
   try {
     return JSON.parse(localStorage.getItem(key)) ?? fallback;
   } catch {
@@ -70,6 +74,7 @@ export const PERSONAL_KEYS = [
   'm3102-pending-schedule-v1',
   'm3102-settings-v1',
   'm3102-student-v1',
+  'm3102-setup-v1',
   'm3102-bookmarks-v1',
   'm3102-reading-v1',
   'm3102-audio-v1',
@@ -123,6 +128,16 @@ export function parsePersonal(text) {
         Array.isArray(parsed.done))
     )
       throw new Error('Повреждён учебный план.');
+    if (key === 'm3102-setup-v1' && (parsed.completed !== true || !Number.isInteger(parsed.version)))
+      throw new Error('Повреждена быстрая настройка.');
+    if (key === 'm3102-student-v1' && typeof parsed.login !== 'string') throw new Error('Повреждён профиль.');
+    if (
+      key === 'm3102-home-layout-v1' &&
+      (!Array.isArray(parsed.order) ||
+        !parsed.order.every((id) => typeof id === 'string') ||
+        (parsed.visible !== undefined && (!Array.isArray(parsed.visible) || !parsed.visible.every((id) => typeof id === 'string'))))
+    )
+      throw new Error('Повреждена настройка главной.');
     if (/^m3102-(draft|pending)-homework/.test(key) && !Array.isArray(parsed.items)) throw new Error('Повреждена копия домашних заданий.');
     if (
       /^m3102-(draft|pending)-schedule/.test(key) &&

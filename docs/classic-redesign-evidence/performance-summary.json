@@ -1,0 +1,74 @@
+[
+  {
+    "stage": "baseline",
+    "width": 1440,
+    "theme": "light",
+    "requests": 92,
+    "jsBytes": 273414,
+    "cssBytes": 69937,
+    "cls": 0.5828367659094815
+  },
+  {
+    "stage": "baseline",
+    "width": 1440,
+    "theme": "dark",
+    "requests": 92,
+    "jsBytes": 273414,
+    "cssBytes": 69937,
+    "cls": 0.5802563606583045
+  },
+  {
+    "stage": "baseline",
+    "width": 390,
+    "theme": "light",
+    "requests": 92,
+    "jsBytes": 273414,
+    "cssBytes": 69937,
+    "cls": 0.15575908691473875
+  },
+  {
+    "stage": "baseline",
+    "width": 390,
+    "theme": "dark",
+    "requests": 92,
+    "jsBytes": 273414,
+    "cssBytes": 69937,
+    "cls": 0.15547578347578347
+  },
+  {
+    "stage": "after",
+    "width": 1440,
+    "theme": "light",
+    "requests": 96,
+    "jsBytes": 291584,
+    "cssBytes": 75449,
+    "cls": 0.003785145926769869
+  },
+  {
+    "stage": "after",
+    "width": 1440,
+    "theme": "dark",
+    "requests": 96,
+    "jsBytes": 291584,
+    "cssBytes": 75449,
+    "cls": 0.0026240973662283516
+  },
+  {
+    "stage": "after",
+    "width": 390,
+    "theme": "light",
+    "requests": 96,
+    "jsBytes": 291584,
+    "cssBytes": 75449,
+    "cls": 0.011668526828110162
+  },
+  {
+    "stage": "after",
+    "width": 390,
+    "theme": "dark",
+    "requests": 96,
+    "jsBytes": 291584,
+    "cssBytes": 75449,
+    "cls": 0.0026847028331750556
+  }
+]
