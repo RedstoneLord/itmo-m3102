@@ -1,0 +1,112 @@
+{
+  "fonts": {
+    "Golos Text": {
+      "width": 590,
+      "ascent": 16,
+      "descent": 4
+    },
+    "Arial": {
+      "width": 557.9296875,
+      "ascent": 14,
+      "descent": 3
+    }
+  },
+  "poses": [
+    {
+      "curl": 0,
+      "leg": 0,
+      "top": -16,
+      "bottom": 15
+    },
+    {
+      "curl": 0,
+      "leg": 1,
+      "top": -16,
+      "bottom": 15
+    },
+    {
+      "curl": 0,
+      "leg": 2,
+      "top": -16,
+      "bottom": 15
+    },
+    {
+      "curl": 0,
+      "leg": 3,
+      "top": -16,
+      "bottom": 15
+    },
+    {
+      "curl": 0.2,
+      "leg": 0,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 0.2,
+      "leg": 1,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 0.2,
+      "leg": 2,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 0.2,
+      "leg": 3,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 0.5,
+      "leg": 0,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 0.5,
+      "leg": 1,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 0.5,
+      "leg": 2,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 0.5,
+      "leg": 3,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 1,
+      "leg": 0,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 1,
+      "leg": 1,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 1,
+      "leg": 2,
+      "top": -19,
+      "bottom": 19
+    },
+    {
+      "curl": 1,
+      "leg": 3,
+      "top": -19,
+      "bottom": 19
+    }
+  ]
+}

@@ -1,0 +1,434 @@
+[
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "home",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10297625284059353,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "schedule",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10297625284059353,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "week",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10297625284059353,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "month",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10297625284059353,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "materials",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10297625284059353,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "homework",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10297625284059353,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "deadlines",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10297625284059353,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "reader",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.16926530328783754,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "settings",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.16926530328783754,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "other",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.16926530328783754,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "students",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.16926530328783754,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "bookmarks",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.16926530328783754,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "links",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.16926530328783754,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "memes",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.16926530328783754,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "diagrams",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.16926530328783754,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "name": "casino",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.16926530328783754,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "home",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10453188666228239,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "schedule",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10453188666228239,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "week",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10453188666228239,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "month",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10453188666228239,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "materials",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10453188666228239,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "homework",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10453188666228239,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "deadlines",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.10453188666228239,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "reader",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.17082093710952642,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "settings",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.17082093710952642,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "other",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.17082093710952642,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "students",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.17082093710952642,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "bookmarks",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.17082093710952642,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "links",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.17082093710952642,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "memes",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.17082093710952642,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "diagrams",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.17082093710952642,
+    "resources": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "name": "casino",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.17082093710952642,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "home",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "schedule",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "week",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "month",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "materials",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "homework",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "deadlines",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "reader",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "settings",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "other",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "students",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "bookmarks",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "links",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "memes",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "diagrams",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "name": "casino",
+    "errors": [],
+    "overflow": false,
+    "cls": 0.27858807419964304,
+    "resources": []
+  }
+]

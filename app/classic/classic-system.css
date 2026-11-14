@@ -1,0 +1,1035 @@
+/* Classic++: токены → компоненты → каркас → рецепты страниц.
+   Префикс html:root[data-site-style] намеренно сильнее исходного unlayered CSS.
+   Игровые столы и рисунки не входят в рецепты обычных страниц. */
+html:root[data-site-style='classic'] {
+  color-scheme: light;
+  --bg: #f5f6f8;
+  --card: #fff;
+  --inset: #edf0f4;
+  --text: #202530;
+  --muted: #5d6676;
+  --border: #dce1e9;
+  --control-border: #7c8697;
+  --primary: var(--palette-light, #5746bd);
+  --on-primary: #fff;
+  --link: var(--palette-light, #5141ad);
+  --selected: #ebe8fa;
+  --danger: #ae2941;
+  --warn: #80530a;
+  --ok: #216842;
+  --lecture: #6552ad;
+  --practice: #1d6d76;
+  --lab: #905118;
+  --ff-golos: 'Golos Text', 'Golos Fallback', Arial, sans-serif;
+  --font-ui: var(--ff-golos);
+  --control-radius: calc(10px * var(--rs, 1));
+  --panel-radius: calc(16px * var(--rs, 1));
+  --home-radius: var(--panel-radius);
+  --gl-fill: var(--card);
+  --gl-fill-hover: var(--inset);
+  --gl-border: var(--border);
+  --gl-border-top: var(--border);
+  --gl-sheen: none;
+  --gl-tex: none;
+  --gl-glow: none;
+  --gl-drop: none;
+  --gl-bg-a: var(--bg);
+  --gl-bg-b: var(--bg);
+  --bgfx-base: var(--bg);
+  --light-accent: var(--link);
+  --light-accent2: var(--link);
+  --home-link: var(--link);
+}
+@media (prefers-color-scheme: dark) {
+  html:root[data-site-style='classic']:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #12141a;
+    --card: #1c2029;
+    --inset: #252b36;
+    --text: #edf0f6;
+    --muted: #b0b9c9;
+    --border: #343d4b;
+    --control-border: #7c899d;
+    --primary: var(--palette-dark, #b7abfa);
+    --on-primary: #1a1630;
+    --link: var(--palette-dark, #beb3ff);
+    --selected: #302b47;
+    --danger: #ffabb9;
+    --warn: #edc274;
+    --ok: #8bd4ac;
+    --lecture: #c2b4f6;
+    --practice: #8ed0d9;
+    --lab: #ecc08c;
+  }
+}
+html:root[data-site-style='classic'][data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #12141a;
+  --card: #1c2029;
+  --inset: #252b36;
+  --text: #edf0f6;
+  --muted: #b0b9c9;
+  --border: #343d4b;
+  --control-border: #7c899d;
+  --primary: var(--palette-dark, #b7abfa);
+  --on-primary: #1a1630;
+  --link: var(--palette-dark, #beb3ff);
+  --selected: #302b47;
+  --danger: #ffabb9;
+  --warn: #edc274;
+  --ok: #8bd4ac;
+  --lecture: #c2b4f6;
+  --practice: #8ed0d9;
+  --lab: #ecc08c;
+}
+/* Преднамеренные пары каждой палитры, без последовательного затемнения кнопок. */
+html:root[data-site-style][data-palette='orange'] {
+  --palette-light: #98430a;
+  --palette-dark: #f5bc8a;
+}
+html:root[data-site-style][data-palette='green'] {
+  --palette-light: #216b47;
+  --palette-dark: #93dab3;
+}
+html:root[data-site-style][data-palette='blue'] {
+  --palette-light: #285bb5;
+  --palette-dark: #a6c5ff;
+}
+html:root[data-site-style][data-palette='cyan'] {
+  --palette-light: #216a79;
+  --palette-dark: #97d7e3;
+}
+html:root[data-site-style][data-palette='gold'] {
+  --palette-light: #80600b;
+  --palette-dark: #ebce80;
+}
+html:root[data-site-style][data-palette='neon'] {
+  --palette-light: #963399;
+  --palette-dark: #edb0f0;
+}
+html:root[data-site-style][data-palette='aurora'] {
+  --palette-light: #216c61;
+  --palette-dark: #95d9c9;
+}
+html:root[data-site-style][data-palette='graphite'] {
+  --palette-light: #475366;
+  --palette-dark: #c0ccdc;
+}
+html:root[data-site-style][data-palette='sakura'] {
+  --palette-light: #a13667;
+  --palette-dark: #f2b4d0;
+}
+html:root[data-site-style][data-palette='ruby'] {
+  --palette-light: #b12740;
+  --palette-dark: #f7b1bd;
+}
+html:root[data-site-style][data-palette='tropic'] {
+  --palette-light: #146c65;
+  --palette-dark: #92d8cd;
+}
+html:root[data-site-style][data-font='noto'] {
+  --font-ui: var(--ff-noto);
+}
+html:root[data-site-style][data-font='liberation'] {
+  --font-ui: var(--ff-liberation);
+}
+html:root[data-site-style][data-font='ubuntu'] {
+  --font-ui: var(--ff-ubuntu);
+}
+html:root[data-site-style][data-font='urw'] {
+  --font-ui: var(--ff-urw);
+}
+html:root[data-site-style] body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: normal;
+}
+html:root[data-site-style] [hidden] {
+  display: none !important;
+}
+html:root[data-site-style] :is(.bgfx, .backdrop, .hero-orbit) {
+  display: none;
+}
+html:root[data-site-style] :is(.wrap, header, .bottom-nav, .home-hero, .dash-panel, .card, .hw-item, .dl-card, .link-card, .sched-card) {
+  background-image: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+html:root[data-site-style] :is(h1, h2, h3, .intro h1, .sched-intro h1, .cs-intro h1) {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--text);
+  text-shadow: none;
+  font-family: var(--font-ui);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+html:root[data-site-style] :is(.intro h1, .student-page h1, .sched-intro h1, .cs-intro h1) {
+  font-size: 2rem;
+  font-weight: 650;
+  margin: 0 0 12px;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+html:root[data-site-style] :is(.intro, .sched-intro, .links-intro, .hw-intro) {
+  margin: 28px 0 24px;
+}
+html:root[data-site-style] :is(.sub, .settings-note, .sched-eyebrow, .sched-time small, .desc, small) {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+html:root[data-site-style] .sched-eyebrow {
+  text-transform: none;
+  font-weight: 500;
+}
+html:root[data-site-style] :is(.panel-head, .dash-panel > .panel-head) {
+  border: 0;
+  padding: 0;
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+html:root[data-site-style] :is(.panel-head h2, .student-page h2, .settings-page h2) {
+  font-size: 1.25rem;
+  font-weight: 650;
+  margin: 0;
+  letter-spacing: normal;
+}
+html:root[data-site-style] .panel-head h2::before {
+  display: none;
+}
+html:root[data-site-style] :is(.dash-panel, .card, .hw-item, .dl-card, .link-card, .meme-card) {
+  border: 1px solid var(--border);
+  border-radius: var(--panel-radius);
+  background: var(--card);
+  animation: none;
+}
+html:root[data-site-style] :is(.card::before, .card::after, .dash-panel::before, .dash-panel::after, .btn2::before, .btn2::after) {
+  display: none;
+}
+html:root[data-site-style] :is(.btn2, .plan-form button, .prefs-action, .pdf-btn, .student-icon-button) {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--control-radius);
+  background: var(--inset);
+  color: var(--text);
+  font: 550 1rem/1.3 var(--font-ui);
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+  box-shadow: none;
+  text-shadow: none;
+  transition:
+    background-color 150ms,
+    color 150ms,
+    transform 150ms;
+}
+html:root[data-site-style] :is(.btn2.btn-primary, .plan-form button) {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+html:root[data-site-style] :is(.btn2.btn-quiet, .panel-head > a) {
+  background: transparent;
+  color: var(--link);
+  border-color: transparent;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 550;
+  text-transform: none;
+  letter-spacing: normal;
+}
+html:root[data-site-style] :is(.btn2.btn-danger, [data-off-clear], [data-prefs-action='reset']) {
+  color: var(--danger);
+  background: transparent;
+  border-color: var(--control-border);
+}
+html:root[data-site-style] :is(button, a).btn-icon {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  flex: none;
+}
+html:root[data-site-style] :is(.btn2, .choice-option, .palette-option, .font-option)[aria-pressed='true'],
+html:root[data-site-style] .btn2[aria-checked='true'],
+html:root[data-site-style] :is(.choice-option, .palette-option, .font-option)[aria-checked='true'],
+html:root[data-site-style] .student-actions [aria-current='page'] {
+  background: var(--selected);
+  color: var(--link);
+  border: 1px solid var(--link);
+  box-shadow: none;
+}
+html:root[data-site-style] :is(button, [role='button']):disabled {
+  opacity: 0.65;
+  cursor: default;
+  transform: none;
+}
+html:root[data-site-style] [aria-busy='true'] {
+  cursor: progress;
+}
+html:root[data-site-style] :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--link);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+html:root[data-site-style] :is(input, select, textarea):not([type='checkbox'], [type='radio'], [type='range'], [type='file']) {
+  min-height: 46px;
+  box-sizing: border-box;
+  font: 400 1rem/1.5 var(--font-ui);
+  padding: 10px 12px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--control-border);
+  border-radius: var(--control-radius);
+  max-width: 100%;
+}
+html:root[data-site-style] :is(input[type='checkbox'], input[type='radio']) {
+  accent-color: var(--link);
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+html:root[data-site-style] :is(.form-error, [role='alert'], [aria-invalid='true']) {
+  color: var(--danger);
+}
+html:root[data-site-style] [aria-invalid='true'] {
+  border-color: var(--danger);
+}
+html:root[data-site-style] :is(.app-dialog, .home-dialog) {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--panel-radius);
+  box-shadow: 0 16px 64px #0004;
+}
+html:root[data-site-style] .app-dialog::backdrop {
+  background: #0b102080;
+  backdrop-filter: none;
+}
+html:root[data-site-style] .student-quick-actions {
+  flex-wrap: wrap;
+  container-type: normal;
+}
+html:root[data-site-style] .student-action-label {
+  display: inline;
+}
+html:root[data-site-style] .student-quick-actions > .btn2 {
+  width: auto;
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  white-space: normal;
+}
+@media (hover: hover) {
+  html:root[data-site-style] :is(.btn2, .prefs-action, .choice-option, .font-option, .palette-option):hover {
+    background: var(--inset);
+    color: var(--text);
+    border-color: var(--control-border);
+    transform: none;
+    box-shadow: none;
+    filter: none;
+  }
+  html:root[data-site-style] .btn2.btn-primary:hover {
+    background: var(--primary);
+    color: var(--on-primary);
+    filter: brightness(0.94);
+  }
+  html:root[data-site-style] :is(.card, .sched-card, .hw-item, .link-card, .dl-card):hover {
+    border-color: var(--control-border);
+    transform: none;
+    box-shadow: none;
+  }
+  html:root[data-site-style] a:hover {
+    text-underline-offset: 3px;
+  }
+}
+html:root[data-site-style] button:active {
+  transform: scale(0.98);
+}
+/* Каркас и поиск. */
+html:root[data-site-style] .wrap {
+  max-width: 1280px;
+  padding: 0 24px 24px;
+}
+@media (min-width: 1001px) {
+  html:root[data-site-style].is-reading .wrap {
+    max-width: none;
+    padding-inline: 32px;
+  }
+}
+html:root[data-site-style] header {
+  min-height: 72px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+}
+html:root[data-site-style] .ss-box {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+html:root[data-site-style] header .ss-input {
+  border: 0;
+  background: var(--inset);
+  padding-left: 36px;
+}
+html:root[data-site-style] header .tabs {
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+html:root[data-site-style] :is(.tab, .bn-item) {
+  color: var(--muted);
+  text-shadow: none;
+  background: none;
+  box-shadow: none;
+  font-weight: 550;
+  letter-spacing: normal;
+}
+html:root[data-site-style] .tab {
+  font-size: 0.9375rem;
+  padding: 12px;
+  white-space: nowrap;
+}
+html:root[data-site-style] :is(.tab.active, .bn-item.active) {
+  color: var(--link);
+  background: var(--selected);
+  border-radius: var(--control-radius);
+  box-shadow: none;
+}
+html:root[data-site-style] [data-site-switch] {
+  background: var(--inset) !important;
+  color: var(--text) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html:root[data-site-style] .site-search {
+  position: relative;
+  min-width: 0;
+}
+html:root[data-site-style] .ss-results {
+  top: calc(100% + 8px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  max-height: min(65dvh, 560px);
+  width: max(100%, 320px);
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--control-border);
+  box-shadow: 0 12px 40px #0002;
+}
+html:root[data-site-style] :is(.ss-title, .ss-sub, .ss-group) {
+  text-shadow: none;
+  overflow-wrap: normal;
+}
+html:root[data-site-style] :is(.ss-row, .ss-item)[aria-selected='true'] {
+  background: var(--selected);
+  color: var(--link);
+}
+html:root[data-site-style] .bottom-nav {
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+html:root[data-site-style] .bn-item,
+html:root[data-site-style] .bn-item > span:last-child {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none !important;
+  overflow: visible;
+  text-overflow: clip;
+  font-size: 14px;
+  line-height: 1.2;
+}
+/* Рабочие страницы: один контур на группу, типографика внутри. */
+html:root[data-site-style] :is(.sched-stage, .sched-layer) {
+  background: var(--card);
+  border: 0;
+  box-shadow: none;
+}
+html:root[data-site-style] .sched-entry {
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 16px;
+}
+html:root[data-site-style] .sched-rail {
+  display: none;
+}
+html:root[data-site-style] .sched-card {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--card);
+}
+html:root[data-site-style] .sched-card-main strong {
+  font-size: 1rem;
+  font-weight: 550;
+  line-height: 1.5;
+}
+html:root[data-site-style] .sched-card-main small {
+  white-space: normal;
+  overflow: visible;
+}
+html:root[data-site-style] .sched-time strong {
+  font-size: 1.25rem;
+}
+html:root[data-site-style] .sched-entry.is-past {
+  opacity: 1;
+}
+html:root[data-site-style] .sched-entry.is-past .sched-time {
+  color: var(--muted);
+}
+html:root[data-site-style] .sched-entry.is-current .sched-card {
+  border-color: var(--link);
+  box-shadow: none;
+}
+html:root[data-site-style] .sched-kind {
+  color: var(--link);
+  background: var(--inset);
+  font-weight: 500;
+}
+html:root[data-site-style] .sched-gap {
+  border: 0;
+  margin-left: 92px;
+}
+html:root[data-site-style] .week-indicator {
+  background: var(--selected);
+  box-shadow: none;
+}
+html:root[data-site-style] .week-pill[aria-selected='true'],
+html:root[data-site-style] .week-pill[aria-selected='true'] strong {
+  color: var(--link);
+}
+html:root[data-site-style] .week-pill[aria-selected='true'] {
+  box-shadow: inset 0 -3px var(--link);
+}
+html:root[data-site-style] :is(.sched-live-text, .week-dots) {
+  color: var(--link);
+}
+html:root[data-site-style] .student-calendar .dash-panel {
+  padding: 16px;
+}
+html:root[data-site-style] :is(.hw-item, .dl-card, .link-card) {
+  padding: 20px;
+}
+html:root[data-site-style] :is(.hw-item-title, .dl-title, .link-title) {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 550;
+  text-shadow: none;
+}
+html:root[data-site-style] :is(.hw-due, .dl-badge, .dl-status) {
+  color: var(--text);
+  background: var(--inset);
+  text-shadow: none;
+  font-size: 0.875rem;
+}
+html:root[data-site-style] [data-state='late'] :is(.dl-badge, .dl-status) {
+  color: var(--danger);
+}
+html:root[data-site-style] :is(.hw-item.is-done, .dl-card[data-state='done']) {
+  opacity: 1;
+}
+html:root[data-site-style] .dl-queue-list li {
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+html:root[data-site-style] .student-is-me {
+  color: var(--link);
+  background: var(--selected);
+  border-color: var(--link);
+}
+html:root[data-site-style] :is(.student-page, .student-stack) :is(p, h1, h2, strong) {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+html:root[data-site-style] :is(.mat-switch, #student-work-tabs, [data-schedule-links]) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  background: var(--inset);
+  border: 0;
+  border-radius: var(--control-radius);
+  width: fit-content;
+  max-width: 100%;
+}
+html:root[data-site-style] :is(.mat-switch a, #student-work-tabs a, [data-schedule-links] a) {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  color: var(--muted);
+  border: 1px solid transparent;
+  background: transparent;
+  text-decoration: none;
+  font-weight: 550;
+}
+html:root[data-site-style] :is(.mat-switch a.active, .mat-switch a[aria-current='page']) {
+  color: var(--link);
+  background: var(--card);
+  box-shadow: none;
+  border-color: var(--link);
+}
+html:root[data-site-style] .grid .card {
+  min-height: 76px;
+  padding: 16px;
+}
+html:root[data-site-style] .grid .card .ic {
+  background: var(--inset);
+  color: var(--link);
+  box-shadow: none;
+}
+html:root[data-site-style] :is(.card .name, .card strong) {
+  font-size: 1rem;
+  font-weight: 550;
+  line-height: 1.5;
+  overflow-wrap: normal;
+}
+/* Читалка сохраняет установленную владельцем ширину, код и KaTeX не наследуют UI-шрифт. */
+html:root[data-site-style] #note-body {
+  background: var(--card);
+  color: var(--text);
+  line-height: 1.7;
+}
+html:root[data-site-style] #note-body :is(h1, h2, h3) {
+  line-height: 1.35;
+  margin-top: 1.5em;
+}
+html:root[data-site-style] #note-body :is(pre, .katex-display, table) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+html:root[data-site-style] #note-body pre {
+  padding: 16px;
+  background: var(--inset);
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+}
+html:root[data-site-style] #note-body code {
+  font-family: monospace;
+}
+html:root[data-site-style] #note-body a {
+  color: var(--link);
+}
+/* Снимок PDF всегда светлый, даже если исходный конспект открыт в тёмной теме. */
+html:root[data-site-style] #pdf-print-root pre {
+  background: #f3f4f6 !important;
+  color: #202530 !important;
+}
+html:root[data-site-style] #pdf-print-root code.hljs {
+  background: transparent !important;
+  color: #202530 !important;
+}
+html:root[data-site-style] #pdf-print-root :is(.hljs-comment, .hljs-quote, .hljs-meta) {
+  color: #5d6676 !important;
+}
+html:root[data-site-style] #pdf-print-root :is(.hljs-keyword, .hljs-selector-tag, .hljs-subst) {
+  color: #6d32a2 !important;
+}
+html:root[data-site-style] #pdf-print-root :is(.hljs-number, .hljs-literal, .hljs-variable, .hljs-type, .hljs-attr) {
+  color: #80530a !important;
+}
+html:root[data-site-style] #pdf-print-root :is(.hljs-string, .hljs-doctag, .hljs-regexp, .hljs-link) {
+  color: #216842 !important;
+}
+html:root[data-site-style] #pdf-print-root :is(.hljs-title, .hljs-section, .hljs-selector-id, .hljs-name, .hljs-built_in, .hljs-builtin-name) {
+  color: #285bb5 !important;
+}
+html:root[data-site-style] :is(.diagram-source textarea, .diagram-source-wrap pre, .code-input) {
+  font-family: monospace;
+}
+html:root[data-site-style] #note-body th {
+  background: var(--inset);
+}
+html:root[data-site-style] :is(.student-pdf-tools, .viewbar, .note-toolbar, .student-audio) {
+  background: var(--card);
+  color: var(--text);
+  gap: 8px;
+}
+html:root[data-site-style] .student-answer {
+  min-height: 44px;
+  padding: 12px;
+  border: 1px solid var(--control-border);
+  background: var(--card);
+  border-radius: var(--control-radius);
+}
+html:root[data-site-style] .student-answer:has(input:checked) {
+  border-color: var(--link);
+  background: var(--selected);
+}
+html:root[data-site-style] :is(.diagram-editor, .diagram-source) {
+  background: var(--card);
+  color: var(--text);
+}
+html:root[data-site-style] :is(.cs-intro, .sl-intro) h1 {
+  font-size: 2rem;
+}
+/* Контракты специализированных контролов исходного сайта. */
+html:root[data-site-style] .hw-filters {
+  background: var(--inset);
+  border: 0;
+  padding: 4px;
+  gap: 4px;
+}
+html:root[data-site-style] .hw-filters button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-weight: 550;
+}
+html:root[data-site-style] .hw-filters button[aria-pressed='true'] {
+  background: var(--card);
+  color: var(--link);
+  border-color: var(--link);
+  box-shadow: none;
+}
+html:root[data-site-style] .hw-text {
+  font-size: 1rem;
+  overflow-wrap: normal;
+}
+html:root[data-site-style] .hw-due.overdue {
+  color: var(--danger);
+  background: var(--inset);
+}
+html:root[data-site-style] :is(.hw-origin, .hw-link, .ss-kind) {
+  color: var(--link);
+}
+html:root[data-site-style] :is(.hw-item-top strong, .dl-card h2, .link-name) {
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 550;
+}
+html:root[data-site-style] .mat-switch a.is-active {
+  background: var(--card);
+  color: var(--link);
+  border-color: var(--link);
+  box-shadow: none;
+}
+html:root[data-site-style] .ss-item.is-sel {
+  background: var(--selected);
+  color: var(--link);
+  outline: 1px solid var(--link);
+}
+html:root[data-site-style] .ss-text strong {
+  font-size: 1rem;
+  line-height: 1.45;
+  font-weight: 550;
+}
+html:root[data-site-style] .ss-text :is(strong, small) {
+  overflow-wrap: normal;
+}
+html:root[data-site-style] .ss-box:focus-within {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+html:root[data-site-style] .quiz {
+  --q-ok: var(--ok);
+  --q-bad: var(--danger);
+  --q-warn: var(--warn);
+  box-shadow: none;
+  background: var(--card);
+}
+html:root[data-site-style] .quiz :is(.quiz-kind, .quiz-meta) {
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: normal;
+}
+html:root[data-site-style] .quiz .quiz-opt {
+  min-height: 48px;
+  background: var(--card);
+  border: 1px solid var(--control-border);
+  color: var(--text);
+  box-shadow: none;
+}
+html:root[data-site-style] .quiz .quiz-opt.is-sel {
+  border-color: var(--link);
+  background: var(--selected);
+}
+html:root[data-site-style] .quiz .quiz-opt.is-sel .quiz-mark {
+  background: var(--primary);
+  border-color: var(--link);
+  color: var(--on-primary);
+}
+html:root[data-site-style] .quiz .quiz-opt.is-correct {
+  border-color: var(--ok);
+  background: var(--card);
+}
+html:root[data-site-style] .quiz .quiz-opt.is-wrong {
+  border-color: var(--danger);
+  background: var(--card);
+}
+html:root[data-site-style] .quiz :is(.quiz-opt.is-correct, .quiz-opt.is-wrong) .quiz-mark {
+  color: var(--card);
+}
+html:root[data-site-style] .quiz .quiz-opt.is-dim {
+  opacity: 1;
+}
+html:root[data-site-style] .quiz :is(.quiz-input.is-correct, .quiz-input.is-wrong, .quiz-fb) {
+  background: var(--inset);
+  box-shadow: none;
+}
+html:root[data-site-style] .settings-content .settings-group {
+  border-radius: 0;
+}
+html:root[data-site-style] :is(.palette-swatch, .font-option-tick) {
+  box-shadow: none;
+  text-shadow: none;
+}
+
+/* Настройки: категории вместо многократно вложенных карточек. */
+html:root[data-site-style] .settings-page {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+html:root[data-site-style] .settings-page > .intro {
+  grid-column: 1/-1;
+  margin-bottom: 0;
+}
+html:root[data-site-style] .settings-nav {
+  display: grid;
+  gap: 4px;
+  position: sticky;
+  top: 16px;
+}
+html:root[data-site-style] .settings-nav button {
+  text-align: left;
+  justify-content: flex-start;
+}
+html:root[data-site-style] .settings-nav button[aria-current='page'] {
+  color: var(--link);
+  background: var(--selected);
+  box-shadow: inset 3px 0 var(--link);
+}
+html:root[data-site-style] .settings-content {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--panel-radius);
+  background: var(--card);
+}
+html:root[data-site-style] .settings-content .dash-panel {
+  padding: 0;
+  border: 0;
+  margin: 0 0 24px;
+  background: transparent;
+}
+html:root[data-site-style] .settings-content .settings-group {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+html:root[data-site-style] :is(.choice-options, .font-options, .palette-options) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+html:root[data-site-style] :is(.choice-option, .font-option, .palette-option) {
+  min-height: 44px;
+  padding: 10px 12px;
+  width: auto;
+  flex: 0 1 auto;
+  border: 1px solid var(--control-border);
+  border-radius: var(--control-radius);
+  background: var(--card);
+  color: var(--text);
+  font: 500 0.9375rem/1.4 var(--font-ui);
+  box-shadow: none;
+  transform: none;
+}
+html:root[data-site-style] :is(.choice-note, .font-option-sample, .font-option-meta, .theme-swatch, .radius-swatch) {
+  display: none;
+}
+html:root[data-site-style] .settings-content [role='radio'][aria-checked='true']::after {
+  content: '✓';
+  color: var(--link);
+  margin-left: 8px;
+}
+html:root[data-site-style] .settings-content .font-option {
+  flex-direction: row;
+  align-items: center;
+}
+html:root[data-site-style] .settings-content :is(.font-option-tick, .palette-swatch .ic-svg) {
+  display: none;
+}
+html:root[data-site-style] .font-option-head {
+  gap: 16px;
+}
+html:root[data-site-style] .palette-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin: 0 8px 0 0;
+  border: 1px solid var(--control-border);
+  flex: none;
+}
+html:root[data-site-style] .palette-option {
+  display: inline-flex;
+  align-items: center;
+}
+html:root[data-site-style] .prefs-row {
+  min-height: 52px;
+  padding: 12px 0;
+  gap: 16px;
+}
+html:root[data-site-style] .prefs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+html:root[data-site-style] .student-file-picker details {
+  border: 0;
+  padding: 8px 0;
+}
+html:root[data-site-style] .student-file-picker label {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+html:root[data-site-style] .settings-page > .settings-category-back {
+  display: none;
+}
+html:root[data-site-style] .settings-content {
+  grid-column: 2;
+  grid-row: 2;
+}
+@media (max-width: 1100px) {
+  html:root[data-site-style] header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 0;
+  }
+  html:root[data-site-style] header {
+    margin-inline: 0;
+    width: 100%;
+  }
+  html:root[data-site-style] header .header-actions {
+    display: contents;
+  }
+  html:root[data-site-style] header .brand {
+    margin-right: auto;
+  }
+  html:root[data-site-style] header .site-search {
+    order: 5;
+    flex: 1 0 100%;
+    max-width: none;
+    width: 100%;
+  }
+  html:root[data-site-style] .ss-results {
+    width: 100%;
+  }
+  html:root[data-site-style] .ss-input {
+    width: 100%;
+  }
+}
+@media (max-width: 760px) {
+  html:root[data-site-style] .wrap {
+    padding: 0 16px calc(100px + env(safe-area-inset-bottom));
+  }
+  html:root[data-site-style] header .tabs {
+    display: none;
+  }
+  html:root[data-site-style] .bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    min-height: 64px;
+  }
+  html:root[data-site-style] .bn-item {
+    padding: 6px 0;
+    min-width: 0;
+    gap: 4px;
+  }
+  html:root[data-site-style] :is(.intro h1, .student-page h1, .sched-intro h1) {
+    font-size: 1.75rem;
+  }
+  html:root[data-site-style] .panel-head h2 {
+    font-size: 1.125rem;
+  }
+  html:root[data-site-style] .sched-entry {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 8px;
+  }
+  html:root[data-site-style] .sched-layer {
+    padding: 8px;
+  }
+  html:root[data-site-style] .sched-card summary {
+    padding: 12px;
+  }
+  html:root[data-site-style] .sched-gap {
+    margin-left: 64px;
+  }
+  html:root[data-site-style] .sched-time strong {
+    font-size: 1rem;
+  }
+  html:root[data-site-style] .sched-kind {
+    display: inline;
+    white-space: normal;
+  }
+  html:root[data-site-style] .settings-page {
+    display: block;
+  }
+  html:root[data-site-style] .settings-nav {
+    position: static;
+    margin: 16px 0;
+  }
+  html:root[data-site-style] .settings-nav button {
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+  }
+  html:root[data-site-style] .settings-content {
+    padding: 16px;
+  }
+  html:root[data-site-style] .settings-page:not([data-category-open]) .settings-content {
+    display: none;
+  }
+  html:root[data-site-style] .settings-page[data-category-open] .settings-nav {
+    display: none;
+  }
+  html:root[data-site-style] .settings-page > .settings-category-back {
+    display: inline-flex;
+    margin: 16px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root[data-site-style] *,
+  html:root[data-site-style] *::before,
+  html:root[data-site-style] *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+html:root[data-site-style][data-reduce-motion] *,
+html:root[data-site-style][data-reduce-motion] *::before,
+html:root[data-site-style][data-reduce-motion] *::after {
+  animation: none !important;
+  transition: none !important;
+}

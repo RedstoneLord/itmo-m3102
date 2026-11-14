@@ -2,6 +2,7 @@ import { esc, read, save, remember, forget } from './student-core.js';
 import { HOME_BLOCKS, SETUP_KEY, LAYOUT_KEY, IDENTITY_KEY, normalizeLayout, migrateSetup } from './home-preferences.js';
 import { applyTheme } from './appearance.js';
 import { applyPalette } from './settings.js';
+import { organizeSettings } from './classic-settings.js';
 
 let students = [],
   completed = false,
@@ -50,7 +51,7 @@ function rows(layout) {
   return layout.order
     .map((id) => {
       const b = HOME_BLOCKS.find((b) => b.id === id);
-      return `<div class="home-option" data-block="${id}"><label><input type="checkbox" ${layout.visible.includes(id) ? 'checked' : ''}><span><strong>${b.title}</strong><small>${b.description}</small></span></label><button type="button" class="btn2" data-up aria-label="Поднять: ${b.title}">↑</button><button type="button" class="btn2" data-down aria-label="Опустить: ${b.title}">↓</button></div>`;
+      return `<div class="home-option" data-block="${id}" data-optional="${!b.enabled && !layout.visible.includes(id)}"><label><input type="checkbox" ${layout.visible.includes(id) ? 'checked' : ''}><span><strong>${b.title}</strong><small>${b.description}</small></span></label><button type="button" class="btn2" data-up aria-label="Поднять: ${b.title}">↑</button><button type="button" class="btn2" data-down aria-label="Опустить: ${b.title}">↓</button></div>`;
     })
     .join('');
 }
@@ -70,28 +71,43 @@ export function openHomeSetup(kind = 'setup') {
   dialog.setAttribute('aria-labelledby', 'home-dialog-title');
   dialog.innerHTML = `<div class="dialog-head"><h2 id="home-dialog-title">${identityOnly ? 'Настройте сайт под себя' : 'Настроить главную'}</h2>${!initial ? '<button class="btn2" data-cancel aria-label="Закрыть">×</button>' : ''}</div><div class="home-dialog-body">${
     identityOnly
-      ? `<section><h3>Кто вы?</h3><p>Выбор нужен для ваших мест в очередях. Это локальная настройка, а не вход в аккаунт.</p><button type="button" class="btn2 guest-choice" data-guest aria-pressed="${login === ''}">Я гость</button><label class="home-field">Найти студента<input type="search" data-student-search placeholder="Имя или GitHub" autocomplete="off"></label><div class="student-choices" role="group" aria-label="Студенты"></div><p data-identity-status role="status"></p></section><section><h3>Оформление</h3><label class="home-field">Тема<select data-setup-theme><option value="auto">Как на устройстве</option><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label><label class="home-field">Палитра<select data-setup-palette>${palettes
+      ? `<section><h3>Кто вы?</h3><p>Выбор нужен для мест в очередях. Это настройка этого браузера.</p><div class="home-identity-row"><button type="button" class="btn2 guest-choice" data-guest aria-pressed="${login === ''}">Я гость</button><span data-identity-status role="status"></span></div><label class="home-field">Найти студента<input type="search" data-student-search placeholder="Имя или GitHub" autocomplete="off" aria-controls="setup-students" aria-expanded="false"></label><div id="setup-students" class="student-choices" role="radiogroup" aria-label="Студенты" hidden></div></section><section><h3>Оформление</h3><div class="home-theme-segments" role="radiogroup" aria-label="Тема оформления">${[
+          ['auto', 'Система'],
+          ['light', 'Светлая'],
+          ['dark', 'Тёмная'],
+        ]
+          .map(
+            ([id, name]) =>
+              `<button type="button" class="btn2" role="radio" data-setup-theme="${id}" aria-checked="${id === (prefs.theme || 'auto')}">${name}</button>`,
+          )
+          .join('')}</div><div class="home-palette-options" role="radiogroup" aria-label="Палитра">${palettes
           .filter(
             ([id]) => ['purple', 'orange', 'green', 'blue', 'cyan', original.palette].includes(id) || read('m3102-slots-v1').album?.['pal:' + id],
           )
-          .map(([id, name]) => `<option value="${id}">${name}</option>`)
+          .map(
+            ([id, name]) =>
+              `<button type="button" class="btn2" role="radio" data-setup-palette="${id}" aria-checked="${id === (prefs.palette || 'purple')}"><span class="home-swatch" style="--swatch:var(--pal-${id}-a)" aria-hidden="true"></span>${name}</button>`,
+          )
           .join(
             '',
-          )}</select></label><label class="toggle-label"><input type="checkbox" data-setup-motion ${prefs.reduceMotion ? 'checked' : ''}> Меньше анимаций</label></section>`
+          )}</div><label class="toggle-label"><input type="checkbox" data-setup-motion ${prefs.reduceMotion ? 'checked' : ''}> Меньше анимаций</label></section>`
       : ''
-  }<section><h3>Что показывать на главной</h3><p>Скрытие блока сохраняет все ваши задачи и отметки.</p><div data-order>${rows(homeLayout())}</div><button type="button" class="btn2" data-defaults>Вернуть стандартный набор</button></section></div><div class="home-dialog-footer"><p data-setup-hint>${initial ? 'Выберите студента или нажмите «Я гость», чтобы продолжить.' : 'Изменения применятся после сохранения.'}</p><div class="student-actions">${!initial ? '<button type="button" class="btn2" data-cancel>Отмена</button>' : ''}<button type="button" class="btn2 btn-primary" data-home-save ${initial && login === null ? 'disabled' : ''}>${identityOnly ? 'Готово' : 'Сохранить'}</button></div></div>`;
+  }<section><h3>Что показывать на главной</h3><p>Скрытие блока сохраняет все ваши задачи и отметки.</p><div data-order>${rows(homeLayout())}</div><div class="student-actions"><button type="button" class="btn2 btn-quiet" data-optional-toggle aria-expanded="false">Добавить блоки</button><button type="button" class="btn2 btn-quiet" data-reorder-toggle aria-pressed="false">Изменить порядок</button><button type="button" class="btn2 btn-quiet" data-defaults aria-label="Вернуть стандартный набор">Стандартный набор</button></div></section></div><div class="home-dialog-footer"><p data-setup-hint>${initial ? 'Выберите студента или нажмите «Я гость», чтобы продолжить.' : 'Изменения применятся после сохранения.'}</p><div class="student-actions">${!initial ? '<button type="button" class="btn2" data-cancel>Отмена</button>' : ''}<button type="button" class="btn2 btn-primary" data-home-save ${initial && login === null ? 'disabled' : ''}>${identityOnly ? 'Готово' : 'Сохранить'}</button></div></div>`;
   const updateIdentity = () => {
     const q = (dialog.querySelector('[data-student-search]')?.value || '').toLowerCase().replaceAll('ё', 'е');
     const list = students.filter((s) => (s.name + ' ' + s.nick).toLowerCase().replaceAll('ё', 'е').includes(q));
     const box = dialog.querySelector('.student-choices');
-    if (box)
+    if (box) {
+      box.hidden = !q;
+      dialog.querySelector('[data-student-search]').setAttribute('aria-expanded', String(Boolean(q)));
       box.innerHTML =
         list
           .map(
             (s) =>
-              `<button type="button" class="btn2" data-login="${esc(s.nick)}" aria-pressed="${login === s.nick}">${esc(s.name)}${login === s.nick ? ' ✓' : ''}</button>`,
+              `<button type="button" class="btn2" role="radio" data-login="${esc(s.nick)}" aria-checked="${login === s.nick}">${esc(s.name)}${login === s.nick ? ' ✓' : ''}</button>`,
           )
           .join('') || '<p>Никого не нашли. Попробуйте другую часть имени.</p>';
+    }
     if (identityOnly) {
       dialog.querySelector('[data-guest]').setAttribute('aria-pressed', String(login === ''));
       dialog.querySelector('[data-identity-status]').textContent =
@@ -99,17 +115,11 @@ export function openHomeSetup(kind = 'setup') {
     }
     dialog.querySelector('[data-home-save]').disabled = initial && login === null;
   };
-  if (identityOnly) {
-    dialog.querySelector('[data-setup-theme]').value = prefs.theme || 'auto';
-    dialog.querySelector('[data-setup-palette]').value = prefs.palette || 'purple';
-  }
   dialog.addEventListener('input', (e) => {
     if (e.target.matches('[data-student-search]')) updateIdentity();
   });
   dialog.addEventListener('change', () => {
     if (!identityOnly) return;
-    prefs.theme = dialog.querySelector('[data-setup-theme]').value;
-    prefs.palette = dialog.querySelector('[data-setup-palette]').value;
     prefs.reduceMotion = dialog.querySelector('[data-setup-motion]').checked;
     appearance(prefs);
   });
@@ -118,15 +128,45 @@ export function openHomeSetup(kind = 'setup') {
     const person = e.target.closest('[data-login]');
     if (person) {
       login = person.dataset.login;
+      dialog.querySelector('[data-student-search]').value = '';
       updateIdentity();
+      const status = dialog.querySelector('[data-identity-status]');
+      status.tabIndex = -1;
+      status.focus();
     }
     if (e.target.closest('[data-guest]')) {
       login = '';
       updateIdentity();
     }
+    for (const [selector, key] of [
+      ['[data-setup-theme]', 'theme'],
+      ['[data-setup-palette]', 'palette'],
+    ]) {
+      const choice = e.target.closest(selector);
+      if (choice) {
+        prefs[key] = key === 'theme' ? choice.dataset.setupTheme : choice.dataset.setupPalette;
+        dialog.querySelectorAll(selector).forEach((n) => n.setAttribute('aria-checked', String(n === choice)));
+        appearance(prefs);
+      }
+    }
+    const order = dialog.querySelector('[data-order]');
+    if (e.target.closest('[data-optional-toggle]')) {
+      const shown = order.toggleAttribute('data-show-optional');
+      e.target.closest('button').setAttribute('aria-expanded', String(shown));
+    }
+    if (e.target.closest('[data-reorder-toggle]')) {
+      const shown = order.toggleAttribute('data-reordering');
+      e.target.closest('button').setAttribute('aria-pressed', String(shown));
+    }
     const row = e.target.closest('[data-block]');
-    if (row && e.target.closest('[data-up]') && row.previousElementSibling) row.previousElementSibling.before(row);
-    if (row && e.target.closest('[data-down]') && row.nextElementSibling) row.nextElementSibling.after(row);
+    if (row && e.target.closest('[data-up]') && row.previousElementSibling) {
+      row.previousElementSibling.before(row);
+      e.target.closest('button').focus();
+    }
+    if (row && e.target.closest('[data-down]') && row.nextElementSibling) {
+      row.nextElementSibling.after(row);
+      e.target.closest('button').focus();
+    }
     if (e.target.closest('[data-defaults]')) dialog.querySelector('[data-order]').innerHTML = rows(normalizeLayout(null));
     if (e.target.closest('[data-home-save]')) {
       if (initial && login === null) return;
@@ -149,6 +189,17 @@ export function openHomeSetup(kind = 'setup') {
       dialog.close();
       if (storageWarning) showStorageWarning();
     }
+  });
+  dialog.addEventListener('keydown', (e) => {
+    const radio = e.target.closest('[role="radio"]');
+    if (!radio || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return;
+    const options = [...radio.closest('[role="radiogroup"]').querySelectorAll('[role="radio"]')];
+    const i = options.indexOf(radio),
+      delta = ['ArrowLeft', 'ArrowUp'].includes(e.key) ? -1 : 1;
+    const next = options[e.key === 'Home' ? 0 : e.key === 'End' ? options.length - 1 : (i + delta + options.length) % options.length];
+    e.preventDefault();
+    next.focus();
+    next.click();
   });
   dialog.addEventListener('cancel', (e) => {
     if (initial) e.preventDefault();
@@ -179,7 +230,10 @@ export function mountHomeSettings() {
   const reading = page.querySelector('.prefs-extra'),
     data = page.querySelector('#student-settings');
   if (reading && data && reading.nextElementSibling !== data) data.before(reading);
-  if (page.querySelector('#home-settings-profile')) return;
+  if (page.querySelector('#home-settings-profile')) {
+    organizeSettings(page);
+    return;
+  }
   const profile = document.createElement('section');
   profile.className = 'dash-panel';
   profile.id = 'home-settings-profile';
@@ -195,6 +249,7 @@ export function mountHomeSettings() {
   profile.querySelector('[data-profile-name]').textContent = read(IDENTITY_KEY).login
     ? `Вы: ${students.find((s) => s.nick === read(IDENTITY_KEY).login)?.name || read(IDENTITY_KEY).login}`
     : 'Вы: гость';
+  organizeSettings(page);
 }
 export function installHomeSetup(list) {
   students = list;

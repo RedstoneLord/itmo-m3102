@@ -1,0 +1,25 @@
+{
+  "previous": "353f30b82e274dfbac76368538153be938519e57",
+  "release": "47e815e0c7d32f9263d8",
+  "reproducedErrors": [
+    "The requested module './student-core.js' does not provide an export named 'forget'"
+  ],
+  "outcomes": [
+    {
+      "failure": "http",
+      "criticalRequests": 1,
+      "activePrevious": true,
+      "incompleteCacheRemoved": true
+    },
+    {
+      "failure": "interrupt",
+      "criticalRequests": 6,
+      "activePrevious": true,
+      "incompleteCacheRemoved": true
+    }
+  ],
+  "oldOpenTab": true,
+  "offlineReopen": true,
+  "personalDataPreserved": true,
+  "errors": []
+}

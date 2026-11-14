@@ -1,3 +1,4 @@
+import { subjectColorId } from './timetable-model.js';
 import { esc, read, nice, fileHref, CONTENT, validTree } from './student-core.js';
 import { json, loadTree, freshnessSnapshot, refreshSources } from './student-data.js';
 import { ensureSchedule, getSchedule, reloadSchedule } from './schedule-ui.js';
@@ -7,7 +8,7 @@ import { homeLayout, mountHomeSettings } from './home-setup.js';
 import { plainMathText } from './student-text.js';
 import { ic } from './icons.js';
 export const emptyState = (title, text, href = '', label = '') =>
-  `<div class="home-empty"><span aria-hidden="true">${ic('notes', 20)}</span><div><strong>${esc(title)}</strong><p>${esc(text)}</p>${href ? `<a href="${esc(href)}">${esc(label)}</a>` : ''}</div></div>`;
+  `<div class="home-empty"><span aria-hidden="true">${ic(/занят|пар|расписан/i.test(title) ? 'calendar' : /очеред|работ|задан/i.test(title) ? 'tasks' : /план/i.test(title) ? 'pencil' : 'notes', 20)}</span><div><strong>${esc(title)}</strong><p>${esc(text)}</p>${href ? `<a href="${esc(href)}">${esc(label)}</a>` : ''}</div></div>`;
 const setMarkup = (node, html) => {
   if (node && node.innerHTML !== html) node.innerHTML = html;
 };
@@ -55,32 +56,54 @@ export function updateHomeTime() {
   }
   const stale = freshnessSnapshot()['Расписание'];
   const warning = stale?.saved || stale?.error ? '<p class="home-cache">Сохранённое расписание. Проверить свежесть можно внизу страницы.</p>' : '';
-  if (!found)
+  if (!found) {
+    delete node.dataset.lesson;
     setMarkup(
       node,
       emptyState('В ближайшие 30 дней занятий нет', 'Выберите другой день в расписании.', '#/schedule', 'Открыть расписание') + warning,
     );
-  else {
+  } else {
     const { lesson, date, start, end, offset } = found,
       ongoing = start <= realNow,
       minutes = Math.max(1, Math.ceil(((ongoing ? end : start) - realNow) / 60000));
     const subject = read('m3102-home-subjects', []).find((s) => s.replaceAll('_', ' ').toLowerCase() === lesson.subject.toLowerCase());
-    const html = `<div class="lesson-summary"><div class="lesson-clock"><span class="lesson-status">${ongoing ? 'Идёт сейчас' : 'Следующая пара'}</span><strong>${esc(lesson.start)}</strong><span class="lesson-interval">${esc(lesson.start)}–${esc(lesson.end)}</span></div><div class="lesson-description"><p class="lesson-day">${offset === 0 ? 'Сегодня' : offset === 1 ? 'Завтра' : esc(date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }))} <span class="lesson-chip">${ongoing ? 'Осталось' : 'Через'} ${duration(minutes)}</span></p><h3>${esc(lesson.subject)}</h3><p>${kind(lesson)} · <strong class="lesson-room">${lesson.room ? 'Ауд. ' + esc(lesson.room) : 'Аудитория уточняется'}</strong></p><p class="lesson-secondary">${esc([lesson.teacher, lesson.location || schedule.defaultLocation].filter(Boolean).join(' · '))}</p><div class="student-actions"><a class="btn2 btn-primary" href="#/schedule/${dateKey(date)}">Открыть день</a>${subject ? `<a class="btn2" href="#/subject/${encodeURIComponent(subject)}">Материалы по предмету</a>` : ''}</div></div></div>${warning}`;
+    const html = `<div class="lesson-summary" data-ongoing="${ongoing}"><div class="lesson-clock"><span class="lesson-status">${ongoing ? 'Идёт сейчас' : 'Следующая пара'}</span><strong data-lesson-start>${esc(lesson.start)}</strong><span class="lesson-interval">До ${esc(lesson.end)}</span></div><div class="lesson-description"><p class="lesson-day">${offset === 0 ? 'Сегодня' : offset === 1 ? 'Завтра' : esc(date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }))} <span class="lesson-chip">${!ongoing && offset > 1 ? `Через ${offset} ${offset < 5 ? 'дня' : 'дней'}` : `${ongoing ? 'Осталось' : 'Через'} ${duration(minutes)}`}</span></p><h3 data-subject-color="${subjectColorId(lesson.subject)}">${esc(lesson.subject)}</h3><p data-lesson-kind>${kind(lesson)} · <strong class="lesson-room">${lesson.room ? 'Ауд. ' + esc(lesson.room) : 'Аудитория уточняется'}</strong></p><p class="lesson-secondary">${esc([lesson.teacher, lesson.location || schedule.defaultLocation].filter(Boolean).join(' · '))}</p><div class="student-actions"><a class="btn2 btn-primary" href="#/schedule/${dateKey(date)}">Открыть день</a>${subject ? `<a class="btn2" href="#/subject/${encodeURIComponent(subject)}">Материалы по предмету</a>` : ''}</div></div></div>${warning}`;
     // У существующих действий не теряем фокус при ежеминутном изменении времени.
-    if (node.dataset.lesson === lesson.id + dateKey(date) + (subject || '')) {
+    if (node.dataset.lesson === lesson.id + dateKey(date) && node.querySelector('.lesson-summary')) {
       const next = document.createElement('div');
       next.innerHTML = html;
-      for (const sel of ['.lesson-status', '.lesson-day', '.lesson-secondary']) {
+      node.querySelector('.lesson-summary').dataset.ongoing = String(ongoing);
+      for (const sel of [
+        '.lesson-status',
+        '[data-lesson-start]',
+        '.lesson-interval',
+        '.lesson-day',
+        'h3',
+        '[data-lesson-kind]',
+        '.lesson-secondary',
+      ]) {
         const a = node.querySelector(sel),
           b = next.querySelector(sel);
-        if (a && b && a.innerHTML !== b.innerHTML) a.innerHTML = b.innerHTML;
+        if (a && b && a.innerHTML !== b.innerHTML) {
+          a.innerHTML = b.innerHTML;
+          if (b.hasAttribute('data-subject-color')) a.dataset.subjectColor = b.dataset.subjectColor;
+        }
       }
+      // Действия с прежним href сохраняют сам DOM-узел, следовательно и фокус.
+      const actions = node.querySelector('.student-actions');
+      const wanted = [...next.querySelectorAll('.student-actions a')];
+      for (const [index, link] of wanted.entries()) {
+        const old = [...actions.querySelectorAll('a')].find((a) => a.getAttribute('href') === link.getAttribute('href'));
+        if (!old || actions.children[index] !== old) actions.insertBefore(old || link, actions.children[index] || null);
+      }
+      for (const link of [...actions.querySelectorAll('a')])
+        if (!wanted.some((a) => a.getAttribute('href') === link.getAttribute('href'))) link.remove();
       const old = node.querySelector('.home-cache');
       if (warning && !old) node.insertAdjacentHTML('beforeend', warning);
       if (!warning) old?.remove();
     } else {
       setMarkup(node, html);
-      node.dataset.lesson = lesson.id + dateKey(date) + (subject || '');
+      node.dataset.lesson = lesson.id + dateKey(date);
     }
   }
   const today = document.getElementById('home-today');
@@ -92,7 +115,7 @@ export function updateHomeTime() {
           .map((l) => {
             const end = instant(now, l.end),
               start = instant(now, l.start);
-            return `<div class="home-today-row${l.break ? ' is-break' : ''}"><span class="lesson-interval">${esc(l.start)}–${esc(l.end)}</span><div><strong>${esc(l.subject)}</strong><p>${l.break ? 'Перерыв' : `${kind(l)} · Ауд. ${esc(l.room || 'уточняется')}`}</p>${!l.break ? `<small>${end <= realNow ? 'Завершено' : start <= realNow ? 'Идёт сейчас' : 'Предстоит'}</small>` : ''}</div></div>`;
+            return `<div data-subject-color="${subjectColorId(l.subject)}" class="home-today-row${l.break ? ' is-break' : ''}"><span class="lesson-interval">${esc(l.start)}–${esc(l.end)}</span><div><strong>${esc(l.break ? 'Перерыв' : l.subject)}</strong>${l.break ? '' : `<p>${kind(l)} · Ауд. ${esc(l.room || 'уточняется')}</p><small>${end <= realNow ? 'Завершено' : start <= realNow ? 'Идёт сейчас' : 'Предстоит'}</small>`}</div></div>`;
           })
           .join('')}</div>${warning}`
       : emptyState(
@@ -133,10 +156,12 @@ export function mountHome() {
     'afterbegin',
     '<section class="dash-panel student-next-panel"><div id="student-next" role="region" aria-label="Следующая пара"><p class="home-loading" role="status">Загружаем расписание…</p></div></section><section class="dash-panel student-queues-panel"><div class="panel-head"><h2>Мои очереди</h2><a href="#/deadlines">Дедлайны</a></div><div id="student-my-queues"></div></section>',
   );
-  grid.insertAdjacentHTML(
-    'beforebegin',
-    '<nav id="student-home-tools" class="student-actions student-quick-actions" aria-label="Настройка главной"><button class="btn2" data-home-config>Настроить главную</button></nav>',
-  );
+  document
+    .querySelector('.home-hero .hero-inner > div')
+    .insertAdjacentHTML(
+      'beforeend',
+      '<nav id="student-home-tools" class="student-actions student-quick-actions" aria-label="Настройка главной"><button class="btn2" data-home-config>Настроить главную</button></nav>',
+    );
   for (const b of HOME_BLOCKS) {
     const node = grid.querySelector('.' + b.id);
     if (node) node.dataset.homeBlock = b.id;
@@ -203,7 +228,7 @@ async function recentNotes() {
         ? `<div class="home-note-list">${list
             .map((n) => {
               const parts = n.path.split('/');
-              return `<a class="home-note" href="${esc(fileHref(n.path))}"><span class="home-format">${/\.pdf$/i.test(n.path) ? 'PDF' : 'MD'}</span><span><strong>${esc(plainMathText(nice(n.path)))}</strong><small>${esc(parts[1].replaceAll('_', ' '))} · ${esc(parts.slice(2, -1).join(' / ').replaceAll('_', ' '))}</small>${n.date ? `<small>${n.change === 'added' ? 'Добавлено' : 'Обновлено'} ${new Date(n.date).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow', day: 'numeric', month: 'short', year: 'numeric' })}</small>` : ''}</span>${ic('arrowUpRight', 18)}</a>`;
+              return `<a class="home-note" href="${esc(fileHref(n.path))}"><span class="home-format" data-subject-color="${subjectColorId(n.path.split('/')[1])}">${/\.pdf$/i.test(n.path) ? 'PDF' : 'MD'}</span><span><strong>${esc(plainMathText(nice(n.path)))}</strong><small>${esc(parts[1].replaceAll('_', ' '))} · ${esc(parts.slice(2, -1).join(' / ').replaceAll('_', ' '))}</small>${n.date ? `<small>${n.change === 'added' ? 'Добавлено' : 'Обновлено'} ${new Date(n.date).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow', day: 'numeric', month: 'short', year: 'numeric' })}</small>` : ''}</span>${ic('arrowUpRight', 18)}</a>`;
             })
             .join('')}</div>${cached ? '<p class="home-cache">Сохранённый список конспектов</p>' : ''}`
         : emptyState(

@@ -1,0 +1,13 @@
+{
+  "viewport": "390x844",
+  "dpr": 2,
+  "cpuThrottling": 4,
+  "duration": 5000,
+  "thread": "desktop Chromium phone emulation; no physical-device claim",
+  "milliseconds": {
+    "FunctionCall": 219.93599999999986,
+    "UpdateLayoutTree": 78.18700000000003,
+    "Layout": 7.214,
+    "Paint": 13.450999999999999
+  }
+}

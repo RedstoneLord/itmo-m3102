@@ -1,4 +1,5 @@
 import { drawHog } from './home-hog-art.js';
+import { ic } from './icons.js';
 
 // Только декоративный рендерер. Игровой баланс и состояние сюда не подключаются.
 export function mountMascot(hero) {
@@ -44,13 +45,19 @@ export function mountMascot(hero) {
     height.style.transform = `translateY(${hill}px)`;
     facing.style.transform = `scaleX(${right ? 1 : -1})`;
     ctx.save();
-    ctx.translate(32, roll ? 35 : 39);
+    // У профиля низ на +15, у клубка на +19: обе позы опираются на линию y=63.
+    ctx.translate(32, roll ? 44 : 48);
     drawHog(ctx, 16, { curl, roll: roll ? rollPhase * Math.PI * 2 : 0, leg: t / 100, run: reduced() || paused ? 0 : 0.55, hat: 'none', blink: 0 });
     ctx.restore();
-    button.disabled = reduced();
-    button.setAttribute('aria-label', paused ? 'Продолжить анимацию ёжика' : 'Приостановить анимацию ёжика');
-    button.setAttribute('aria-pressed', String(paused));
-    button.textContent = paused ? '▷' : 'Ⅱ';
+    if (button.disabled !== reduced()) button.disabled = reduced();
+    const state = paused ? 'play' : 'pause';
+    // Замена подписи каждый кадр будила декоратор всей страницы через MutationObserver.
+    if (button.dataset.motionState !== state) {
+      button.dataset.motionState = state;
+      button.setAttribute('aria-label', paused ? 'Продолжить анимацию ёжика' : 'Приостановить анимацию ёжика');
+      button.setAttribute('aria-pressed', String(paused));
+      button.innerHTML = ic(state, 18);
+    }
   }
   function loop(now) {
     frame = 0;

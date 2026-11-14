@@ -1,3 +1,5 @@
+import { subjectColorId } from './timetable-model.js';
+import { overview } from './schedule-overview.js';
 import { installHomeSetup, mountHomeSettings } from './home-setup.js';
 import { mountHome, leaveHome, updateHomeTime, renderFreshness, refreshHomeData, installHomeDashboard, emptyState } from './home-dashboard.js';
 import {
@@ -19,7 +21,7 @@ import { directoryResponse, json, loadTree, queues, markFresh, freshnessSnapshot
 import { bookmarksPage, decorateReader, audioPage, memeDialog, showDialog } from './student-reader.js';
 import { mountOfflinePanel, installOffline } from './offline.js';
 import { ensureSchedule, getSchedule } from './schedule-ui.js';
-import { lessonsOn, dateKey, addDays, mondayOf, parseDate } from './schedule.js';
+import { lessonsOn, dateKey, addDays, parseDate } from './schedule.js';
 import { parseQuiz, quizPageSource } from './quiz.js';
 import { plainMathText } from './student-text.js';
 import { ic } from './icons.js';
@@ -51,11 +53,11 @@ function compactQuickActions() {
     ['[data-review-all]', 'refresh', 'Все вопросы'],
     ['[data-review-wrong]', 'notes', 'Ошибки'],
     ['[data-calendar]', 'calendar', 'Календарь'],
-    ['[data-backup-export]', 'download', 'Копия'],
-    ['[data-backup-choose]', 'folder', 'Восстановить'],
-    ['[data-prefs-action="export"]', 'download', 'Экспорт'],
-    ['[data-prefs-action="import"]', 'folder', 'Импорт'],
-    ['[data-prefs-action="reset"]', 'undo', 'Сброс'],
+    ['[data-backup-export]', 'download', 'Скачать копию'],
+    ['[data-backup-choose]', 'folder', 'Восстановить из файла'],
+    ['[data-prefs-action="export"]', 'download', 'Экспорт настроек'],
+    ['[data-prefs-action="import"]', 'folder', 'Импорт настроек'],
+    ['[data-prefs-action="reset"]', 'undo', 'Сбросить настройки'],
     ['#student-work-tabs a[href="#/homework"]', 'pencil', 'ДЗ'],
     ['#student-work-tabs a[href="#/deadlines"]', 'tasks', 'Дедлайны'],
   ];
@@ -177,39 +179,6 @@ function calendarDialog() {
       })
       .catch(() => {});
 }
-async function overview(node, mode, date) {
-  const schedule = await ensureSchedule();
-  if (!node.isConnected) return;
-  const month = mode === 'month',
-    start = month ? mondayOf(new Date(date.getFullYear(), date.getMonth(), 1)) : mondayOf(date);
-  const count = month
-    ? Math.ceil(
-        (((new Date(date.getFullYear(), date.getMonth() + 1, 0).getDay() + 6) % 7) + new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()) /
-          7,
-      ) * 7
-    : 7;
-  // Month grid always includes leading and trailing days; six rows when needed.
-  const cells = month
-    ? Math.ceil(
-        (((new Date(date.getFullYear(), date.getMonth(), 1).getDay() + 6) % 7) + new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()) / 7,
-      ) * 7
-    : count;
-  node.innerHTML = `<h1>${month ? 'Месяц' : 'Неделя'} расписания</h1><nav class="student-actions"><a class="btn2" href="#/schedule/${dateKey(date)}">День</a><a class="btn2" href="#/week/${dateKey(date)}">Неделя</a><a class="btn2" href="#/month/${dateKey(date)}">Месяц</a><button class="btn2" data-calendar>Подписка на календарь</button></nav><div class="student-actions"><button class="btn2" data-overview-prev aria-label="Предыдущий период">←</button><strong>${esc(date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }))}</strong><button class="btn2" data-overview-next aria-label="Следующий период">→</button><a class="btn2" href="#/${mode}/${dateKey(new Date())}">Сегодня</a></div><div class="student-calendar ${month ? 'is-month' : ''}">${Array.from(
-    { length: cells },
-    (_, i) => {
-      const day = addDays(start, i),
-        entries = lessonsOn(day, schedule),
-        real = entries.filter((l) => !l.break);
-      return `<article class="dash-panel ${dateKey(day) === dateKey(new Date()) ? 'student-today' : ''}"><h2><a href="#/schedule/${dateKey(day)}">${esc(day.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' }))}</a></h2>${entries.map((l) => `<p class="${l.break ? 'student-gap' : ''}"><strong>${esc(l.start)}–${esc(l.end)}</strong><br>${esc(l.break ? 'Свободное окно' : l.subject)}${l.break ? '' : `<br><small>${esc({ lecture: 'Лекция', practice: 'Практика', lab: 'Лабораторная' }[l.kind] || 'Занятие')} · ауд. ${esc(l.room || '?')}</small>`}</p>`).join('') || '<p>Свободный день</p>'}${real.length ? `<small>Занятий: ${real.length}</small>` : ''}</article>`;
-    },
-  ).join('')}</div>`;
-  node.querySelector('[data-overview-prev]').onclick = () => {
-    location.hash = `#/${mode}/${dateKey(month ? new Date(date.getFullYear(), date.getMonth() - 1, 1) : addDays(date, -7))}`;
-  };
-  node.querySelector('[data-overview-next]').onclick = () => {
-    location.hash = `#/${mode}/${dateKey(month ? new Date(date.getFullYear(), date.getMonth() + 1, 1) : addDays(date, 7))}`;
-  };
-}
 async function subjectsPage(node, subject = '') {
   const [lectures, tree, deadlines, links, schedule] = await Promise.all([
     json('./data/lectures.json'),
@@ -221,7 +190,7 @@ async function subjectsPage(node, subject = '') {
   if (!node.isConnected) return;
   const subjects = lectures.subjects || [];
   if (!subject) {
-    node.innerHTML = `<h1>Предметы</h1><div class="grid">${subjects.map((s) => `<a class="card" href="#/subject/${encodeURIComponent(s.name)}"><div class="meta"><strong>${esc(s.name.replace(/_/g, ' '))}</strong><p>Конспекты, занятия, лабораторные и подготовка</p></div></a>`).join('')}</div>`;
+    node.innerHTML = `<h1>Предметы</h1><div class="grid">${subjects.map((s) => `<a class="card" href="#/subject/${encodeURIComponent(s.name)}"><div class="meta"><strong class="subject-coded" data-subject-color="${subjectColorId(s.name)}">${esc(s.name.replace(/_/g, ' '))}</strong><p>Конспекты, занятия, лабораторные и подготовка</p></div></a>`).join('')}</div>`;
     return;
   }
   const s = subjects.find((s) => s.name === subject);
@@ -432,6 +401,17 @@ export function renderStudentRoute(mode, path) {
     return true;
   }
   if (!custom.includes(name)) return false;
+  if (name === 'week' || name === 'month') {
+    document.querySelectorAll('.tab,.bn-item').forEach((link) => {
+      link.classList.remove('active');
+      link.removeAttribute('aria-current');
+    });
+    for (const id of ['tab-schedule', 'bn-schedule']) {
+      const link = document.getElementById(id);
+      link?.classList.add('active');
+      link?.setAttribute('aria-current', 'page');
+    }
+  }
   const node = host(),
     page = document.createElement('section');
   page.className = 'student-page';
@@ -456,8 +436,15 @@ export function renderStudentRoute(mode, path) {
                   else fn();
                 }
               })
-          : overview(page, name, parseDate(arg) || new Date());
-  Promise.resolve(task).catch((error) => errors(page, error));
+          : overview(page, name, parseDate(arg.split('?')[0]) || new Date());
+  Promise.resolve(task)
+    .then((fn) => {
+      if (typeof fn === 'function') {
+        if (page.isConnected) cleanup = fn;
+        else fn();
+      }
+    })
+    .catch((error) => errors(page, error));
   return true;
 }
 export function decorateStudentPage({ mode, path }) {
@@ -537,6 +524,7 @@ function refreshFreshness() {
   renderFreshness();
 }
 export function installStudentTools(options) {
+  document.dispatchEvent(new Event('classic:booted'));
   context = options;
   installHomeSetup(options.students);
   installHomeDashboard({

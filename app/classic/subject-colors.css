@@ -1,0 +1,68 @@
+/* Цвет узнаваемого предмета дополняет его полное название, тип пары остаётся словом. */
+html:root[data-site-style] {
+  --subject-0: #7354a5;
+  --subject-1: #1d7785;
+  --subject-2: #356bc0;
+  --subject-3: #9d5e13;
+  --subject-4: #a34474;
+  --subject-5: #47732d;
+  --subject-6: #836022;
+  --subject-7: #536080;
+}
+@media (prefers-color-scheme: dark) {
+  html:root[data-site-style]:not([data-theme='light']) {
+    --subject-0: #c1b0ef;
+    --subject-1: #88cad4;
+    --subject-2: #9dbdf1;
+    --subject-3: #e5bd8d;
+    --subject-4: #e7a8cb;
+    --subject-5: #aed28d;
+    --subject-6: #dfca96;
+    --subject-7: #b8c1dc;
+  }
+}
+html:root[data-site-style][data-theme='dark'] {
+  --subject-0: #c1b0ef;
+  --subject-1: #88cad4;
+  --subject-2: #9dbdf1;
+  --subject-3: #e5bd8d;
+  --subject-4: #e7a8cb;
+  --subject-5: #aed28d;
+  --subject-6: #dfca96;
+  --subject-7: #b8c1dc;
+}
+[data-subject-color='0'] {
+  --subject-color: var(--subject-0);
+}
+[data-subject-color='1'] {
+  --subject-color: var(--subject-1);
+}
+[data-subject-color='2'] {
+  --subject-color: var(--subject-2);
+}
+[data-subject-color='3'] {
+  --subject-color: var(--subject-3);
+}
+[data-subject-color='4'] {
+  --subject-color: var(--subject-4);
+}
+[data-subject-color='5'] {
+  --subject-color: var(--subject-5);
+}
+[data-subject-color='6'] {
+  --subject-color: var(--subject-6);
+}
+[data-subject-color='7'] {
+  --subject-color: var(--subject-7);
+}
+html:root[data-site-style] :is(.subject-coded, .lesson-description h3, .home-today-row:not(.is-break) strong, .sched-card-main > strong) {
+  border-left: 3px solid var(--subject-color, var(--border));
+  padding-left: 10px;
+}
+html:root[data-site-style] .home-format[data-subject-color] {
+  color: var(--subject-color);
+  border-bottom: 3px solid var(--subject-color);
+}
+html:root[data-site-style] .sched-entry[data-subject-color] {
+  --tone: var(--subject-color);
+}

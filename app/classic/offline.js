@@ -4,6 +4,7 @@ import { loadTree, json } from './student-data.js';
 const KEY = 'm3102-offline-v1';
 const roots = /^(Конспекты|Материалы|Лабораторные|Записи лекций)\//;
 let running,
+  shellCache = SHELL,
   status = '',
   inventory = [],
   shellFiles = [],
@@ -24,6 +25,7 @@ async function catalog(fresh = false) {
     (e) => e.type === 'blob' && (roots.test(e.path) || /^(img\/|data\/|Дедлайны\/)/.test(e.path)) && !e.path.split('/').includes('output'),
   );
   shellFiles = manifest.files;
+  shellCache = manifest.shellCache || SHELL;
   if ('caches' in window) {
     const cache = await caches.open(CONTENT),
       state = read(KEY),
@@ -36,7 +38,7 @@ async function catalog(fresh = false) {
       }),
     );
     if (complete) {
-      const shell = await caches.open(SHELL);
+      const shell = await caches.open(shellCache);
       for (const entry of shellFiles) {
         const hit = await shell.match(new URL(entry.url, location.href));
         if (!hit || hit.headers.get('X-M3102-Revision') !== entry.revision) {
@@ -61,6 +63,7 @@ async function stored(entry, cache) {
   return Boolean(hit && read(KEY).files?.[entry.path] === entry.sha);
 }
 async function shellDownload() {
+  // Панель не дописывает активный атомарный выпуск: дополнительные шрифты хранятся отдельно.
   const cache = await caches.open(SHELL);
   const files = [...shellFiles];
   const seen = new Set(files.map((e) => new URL(e.url, location.href).href));
@@ -200,7 +203,8 @@ export async function clearOffline() {
   emit();
 }
 function draw(root) {
-  const open = [...root.querySelectorAll('details[open]')].map((el) => el.querySelector('[data-off-group]')?.dataset.offGroup);
+  const advancedOpen = Boolean(root.querySelector('[data-off-advanced]')?.open);
+  const open = [...root.querySelectorAll('details[open]')].map((el) => el.querySelector('[data-off-group]')?.dataset.offGroup).filter(Boolean);
   const state = read(KEY),
     groups = new Map();
   for (const entry of inventory) {
@@ -213,6 +217,16 @@ function draw(root) {
   size.className = 'plan-hint';
   size.textContent = `Приложение и игры: ${bytes(shellFiles.reduce((total, file) => total + (file.size || 0), 0))} дополнительно к выбранным материалам. Размер библиотек чтения определяется при загрузке.`;
   root.querySelector('.student-file-picker').before(size);
+  const picker = root.querySelector('.student-file-picker');
+  const technical = [...picker.children].filter((el) => /^(data|img|Дедлайны)\//.test(el.querySelector('[data-off-group]')?.dataset.offGroup || ''));
+  if (technical.length) {
+    const advanced = document.createElement('details');
+    advanced.dataset.offAdvanced = '';
+    advanced.open = advancedOpen;
+    advanced.innerHTML = '<summary>Служебные данные и иллюстрации</summary>';
+    advanced.append(...technical);
+    picker.append(advanced);
+  }
   root.querySelectorAll('details').forEach((el) => {
     if (open.includes(el.querySelector('[data-off-group]')?.dataset.offGroup)) el.open = true;
   });

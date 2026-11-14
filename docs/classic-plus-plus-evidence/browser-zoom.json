@@ -1,0 +1,46 @@
+{
+  "method": "chrome.tabs.setZoom, verified with chrome.tabs.getZoom, CSS viewport and devicePixelRatio",
+  "zoom": 2,
+  "before": {
+    "width": 1440,
+    "dpr": 1
+  },
+  "results": [
+    {
+      "hash": "",
+      "width": 720,
+      "dpr": 2,
+      "overflow": false
+    },
+    {
+      "hash": "#/week/2026-11-14",
+      "width": 720,
+      "dpr": 2,
+      "overflow": false
+    },
+    {
+      "hash": "#/month/2026-11-14",
+      "width": 720,
+      "dpr": 2,
+      "overflow": false
+    },
+    {
+      "hash": "#/settings?section=appearance",
+      "width": 720,
+      "dpr": 2,
+      "overflow": false
+    },
+    {
+      "hash": "#/materials",
+      "width": 720,
+      "dpr": 2,
+      "overflow": false
+    },
+    {
+      "hash": "#/homework",
+      "width": 720,
+      "dpr": 2,
+      "overflow": false
+    }
+  ]
+}

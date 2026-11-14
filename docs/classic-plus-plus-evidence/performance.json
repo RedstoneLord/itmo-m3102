@@ -1,0 +1,77 @@
+{
+  "method": "Lighthouse mobile simulated throttling; same localhost server and Chrome, 390x844, cold HTTP cache, returning Guest, CDN replay; remote group API blocked; no SW during performance sampling",
+  "rows": [
+    {
+      "phase": "before",
+      "run": 1,
+      "performance": 0.63,
+      "accessibility": 1,
+      "bestPractices": 0.96,
+      "cls": 0,
+      "lcp": 9197.762050000001,
+      "tbt": 84,
+      "transfer": 2141958,
+      "requests": 89
+    },
+    {
+      "phase": "before",
+      "run": 2,
+      "performance": 0.63,
+      "accessibility": 1,
+      "bestPractices": 0.96,
+      "cls": 0,
+      "lcp": 8926.0035,
+      "tbt": 25,
+      "transfer": 2141958,
+      "requests": 89
+    },
+    {
+      "phase": "before",
+      "run": 3,
+      "performance": 0.27,
+      "accessibility": 1,
+      "bestPractices": 0.96,
+      "cls": 0,
+      "lcp": 8674.021223520494,
+      "tbt": 8251.046122879787,
+      "transfer": 2149701,
+      "requests": 90
+    },
+    {
+      "phase": "after",
+      "run": 1,
+      "performance": 0.39,
+      "accessibility": 1,
+      "bestPractices": 0.96,
+      "cls": 0,
+      "lcp": 8767.353899999998,
+      "tbt": 1295.4204500000005,
+      "transfer": 2195260,
+      "requests": 92
+    },
+    {
+      "phase": "after",
+      "run": 2,
+      "performance": 0.4,
+      "accessibility": 1,
+      "bestPractices": 0.96,
+      "cls": 0,
+      "lcp": 8313.159140339598,
+      "tbt": 1247.5,
+      "transfer": 2195260,
+      "requests": 92
+    },
+    {
+      "phase": "after",
+      "run": 3,
+      "performance": 0.25,
+      "accessibility": 1,
+      "bestPractices": 0.96,
+      "cls": 0,
+      "lcp": 9548.808967760604,
+      "tbt": 13451.5,
+      "transfer": 2195260,
+      "requests": 92
+    }
+  ]
+}

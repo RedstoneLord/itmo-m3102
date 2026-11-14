@@ -1,0 +1,14 @@
+import { mkdtempSync, mkdirSync, symlinkSync, cpSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+const revision = process.argv[2] || '353f30b82e274dfbac76368538153be938519e57';
+const root = mkdtempSync(join(tmpdir(),'classic-previous-'));
+const archive = execFileSync('git',['archive',revision],{cwd:resolve('..'),maxBuffer:256*1024*1024});
+execFileSync('tar',['-x','-C',root],{input:archive});
+symlinkSync(resolve('node_modules'),join(root,'app/node_modules'),'dir');
+cpSync(resolve('dist'),join(root,'app/dist'),{recursive:true});
+const result = spawnSync(process.execPath,['--import','tsx',join(root,'app/scripts/assemble-classic.ts'),'--site'],{cwd:join(root,'app'),encoding:'utf8'});
+if(result.status) throw new Error(result.stderr || result.stdout);
+writeFileSync('/tmp/classic-previous-path',join(root,'app/site'));
+console.log(join(root,'app/site'));

@@ -16,6 +16,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { writeHomeAssets } from './classic-home-assets';
+import { freezeClassicRelease } from './classic-release';
 import { patchClassicIndex, patchClassicModule } from '../src/lib/classicPatch';
 
 const REPO = 'RedstoneLord/itmo-m3102';
@@ -118,7 +119,9 @@ function studentAssets(out: string): void {
     if (name.endsWith('.js') && name !== 'sw.js') copyFileSync(join(APP, 'classic', name), join(out, 'js', name));
   }
   copyFileSync(join(APP, 'classic', 'sw.js'), join(out, 'sw.js'));
-  for (const name of readdirSync(join(APP, 'classic')).filter(n => n.endsWith('.css'))) copyFileSync(join(APP, 'classic', name), join(out, 'css', name));
+  copyFileSync(join(APP, 'classic', 'home-fonts.css'), join(out, 'css', 'home-fonts.css'));
+  // Источники разделены по назначению, в браузер идёт один stylesheet без @import-водопада.
+  writeFileSync(join(out, 'css', 'classic-plus.css'), ['student-tools.css', 'classic-system.css', 'subject-colors.css', 'timetable.css', 'home-dashboard.css'].map(name => readFileSync(join(APP, 'classic', name), 'utf8')).join('\n'));
   copyTree(join(APP, 'classic', 'fonts'), join(out, 'fonts'));
   writeHomeAssets(ROOT, out, content);
   for (const path of ['js/schedule.js', 'js/schedule-ui.js', 'js/homework.js', 'js/lectures.js', 'js/quiz.js', 'js/prefs.js', 'js/settings.js']) writeFileSync(join(out, path), patchClassicModule(path, readFileSync(join(out, path), 'utf8')));
@@ -127,20 +130,23 @@ function studentAssets(out: string): void {
 function shellManifest(out: string): void {
   const paths = ['index.html', 'site.css', ...['js', 'css', 'img', 'fonts', 'switch', 'ai'].flatMap((dir) => pathsBelow(out, dir))];
   if (existsSync(join(out, 'm3102.ics'))) paths.push('m3102.ics');
-  const files = paths.map((url) => ({ url: encodePath(url), revision: createHash('sha256').update(readFileSync(join(out, url))).digest('hex'), size: statSync(join(out, url)).size }));
+  const release = freezeClassicRelease(out, paths);
+  const frozenPaths = ['index.html', ...pathsBelow(out, `releases/${release}`), ...paths.filter(p => p.startsWith('ai/') || p === 'm3102.ics')];
+  const files = frozenPaths.map((url) => ({ url: encodePath(url), revision: createHash('sha256').update(readFileSync(join(out, url))).digest('hex'), size: statSync(join(out, url)).size }));
   const html = readFileSync(join(out, 'index.html'), 'utf8');
-  const vendors = [...new Set(html.match(/https:\/\/cdnjs\.cloudflare\.com\/[^"'\s)<>]+/g) || [])];
+  const vendorSource = html + readFileSync(join(APP, 'classic', 'classic-libraries.js'), 'utf8');
+  const vendors = [...new Set(vendorSource.match(/https:\/\/cdnjs\.cloudflare\.com\/[^"'\s)<>]+/g) || [])];
   files.push(...vendors.map((url) => ({ url, revision: url, size: 0 })));
   // Both addresses can be used to reopen the application offline.
   files.push({ url: './', revision: files[0]!.revision, size: 0 });
-  writeFileSync(join(out, 'shell-manifest.json'), JSON.stringify({ files }));
+  writeFileSync(join(out, 'shell-manifest.json'), JSON.stringify({ release, shellCache: `m3102-shell-release-${release}`, files }));
   // Make browser update detection notice shell changes even when worker logic is unchanged.
   const revision = createHash('sha256').update(JSON.stringify(files)).digest('hex');
-  writeFileSync(join(out, 'sw.js'), readFileSync(join(APP, 'classic', 'sw.js'), 'utf8') + `\n// Build: ${revision}\n`);
+  writeFileSync(join(out, 'sw.js'), readFileSync(join(APP, 'classic', 'sw.js'), 'utf8').replaceAll('__CLASSIC_RELEASE__', release) + `\n// Build: ${revision}\n`);
 }
 
 /** Классический сайт из корня репозитория → папка `out`, с правкой index.html и переключателем стиля */
-function assemble(out: string): void {
+function assemble(out: string, manifest = true): void {
   // Папку может держать dev-сервер (Windows не даёт её удалить) — тогда просто перезаписываем файлы поверх
   try {
     rmSync(out, { recursive: true, force: true, maxRetries: 3 });
@@ -154,14 +160,14 @@ function assemble(out: string): void {
   copyTree(join(APP, 'public', 'switch'), join(out, 'switch'));
   writeFileSync(join(out, 'index.html'), patchClassicIndex(readFileSync(join(ROOT, 'index.html'), 'utf8')));
   studentAssets(out);
-  shellManifest(out);
+  if (manifest) shellManifest(out);
 }
 
 /** Готовый сайт: классический — в корне, приложение (уже собранное в app/dist) — в /app/, выгрузки предметов для ИИ — в /app/ai/ */
 async function assembleSite(out: string): Promise<void> {
   const dist = join(APP, 'dist');
   if (!existsSync(join(dist, 'index.html'))) throw new Error('нет app/dist — сначала npm run build');
-  assemble(out);
+  assemble(out, false);
   copyTree(dist, join(out, 'app'));
   // dev-копия классического сайта (app/public/classic) попадает в dist вместе с public/ — в готовом сайте она лишняя
   rmSync(join(out, 'app', 'classic'), { recursive: true, force: true });

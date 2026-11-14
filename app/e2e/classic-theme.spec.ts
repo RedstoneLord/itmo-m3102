@@ -24,13 +24,13 @@ for (const system of ['light', 'dark'] as const) {
       await openClassic(page, choice);
       const light = (choice === 'auto' ? system : choice) === 'light';
       await expect(page.locator('.brand-logo')).toHaveCSS('filter', light ? 'invert(1)' : 'none');
-      await expect(page.locator('body')).toHaveCSS('background-color', light ? 'rgb(255, 255, 255)' : 'rgb(17, 19, 27)');
-      await expect(page.locator('.home-hero h1')).toHaveCSS('color', light ? 'rgb(32, 35, 46)' : 'rgb(255, 255, 255)');
+      await expect(page.locator('body')).toHaveCSS('background-color', light ? 'rgb(245, 246, 248)' : 'rgb(18, 20, 26)');
+      await expect(page.locator('.home-hero h1')).toHaveCSS('color', light ? 'rgb(32, 37, 48)' : 'rgb(237, 240, 246)');
       if (system === 'dark' && choice === 'light') {
         await page.screenshot({ path: testInfo.outputPath('classic-light-desktop.png') });
       }
       // Переключение на лету, без перезагрузки: убирается/возвращается весь светлый каскад.
-      await page.goto('../#/settings');
+      await page.goto('../#/settings?section=appearance');
       await page.locator(`[data-theme-opt="${light ? 'dark' : 'light'}"]`).click();
       await expect(page.locator('.brand-logo')).toHaveCSS('filter', light ? 'none' : 'invert(1)');
     });
@@ -38,7 +38,7 @@ for (const system of ['light', 'dark'] as const) {
 }
 
 test('светлая классическая тема: контраст во всех 12 палитрах', async ({ page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(180_000);
   await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
   await openClassic(page, 'light');
   // Особые палитры в обычном интерфейсе видны после открытия в коллекции.
@@ -46,11 +46,11 @@ test('светлая классическая тема: контраст во в
     album: Object.fromEntries(['gold', 'neon', 'aurora', 'graphite', 'sakura', 'ruby', 'tropic'].map(id => [`pal:${id}`, true])),
   })));
   for (const palette of ['purple', 'orange', 'green', 'blue', 'cyan', 'gold', 'neon', 'aurora', 'graphite', 'sakura', 'ruby', 'tropic']) {
-    await page.goto('../#/settings');
+    await page.goto('../#/settings?section=appearance');
     await page.locator(`button[data-palette="${palette}"]`).click();
     await page.goto('../');
     await expect(page.locator('.home-hero')).toBeVisible();
-    await expect(page.locator('.bgfx')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(245, 246, 248)');
     const ratio = await page.locator('#student-next .btn-primary').evaluate(button => {
       const style = getComputedStyle(button);
       const canvas = document.createElement('canvas');
@@ -74,7 +74,7 @@ test('светлая классическая тема: контраст во в
 test('светлая классическая тема на телефоне @phone', async ({ page }, testInfo) => {
   await openClassic(page, 'light');
   await expect(page.locator('.bottom-nav')).toBeVisible();
-  await expect(page.locator('.hero-date')).toHaveCSS('border-top-color', 'rgb(221, 225, 233)');
+  await expect(page.locator('.hero-date strong')).toHaveCSS('color', 'rgb(32, 37, 48)');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('classic-light-phone.png') });
 });

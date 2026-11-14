@@ -105,7 +105,7 @@ test('студент: поиск и выбор, отмена предпросм�
   await page.locator('[data-home-save]').click();
   await page.goto('../#/settings');
   await page.getByRole('button', { name: 'Быстрая настройка', exact: true }).click();
-  await page.locator('[data-setup-theme]').selectOption('dark');
+  await page.locator('[data-setup-theme="dark"]').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.getByRole('button', { name: 'Отмена', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
@@ -180,6 +180,28 @@ test('обновление без перезагрузки: фокус, ввод
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('m3102-data-freshness-v1')!)['Расписание'].at)).toBe(before);
   await expect(page.locator('#student-next')).toContainText('Сохранённое расписание');
 });
+test('та же пара: все поля обновляются, пустое расписание восстанавливается, действие сохраняет фокус', async ({ page }) => {
+  await fixture(page, { identity: { login: '' } });
+  const lesson = { id:'test', subject:'Новый предмет', start:'13:30', end:'15:10', room:'9999', kind:'lab', teacher:'Другой преподаватель', location:'Новый корпус' };
+  let entries = [lesson];
+  await page.route('**/data/schedule.json', r => r.fulfill({json:{anchorMonday:'2026-11-09',anchorParity:'odd',cycle:Array.from({length:14},()=>entries),vacations:[],overrides:{}}}));
+  const refresh = () => page.evaluate(async () => {
+    const prefix = `/releases/${document.documentElement.dataset.classicRelease}/js/`;
+    await (await import(prefix + 'home-dashboard.js')).refreshHomeData();
+  });
+  const action = page.locator('#student-next a').first();
+  await action.focus();
+  await refresh();
+  await expect(action).toBeFocused();
+  for (const value of ['13:30','15:10','9999','Лабораторная','Новый предмет','Другой преподаватель','Новый корпус']) await expect(page.locator('#student-next')).toContainText(value);
+  entries = [];
+  await refresh();
+  await expect(page.locator('#student-next')).toContainText('В ближайшие 30 дней занятий нет');
+  entries = [lesson];
+  await refresh();
+  await expect(page.locator('#student-next h3')).toHaveText('Новый предмет');
+  await expect(page.locator('#student-next .lesson-room')).toHaveText('Ауд. 9999');
+});
 for (const state of ['upcoming', 'ongoing', 'tomorrow', 'empty', 'error'] as const)
   test(`расписание: ${state}, московская дата на устройстве в Америке`, async ({ page }) => {
     await fixture(page, {
@@ -234,6 +256,8 @@ test('ёжик: два цикла на телефоне и компьютере,
       expect(hog.y + hog.height).toBeLessThanOrEqual(hero.y + hero.height + 1);
       const text = (await page.locator('.hero-inner').boundingBox())!;
       expect(hog.y).toBeGreaterThan(text.y + text.height);
+      const control = (await page.locator('.home-motion').boundingBox())!;
+      expect(hog.x + hog.width).toBeLessThan(control.x);
     }
     expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(100);
   }
@@ -299,4 +323,28 @@ test('повтор после ошибки раздела загружает е�
   await page.locator('#content [data-student-retry]').click();
   await expect(page.locator('#content [data-student-retry]')).toHaveCount(0);
   expect(await page.evaluate(() => (window as any).retainedDocument)).toBe(true);
+});
+
+test('ошибка запуска модуля: понятный повтор, личные данные сохраняются', async ({page}) => {
+  test.setTimeout(30000);
+  await page.context().route(u => !['127.0.0.1','localhost'].includes(u.hostname),r=>r.fulfill({contentType:'text/javascript',body:r.request().url().includes('/marked/')?'window.marked={use(){}}':''}));
+  await page.addInitScript(()=>{
+    if(!localStorage.getItem('m3102-student-v1')) {
+      localStorage.setItem('m3102-student-v1','{"login":""}');
+      localStorage.setItem('m3102-study-plan-v1','{"tasks":[{"id":"keep","name":"Не потерять"}],"done":{}}');
+    }
+  });
+  await page.route('**/js/home-setup.js',r=>r.abort());
+  await page.goto('../');
+  await expect(page.locator('#classic-boot-recovery')).toContainText('Ваши задачи и прогресс сохранены',{timeout:15000});
+  await page.unroute('**/js/home-setup.js');
+  await page.getByRole('button',{name:'Повторить загрузку',exact:true}).click();
+  await expect(page.locator('#student-next')).toBeVisible();
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('m3102-study-plan-v1')!).tasks[0].id)).toBe('keep');
+});
+test('главная не загружает библиотеки PDF, экспорта и Mermaid', async ({page})=>{
+  const requests:string[]=[];page.on('request',r=>{if(/cdnjs.*\/(pdf\.js|jspdf|html2canvas|mermaid)\//.test(r.url()))requests.push(r.url());});
+  await fixture(page,{identity:{login:''}});
+  await expect(page.locator('#student-next .lesson-summary')).toBeVisible();
+  expect(requests).toEqual([]);
 });

@@ -23,7 +23,7 @@ export function patchClassicIndex(html: string): string {
     .replace(/<html(\s|>)/, '<html data-site-style="classic"$1')
     .replace(
       '</head>',
-      `    <style id="classic-light-theme">${CLASSIC_LIGHT_THEME}</style>\n    <link rel="stylesheet" href="./css/student-tools.css">\n    <link rel="stylesheet" href="./css/home-dashboard.css">\n    <script src="./switch/site-switch.js" charset="utf-8"></script>\n  </head>`,
+      `    <style id="classic-light-theme">${CLASSIC_LIGHT_THEME}</style>\n    <link rel="stylesheet" href="./css/classic-plus.css">\n    <script src="./js/classic-boot.js" defer></script>\n    <script src="./switch/site-switch.js" charset="utf-8"></script>\n  </head>`,
     );
   // Small fixtures and upstream pages without our supported router only receive the appearance patch.
   if (!html.includes('function renderRoute()')) return patched;
@@ -33,7 +33,32 @@ export function patchClassicIndex(html: string): string {
   patched = replaceRequired(
     patched,
     '    import { dateKey,',
-    "    import { installStudentTools, renderStudentRoute, decorateStudentPage, directoryResponse, renderHomeDeadlines } from './js/student-tools.js';\n    import { loadRecentNotes, updateHomeTime } from './js/home-dashboard.js';\n    import { queues, studentFetch } from './js/student-data.js';\n    import { groupArchived, read as readClassicPreference } from './js/student-core.js';\n    import { dateKey,",
+    "    import { loadClassicLibrary } from './js/classic-libraries.js';\n    import { installStudentTools, renderStudentRoute, decorateStudentPage, directoryResponse, renderHomeDeadlines } from './js/student-tools.js';\n    import { loadRecentNotes, updateHomeTime } from './js/home-dashboard.js';\n    import { queues, studentFetch } from './js/student-data.js';\n    import { groupArchived, read as readClassicPreference } from './js/student-core.js';\n    import { dateKey,",
+  );
+  // Эти четыре существующие библиотеки нужны только PDF, экспорту и Mermaid, не главной.
+  for (const library of [
+    'pdf.js/2.16.105/pdf.min.js',
+    'mermaid/10.9.1/mermaid.min.js',
+    'jspdf/2.5.1/jspdf.umd.min.js',
+    'html2canvas/1.4.1/html2canvas.min.js',
+  ]) {
+    patched = replaceRequired(patched, `    <script src="https://cdnjs.cloudflare.com/ajax/libs/${library}"></script>`, '');
+  }
+  patched = replaceRequired(patched, 'function renderPdfView(path){', 'async function renderPdfView(path){');
+  patched = replaceRequired(
+    patched,
+    '  if(!window.__pdfWorkerSet){',
+    "  try { await loadClassicLibrary('pdf'); } catch { const status=document.getElementById('pdf-status'); if(status&&seq===routeSeq){status.innerHTML='Не удалось загрузить PDF. <button class=\"btn2\" data-pdf-retry>Повторить</button>';status.querySelector('button').onclick=()=>renderPdfView(path);} return; }\n  if(seq!==routeSeq)return;\n  if(!window.__pdfWorkerSet){",
+  );
+  patched = replaceRequired(
+    patched,
+    '      if(nodes.length){\n        initMermaidOnce();',
+    "      if(nodes.length){\n        try { await loadClassicLibrary('mermaid'); } catch { for(const node of nodes){node.innerHTML='<p role=\"alert\">Не удалось загрузить схему. <button class=\"btn2\">Повторить</button></p>';node.querySelector('button').onclick=()=>runNoteExtras(container);} return; }\n        initMermaidOnce();",
+  );
+  patched = replaceRequired(
+    patched,
+    '      if(!window.jspdf || !window.html2canvas){',
+    "      if(btn){btn.disabled=true;btn.textContent='Подготавливаем PDF…';}\n      try { await Promise.all([loadClassicLibrary('exportPdf'),loadClassicLibrary('capture')]); } catch {} finally { if(btn){btn.disabled=false;btn.innerHTML=origHtml;} }\n      if(!window.jspdf || !window.html2canvas){",
   );
   patched = replaceRequired(
     patched,
@@ -53,6 +78,7 @@ export function patchClassicIndex(html: string): string {
     '  decorateCasinoPage(); /* casino:step6 */\n  decorateStudentPage({mode,path});',
   );
   patched = replaceRequired(patched, "if(h==='memes')", "if(h==='memes'||h.startsWith('memes?'))");
+  patched = replaceRequired(patched, "if(h==='settings')", "if(h==='settings'||h.startsWith('settings?'))");
   patched = replaceRequired(patched, 'githubFetch(apiUrl(path))', 'directoryResponse(path)');
   patched = replaceRequired(patched, "'tests','inner'", "'output','node_modules','tests','inner'");
   patched = replaceRequired(
@@ -106,8 +132,31 @@ export function patchClassicIndex(html: string): string {
   const scheduleEnd = patched.indexOf('\n}\n    const RECENT_NOTES_LIMIT', scheduleStart);
   if (scheduleStart < 0 || scheduleEnd < 0) throw new Error('Classic home schedule integration changed');
   patched = patched.slice(0, scheduleStart) + '  ensureSchedule().then(updateHomeTime).catch(()=>{});' + patched.slice(scheduleEnd);
-  patched = replaceRequired(patched, '<span>Файлы</span>', '<span>Материалы</span>');
-  patched = replaceRequired(patched, '<span>Пары</span>', '<span>Расписание</span>');
+  patched = replaceRequired(patched, '<span>Файлы</span>', '<span>Учёба</span>');
+  patched = replaceRequired(patched, '<span>ДЗ</span>', '<span>Задания</span>');
+  patched = replaceRequired(patched, '<span>Еще</span>', '<span>Ещё</span>');
+  patched = replaceRequired(patched, 'data-icon="folder"></span>Материалы', 'data-icon="folder"></span>Учёба');
+  patched = replaceRequired(patched, 'data-icon="calendar"></span>Расписание', 'data-icon="calendar"></span>Пары');
+  patched = patched.replace(/(<a class="tab" id="tab-homework"[^>]*>[\s\S]*?<\/span>)[^<]+/, '$1Задания');
+  patched = replaceRequired(patched, '    installBackdrop();', '    /* Статичный фон рабочего пространства. */');
+  patched = replaceRequired(
+    patched,
+    "        mountOfflinePanel(c.querySelector('#offline-panel'));",
+    '        c.querySelector(\'#offline-panel\').innerHTML=\'<a class="btn2" href="#/settings?section=data">Данные и работа без интернета</a>\';',
+  );
+  for (const [id, label] of [
+    ['home', 'Главная'],
+    ['materials', 'Материалы и конспекты'],
+    ['schedule', 'Расписание занятий'],
+    ['homework', 'Домашнее задание и дедлайны'],
+    ['other', 'Ещё'],
+  ]) {
+    patched = patched.replace(new RegExp(`(id="tab-${id}"[^>]*)(>)`), `$1 aria-label="${label}"$2`);
+  }
+  // У исходного HTML одинаковый stylesheet подключён дважды.
+  patched = patched.replace('    <link rel="stylesheet" href="./css/shell.css">\n', '');
+  // Размер приветствия задаёт иерархия, длинный текст переносится по словам.
+  patched = replaceRequired(patched, "  fitHeroTitle(c.querySelector('.home-hero h1'));", '');
   patched = replaceRequired(
     patched,
     '\'<p class="empty-line">Пока задач нет. Добавьте первую задачу.</p>\'',
@@ -157,7 +206,17 @@ export function patchClassicModule(path: string, source: string): string {
       "  s=s.replace(/\\b(?:void|int|char|double|float|bool|auto|long|short|unsigned|signed)\\s+\\w+\\([^()\\n]*\\)/g,c=>keep('<code>'+esc(c)+'</code>'));\n  s=s.replace(/\\$([^$\\n]+?)\\$/g,",
     );
   }
-  if (path === 'js/settings.js') return replaceRequired(source, 'Подгружается из Google Fonts', 'Локальный шрифт с поддержкой кириллицы');
+  if (path === 'js/settings.js') {
+    let result = replaceRequired(source, 'Подгружается из Google Fonts', 'Локальный шрифт с поддержкой кириллицы');
+    result = replaceRequired(
+      result,
+      'const FONTS = [',
+      "const FONTS = [\n  { id: 'golos', name: 'Golos Text', var: '--ff-golos', note: 'По умолчанию · кириллица и латиница' },",
+    );
+    result = replaceRequired(result, "var: '--ff-noto', note: 'По умолчанию'", "var: '--ff-noto', note: 'Кириллица и латиница'");
+    result = replaceRequired(result, "? id : 'noto'", "? id : 'golos'");
+    return result;
+  }
   if (path === 'js/prefs.js') {
     let result = replaceRequired(source, '>Сбросить всё</button>', '>Сбросить настройки оформления и чтения</button>');
     result = replaceRequired(
@@ -168,7 +227,17 @@ export function patchClassicModule(path: string, source: string): string {
     return result;
   }
   if (path === 'js/schedule-ui.js') {
-    let result = replaceRequired(source, '＋ Домашнее задание</button>', '＋ Добавить ДЗ</button>');
+    let result = replaceRequired(
+      "import { subjectColorId } from './timetable-model.js';\n" + source,
+      '＋ Домашнее задание</button>',
+      '＋ Добавить ДЗ</button>',
+    );
+    result = "import { campusNow } from './home-preferences.js';\n" + result.replaceAll('new Date()', 'campusNow()');
+    result = replaceRequired(
+      result,
+      'data-lesson="${esc(lesson.id)}"',
+      'data-subject-color="${subjectColorId(lesson.subject)}" data-lesson="${esc(lesson.id)}"',
+    );
     result = replaceRequired(
       result,
       'export async function ensureSchedule() {',

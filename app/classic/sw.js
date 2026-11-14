@@ -1,5 +1,6 @@
 // Assembled classic site's worker. /app/ keeps its own worker and caches.
-const SHELL = 'm3102-shell-student-v1',
+const RELEASE = '__CLASSIC_RELEASE__';
+const SHELL = 'm3102-shell-release-' + RELEASE,
   CONTENT = 'm3102-content-v1';
 const base = new URL(self.registration.scope);
 const local = (path) => new URL(path, base).href;
@@ -11,6 +12,7 @@ async function stamped(response, revision) {
   headers.delete('Content-Length');
   return new Response(await response.arrayBuffer(), { status: response.status, statusText: response.statusText, headers });
 }
+// Каждый install пишет только свой выпуск; незавершённый кеш не становится активным.
 self.addEventListener('install', (event) =>
   event.waitUntil(
     (async () => {
@@ -19,35 +21,82 @@ self.addEventListener('install', (event) =>
         const response = await fetch(local('shell-manifest.json'), { cache: 'reload' });
         if (!response.ok) throw new Error('manifest');
         const manifest = await response.clone().json();
-        await cache.put(local('shell-manifest.json'), response);
-        await Promise.all(
-          manifest.files.map(async ({ url, revision }) => {
-            try {
+        if (manifest.release !== RELEASE) throw new Error('release changed during install');
+        const required = manifest.files.filter((e) => !/^https?:/.test(e.url));
+        // Ограниченная очередь, все критичные файлы и их SHA проверены до завершения install.
+        for (let i = 0; i < required.length; i += 8) {
+          await Promise.all(
+            required.slice(i, i + 8).map(async ({ url, revision }) => {
               const response = await fetch(new URL(url, base), { cache: 'reload' });
-              if (!response.ok) return;
+              if (!response.ok) throw new Error(url);
+              const bytes = await response.arrayBuffer();
+              const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), (n) => n.toString(16).padStart(2, '0')).join('');
+              if (revision !== hash) throw new Error('revision: ' + url);
               const headers = new Headers(response.headers);
               headers.set('X-M3102-Revision', revision);
-              await cache.put(new URL(url, base), new Response(await response.arrayBuffer(), { headers }));
-            } catch {
-              /* The download panel reports and retries missing files. */
-            }
-          }),
+              await cache.put(new URL(url, base), new Response(bytes, { headers }));
+            }),
+          );
+        }
+        // Существующие CDN не блокируют обновление оболочки при недоступности сети.
+        await Promise.all(
+          manifest.files
+            .filter((e) => /^https?:/.test(e.url))
+            .map(async ({ url }) => {
+              try {
+                const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+                if (r.ok) await cache.put(url, r);
+              } catch {}
+            }),
         );
-      } catch {
-        /* Previously cached site remains available. */
+        await cache.put(local('shell-manifest.json'), response);
+        await cache.put(local('__complete__'), new Response(RELEASE));
+      } catch (error) {
+        await caches.delete(SHELL);
+        throw error;
       }
-      await self.skipWaiting();
+      // Открытые вкладки продолжают пользоваться целым прежним выпуском.
     })(),
   ),
 );
 self.addEventListener('activate', (event) =>
   event.waitUntil(
     (async () => {
-      await Promise.all((await caches.keys()).filter((n) => n.startsWith('m3102-shell-') && n !== SHELL).map((n) => caches.delete(n)));
       await self.clients.claim();
+      const clients = (await self.clients.matchAll({ type: 'window' })).filter((client) => {
+        const url = new URL(client.url);
+        return url.origin === base.origin && url.pathname.startsWith(base.pathname) && !url.pathname.startsWith(base.pathname + 'app/');
+      });
+      const releases = await Promise.all(
+        clients.map(
+          (client) =>
+            new Promise((resolve) => {
+              const channel = new MessageChannel();
+              const timeout = setTimeout(() => resolve(null), 1000);
+              channel.port1.onmessage = (e) => {
+                clearTimeout(timeout);
+                channel.port1.close();
+                resolve(e.data);
+              };
+              client.postMessage({ type: 'CLASSIC_RELEASE_QUERY' }, [channel.port2]);
+            }),
+        ),
+      );
+      // Неизвестная старая вкладка: лучше сохранить кеш, чем оборвать её ленивые импорты.
+      if (releases.includes(null)) return;
+      const complete = [];
+      for (const name of await caches.keys()) {
+        if (!name.startsWith('m3102-shell-release-')) continue;
+        if (await (await caches.open(name)).match(local('__complete__'))) complete.push(name);
+      }
+      const keep = new Set([SHELL, ...complete.slice(-2), ...releases.map((id) => 'm3102-shell-release-' + id)]);
+      await Promise.all(complete.filter((name) => !keep.has(name)).map((name) => caches.delete(name)));
     })(),
   ),
 );
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'ACTIVATE_CLASSIC') event.waitUntil(self.skipWaiting());
+});
 async function cachedResponse(cache, request) {
   const hit = await cache.match(request.url, { ignoreVary: true });
   if (!hit) return null;
@@ -71,22 +120,24 @@ async function cachedResponse(cache, request) {
 }
 async function serve(request, shell, event) {
   const cache = await caches.open(shell ? SHELL : CONTENT);
-  if (request.headers.has('Range')) {
-    const hit = await cachedResponse(cache, request);
+  let hit = await cachedResponse(cache, request);
+  if (shell) {
+    if (request.mode === 'navigate') return (await cache.match(local('index.html'))) || fetch(request);
     if (hit) return hit;
+    // Ленивый импорт из старой вкладки остаётся доступен после явного обновления.
+    if (new URL(request.url).pathname.includes('/releases/') || new URL(request.url).hostname === 'cdnjs.cloudflare.com') {
+      for (const name of await caches.keys()) {
+        if (!name.startsWith('m3102-shell-')) continue;
+        hit = await cachedResponse(await caches.open(name), request);
+        if (hit) return hit;
+      }
+    }
     return fetch(request);
   }
-  const hit = await cachedResponse(cache, request);
-  if (shell && hit && !request.mode.includes('navigate') && !request.url.endsWith('shell-manifest.json')) return hit;
+  if (request.headers.has('Range')) return hit || fetch(request);
   const network = fetch(request).then(async (response) => {
     if (response.ok && response.status === 200) {
-      let revision;
-      if (shell) {
-        const manifest = await cache.match(local('shell-manifest.json'));
-        if (manifest) revision = (await manifest.json()).files.find((entry) => new URL(entry.url, base).href === request.url)?.revision;
-      }
-      const copy = await stamped(response.clone(), revision);
-      await cache.put(request.url, copy).catch(() => {});
+      await cache.put(request.url, await stamped(response.clone())).catch(() => {});
     }
     return response;
   });
@@ -109,16 +160,12 @@ async function serve(request, shell, event) {
   } finally {
     clearTimeout(timer);
   }
-  if (request.mode === 'navigate' && shell) {
-    const page = await cache.match(local('index.html'));
-    if (page) return page;
-  }
   return new Response('Нет сети. Сохраните этот файл через «Работа без интернета».', { status: 503 });
 }
 self.addEventListener('fetch', (event) => {
   const request = event.request,
     url = new URL(request.url);
-  if (request.method !== 'GET' || request.cache === 'reload' || request.headers.has('Authorization')) return;
+  if (request.method !== 'GET' || request.headers.has('Authorization')) return;
   if (url.origin === base.origin) {
     if (!url.pathname.startsWith(base.pathname) || url.pathname.startsWith(`${base.pathname}app/`)) return;
     const path = decodeURIComponent(url.pathname.slice(base.pathname.length));

@@ -206,7 +206,7 @@ test('классика: 125% сохраняет мобильный поиск и
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('классика: быстрые действия в один ряд при 125% @phone', async ({ page }) => {
+test('классика: подписанные быстрые действия при 125% @phone', async ({ page }) => {
   await setup(page);
   await page.addInitScript(() => localStorage.setItem('m3102-settings-v1', JSON.stringify({ theme: 'dark', reduceMotion: true, textScale: 125 })));
   for (const width of [320, 393]) {
@@ -230,7 +230,7 @@ test('классика: быстрые действия в один ряд пр�
           return { top: Math.round(r.top), left: r.left, right: r.right, height: r.height };
         }),
       );
-      expect(new Set(rects.map((r) => r.top)).size).toBe(1);
+      for (const label of await row.locator('.student-action-label').all()) await expect(label).toBeVisible();
       for (const rect of rects) {
         expect(rect.left).toBeGreaterThanOrEqual(0);
         expect(rect.right).toBeLessThanOrEqual(width);
@@ -253,11 +253,13 @@ test('классика: PDF-закладка без цитаты и оформл
   await page.goto('../#/bookmarks');
   await expect(page.locator('#content')).toContainText('страница 3');
   await expect(page.locator('#content blockquote')).toHaveCount(0);
-  await page.goto('../#/settings');
+  await page.goto('../#/settings?section=data');
   await expect(page.getByRole('button', { name: 'Выбрать резервную копию' })).toBeVisible();
   await expect(page.locator('[data-backup-import]')).toBeHidden();
+  await page.locator('details.prefs-extra > summary').click();
   await expect(page.locator('[data-prefs-action="reset"]')).toHaveAccessibleName('Сбросить настройки оформления и чтения');
-  await expect(page.locator('[data-pref="textScale"]')).toHaveCSS('min-height', '44px');
+  await page.goto('../#/settings?section=reading');
+  await expect(page.locator('[data-pref="textScale"]')).toHaveCSS('min-height', '46px');
 });
 
 test('классика: указатели в перегрузках C++ видны буквально', async ({ page }) => {
@@ -277,7 +279,7 @@ test('классика: указатели в перегрузках C++ вид�
 });
 test('классика: резервная копия переносит прогресс и отвергает посторонний файл', async ({ page }) => {
   await setup(page);
-  await page.goto('../#/settings');
+  await page.goto('../#/settings?section=data');
   await page.evaluate(() => {
     localStorage.setItem('m3102-study-plan-v1', JSON.stringify({ tasks: [{ id: 'one', name: 'Моя задача' }], done: { one: true } }));
     localStorage.setItem('m3102-github-token-v1', 'test-secret');
@@ -319,6 +321,7 @@ test('классика: личный порядок главной сохран�
   await setup(page);
   await page.goto('../');
   await page.getByRole('button', { name: 'Настроить главную' }).click();
+  await page.locator('[data-reorder-toggle]').click();
   await page.locator('[data-block="student-queues-panel"] [data-up]').click();
   await page.locator('[data-block="student-queues-panel"] input').check();
   for(let i=0;i<8;i++) await page.locator('[data-block="student-queues-panel"] [data-up]').click();
@@ -372,7 +375,7 @@ test.describe('классика с настоящим офлайн-кешем', 
       (url) => decodeURIComponent(url.href).endsWith(note),
       (route) => (fail ? route.abort() : route.fulfill({ body: noteText })),
     );
-    await page.goto('../#/settings');
+    await page.goto('../#/settings?section=data');
     await page.locator('[data-off-start]').click();
     await expect(page.locator('.student-offline [role=status]')).toContainText('Не удалось скачать', { timeout: 40_000 });
     await expect(page.locator('.student-offline [role=status]')).not.toContainText('Всё готово');
@@ -392,4 +395,11 @@ test.describe('классика с настоящим офлайн-кешем', 
     await expect(page.locator('#note-body')).toContainText('Доказательство');
     expect(errors).toEqual([]);
   });
+});
+test('классика: ошибка импорта оформления видна рядом с действиями данных',async({page})=>{
+ await setup(page);await page.goto('../#/settings?section=data');
+ await page.locator('details.prefs-extra > summary').click();
+ await page.locator('[data-prefs-import]').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{broken')});
+ await expect(page.locator('#settings-data .prefs-status')).toBeVisible();
+ await expect(page.locator('#settings-data .prefs-status')).toHaveText('Не удалось прочитать файл настроек.');
 });

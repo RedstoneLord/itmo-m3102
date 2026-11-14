@@ -1,0 +1,29 @@
+{
+  "fixture": "Controlled educational Markdown and silent WAV; real renderer, font assets, export libraries and PDF.js",
+  "results": [
+    {
+      "theme": "light",
+      "fonts": {
+        "body": "\"Golos Text\", \"Golos Fallback\", Arial, sans-serif",
+        "math": "KaTeX_Main, \"Times New Roman\", serif",
+        "code": "monospace",
+        "width": 1076,
+        "wrap": 1440
+      },
+      "exportBytes": 690274,
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "fonts": {
+        "body": "\"Golos Text\", \"Golos Fallback\", Arial, sans-serif",
+        "math": "KaTeX_Main, \"Times New Roman\", serif",
+        "code": "monospace",
+        "width": 1076,
+        "wrap": 1440
+      },
+      "exportBytes": 690274,
+      "errors": []
+    }
+  ]
+}
