@@ -139,11 +139,8 @@ html:root[data-site-style][data-font='ubuntu'] {
 html:root[data-site-style][data-font='urw'] {
   --font-ui: var(--ff-urw);
 }
-html:root[data-site-style] {
-  background: var(--bg);
-}
 html:root[data-site-style] body {
-  background: transparent;
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-ui);
   font-weight: 400;
@@ -152,6 +149,10 @@ html:root[data-site-style] body {
 }
 html:root[data-site-style] [hidden] {
   display: none !important;
+}
+html:root[data-site-style] .bgfx {
+  display: block;
+  z-index: 0;
 }
 html:root[data-site-style] :is(.backdrop, .hero-orbit) {
   display: none;
@@ -368,6 +369,8 @@ html:root[data-site-style] button:active {
 }
 /* Каркас и поиск. */
 html:root[data-site-style] .wrap {
+  position: relative;
+  z-index: 1;
   max-width: 1280px;
   padding: 0 24px 24px;
 }
