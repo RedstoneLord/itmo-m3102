@@ -146,6 +146,28 @@ export function applyHomeLayout() {
     grid.append(none);
   }
   none.hidden = layout.visible.length !== 0;
+
+  const naturallyFull = new Set(['student-next-panel', 'notes-panel', 'plan-panel']);
+  const visiblePanels = [...grid.children].filter((el) => el.matches('section.dash-panel') && !el.hidden);
+  let i = 0;
+  while (i < visiblePanels.length) {
+    const current = visiblePanels[i];
+    const blockId = current.dataset.homeBlock;
+    if (naturallyFull.has(blockId)) {
+      current.dataset.span = '2';
+      i++;
+    } else {
+      const next = visiblePanels[i + 1];
+      if (next && !naturallyFull.has(next.dataset.homeBlock)) {
+        current.dataset.span = '1';
+        next.dataset.span = '1';
+        i += 2;
+      } else {
+        current.dataset.span = '2';
+        i++;
+      }
+    }
+  }
 }
 export function mountHome() {
   mountHomeSettings();

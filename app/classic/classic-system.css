@@ -139,8 +139,11 @@ html:root[data-site-style][data-font='ubuntu'] {
 html:root[data-site-style][data-font='urw'] {
   --font-ui: var(--ff-urw);
 }
-html:root[data-site-style] body {
+html:root[data-site-style] {
   background: var(--bg);
+}
+html:root[data-site-style] body {
+  background: transparent;
   color: var(--text);
   font-family: var(--font-ui);
   font-weight: 400;
@@ -150,7 +153,7 @@ html:root[data-site-style] body {
 html:root[data-site-style] [hidden] {
   display: none !important;
 }
-html:root[data-site-style] :is(.bgfx, .backdrop, .hero-orbit) {
+html:root[data-site-style] :is(.backdrop, .hero-orbit) {
   display: none;
 }
 html:root[data-site-style] :is(.wrap, header, .bottom-nav, .home-hero, .dash-panel, .card, .hw-item, .dl-card, .link-card, .sched-card) {
