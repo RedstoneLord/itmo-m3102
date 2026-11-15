@@ -35,12 +35,43 @@ async function prepare(page: Page, theme: string) {
 }
 
 test.describe('live timetable UI', () => {
+  test.describe.configure({ timeout: 60_000 });
   test.use({ serviceWorkers: 'block' });
+  test('confirmed room and teacher defaults produce no false alerts in either edition', async ({ page }) => {
+    test.setTimeout(120_000);
+    await prepare(page, 'light');
+    const titles = ['Линейная алгебра', 'Основы программирования', 'Основы программирования', 'Математический анализ'];
+    const teachers = ['Ржонсницкая Юлия Борисовна', 'Т', 'Влад Сергей Евгеньевич', 'Мурадова Мариам Баширова'];
+    const rooms = ['2337', '1419', '2311', '2138'];
+    const starts = ['09:50', '11:30', '13:30', '15:30'], ends = ['11:20', '13:00', '15:00', '17:00'];
+    const expected = titles.map((subject, i) => ({ id: `default-${i}`, subject, teacher: teachers[i], room: rooms[i],
+      start: starts[i], end: ends[i], kind: i < 2 ? 'lecture' : 'practice',
+      location: i === 1 ? 'Lemon Classroom (1419), Кронверкский' : 'Кронверкский' }));
+    const cycle = Array.from({ length: 14 }, (_, i) => i % 7 === 1 ? expected : []);
+    await page.context().route('**/data/schedule.json', (route) => route.fulfill({ json: { ...baseline, cycle } }));
+    const live = importPersonalTimetable([{ code: 0, data: dateRange('2026-11-16', '2026-11-22').map((date) => ({ date,
+      lessons: date === '2026-11-17' ? titles.map((subject, i) => ({ pair_id: i + 1, subject, group: 'Поток(M3102)',
+        work_type_id: [1, 1, 2, 3][i], time_start: starts[i], time_end: ends[i],
+        room: ['Orange Classroom (2304)', 'Lemon Classroom (1419)', '2134', '2138'][i],
+        teacher_name: i === 3 ? 'Бровкина Екатерина Анатольевна' : teachers[i], building: 'Кронверкский' })) : [] }))
+    }], '2026-11-16', '2026-11-22', '2026-11-18T08:30:00Z');
+    await page.context().route('**/data/timetable-live.json', (route) => route.fulfill({ json: live }));
+    for (const url of ['./#/schedule?view=day&date=2026-11-17', '../#/schedule/2026-11-17']) {
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      if (url.startsWith('./')) await page.waitForFunction(() => localStorage.getItem('m3102:last-sync') !== null);
+      await expect(page.getByText(/My ITMO · обновлено/).first()).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText(/Мурадова/).filter({ visible: true }).first()).toBeVisible();
+      await expect(page.getByText(/Бровкина/)).toHaveCount(0);
+      await expect(page.getByText(/Изменения в расписании|В расписании есть изменения/)).toHaveCount(0);
+      await expect(page.getByText(/Orange Classroom|Lemon Classroom/).filter({ visible: true })).toHaveCount(0);
+      for (const room of ['2307', '2134', '1419']) await expect(page.getByText(new RegExp(`(?:Аудитория|ауд\\.) ${room}`)).first()).toBeVisible();
+    }
+  });
   for (const theme of ['light', 'dark']) {
     test(`My ITMO: room changes, missing lessons and consultations in both editions (${theme})`, async ({ page }, info) => {
       await prepare(page, theme);
       await page.context().route('**/data/timetable-live.json', (route) => route.fulfill({ json: snapshot() }));
-      await page.goto(`./#/schedule?view=day&date=${DAY}`);
+      await page.goto(`./#/schedule?view=day&date=${DAY}`, { waitUntil: 'domcontentloaded' });
       await page.waitForFunction(() => localStorage.getItem('m3102:last-sync') !== null);
       await expect(page.getByText('Ауд. изменена', { exact: true })).toBeVisible();
       await expect(page.getByText('Отменено', { exact: true })).toHaveCount(1);
@@ -50,11 +81,11 @@ test.describe('live timetable UI', () => {
       await expect(page.getByRole('dialog')).toContainText('1330 (было 2240)');
       await page.keyboard.press('Escape');
       await page.screenshot({ path: info.outputPath(`modern-${theme}.png`), fullPage: true });
-      await page.goto('./#/today');
+      await page.goto('./#/today', { waitUntil: 'domcontentloaded' });
       await expect(page.getByRole('region', { name: 'Ближайшая пара' })).toContainText('Нет в расписании My ITMO');
       await expect(page.getByRole('region', { name: 'Ближайшая пара' })).toContainText('1330 (было 2240)');
 
-      await page.goto(`../#/schedule/${DAY}`);
+      await page.goto(`../#/schedule/${DAY}`, { waitUntil: 'domcontentloaded' });
       await expect(page.locator('.sched-entry.live-cancelled')).toHaveCount(1);
       await expect(page.locator('.sched-entry').first()).toContainText('1330');
       await page.locator('.sched-card summary').first().click();
@@ -63,7 +94,7 @@ test.describe('live timetable UI', () => {
       await expect(page.getByText('Учебная, ознакомительная', { exact: true })).toBeVisible();
       await expect(page.locator('.sched-kind').last()).toHaveText('Зачёт');
       await page.screenshot({ path: info.outputPath(`classic-${theme}.png`), fullPage: true });
-      await page.goto('../#/');
+      await page.goto('../#/', { waitUntil: 'domcontentloaded' });
       await expect(page.locator('#student-next')).toContainText('Нет в расписании My ITMO');
       await expect(page.locator('#student-next')).toContainText('1330 (было 2240)');
     });
@@ -72,7 +103,7 @@ test.describe('live timetable UI', () => {
     await prepare(page, 'dark');
     await page.context().route('**/data/timetable-live.json', (route) => route.fulfill({ json: snapshot() }));
     for (const url of [`./#/schedule?view=day&date=${DAY}`, `../#/schedule/${DAY}`]) {
-      await page.goto(url);
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
       await expect(page.getByText(/My ITMO · обновлено/).first()).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
@@ -85,7 +116,7 @@ test('hourly public data refreshes through the modern service worker; offline ke
   let current = snapshot();
   let available = true;
   await context.route('**/data/timetable-live.json', (route) => available ? route.fulfill({ json: current }) : route.abort());
-  await page.goto(`./#/schedule?view=day&date=${DAY}`);
+  await page.goto(`./#/schedule?view=day&date=${DAY}`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByText(/1330 \(было 2240\)/).first()).toBeVisible();
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));

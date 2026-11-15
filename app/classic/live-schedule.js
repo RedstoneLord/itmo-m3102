@@ -1,6 +1,7 @@
 import { diffTimetableDay, liveFreshness, parseLiveTimetable, timetableChangeText } from './live-timetable.js';
 import { esc, read, save } from './student-core.js';
 import { markFresh } from './student-data.js';
+import { normalizeTimetableLesson } from './timetable-changes.js';
 
 let flight;
 let current = { snapshot: null, saved: true };
@@ -27,6 +28,7 @@ export async function loadLiveSnapshot() {
 }
 
 export function liveRowsOn(date, baseline, snapshot = current.snapshot) {
+  baseline = baseline.map((lesson) => normalizeTimetableLesson(lesson, new Date(`${date}T12:00:00Z`).getUTCDay(), baseline, true));
   if (!snapshot?.days || !Object.hasOwn(snapshot.days, date)) return baseline;
   return diffTimetableDay(baseline, snapshot.days[date], date, snapshot.removed[date]).map((row) => {
     const sourceId = row.lesson.id.startsWith('itmo-') ? row.lesson.id : snapshot.removed[date]?.find((item) =>

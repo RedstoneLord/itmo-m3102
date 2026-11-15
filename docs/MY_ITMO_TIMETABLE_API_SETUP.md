@@ -548,3 +548,18 @@ is now explicitly mapped as `intro-practice`, with the exact official title in b
 not inserted into the fixed repeating cycle. Subject-store migration v2 adds it for existing visitors while preserving
 their saved edits and custom subjects. Unknown-course diagnostics collect a bounded report and still stop the entire
 publication instead of dropping entries from an otherwise complete-looking day.
+
+### Owner-confirmed defaults and API corrections
+
+Following the live rollout, the owner confirmed: Tuesday classes taught by Юлия Борисовна normally use **2307**;
+ITMO's **2304** on that slot is incorrect. Влад Сергей normally uses **2134**; the old cycle's **2311** is obsolete.
+Mathematical-analysis practices retain **the original group JSON's teacher** (currently Мурадова Мариам Баширова),
+because ITMO supplies the wrong teacher for these practices. The private importer reads the checked-out original
+`data/schedule.json`; it applies that correction to current and previous snapshots without inventing a teacher change.
+
+Room labels containing numbers are projected as their numeric identifiers, so **Lemon Classroom (1419)** and
+**1419**, and equivalent Orange Classroom labels, compare as the same room. A redundant Classroom prefix in the
+building address does not count as a building move. An initial generic practice-to-lab type enrichment from the
+old cycle is ordinary metadata; subsequent changes between two official snapshots can still be marked.
+A replay of the published 16–22 November week with these rules removes the false routine alerts and leaves only
+the additional Saturday discrete-mathematics consultation. The group's original JSON and its format are preserved.

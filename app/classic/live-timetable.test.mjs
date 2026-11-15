@@ -1,5 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { roomNumber } from './timetable-changes.js';
 import { dateRange, diffTimetableDay, importPersonalTimetable, isIndividualLesson, parseLiveTimetable, timetableChangeText } from './live-timetable.js';
 
 const FROM = '2026-11-15', TO = '2026-11-21', AT = '2026-11-15T09:00:00.000Z';
@@ -100,4 +102,40 @@ test('recognizes a different-day move only through a unique stable upstream iden
   const value = importPersonalTimetable([moved], FROM, TO, AT, before);
   assert.equal(value.days['2026-11-19'][0].previous.date, '2026-11-18');
   assert.equal(value.removed['2026-11-18'][0].id, 'itmo-1');
+});
+test('classroom names are numeric labels and do not create room or building moves', () => {
+  assert.equal(roomNumber('Orange Classroom (2307)'), '2307');
+  assert.equal(roomNumber('Lemon Classroom (1419)'), '1419');
+  assert.equal(roomNumber('Онлайн'), 'Онлайн');
+  const value = snapshot([lesson({ room: 'Lemon Classroom (1419)', building: 'Кронверкский' })]);
+  const row = diffTimetableDay([base({ room: '1419', location: 'Lemon Classroom (1419), Кронверкский' })], value.days['2026-11-18'], '2026-11-18')[0];
+  assert.equal(row.state, 'regular'); assert.deepEqual(row.changes, []);
+  assert.equal(row.lesson.room, '1419');
+});
+test('initial API lesson types are defaults; later official type changes remain observable', () => {
+  const value = snapshot();
+  assert.equal(diffTimetableDay([base({ kind: 'practice' })], value.days['2026-11-18'], '2026-11-18')[0].state, 'regular');
+  const actual = value.days['2026-11-18'][0];
+  actual.previous = { ...actual, kind: 'practice', date: '2026-11-18' };
+  assert.deepEqual(diffTimetableDay([base({ kind: 'practice' })], [actual], '2026-11-18')[0].changes, ['type']);
+  const moved = snapshot([lesson({ time_start: '17:10', time_end: '18:40' })]).days['2026-11-18'];
+  assert.deepEqual(diffTimetableDay([base({ kind: 'practice' })], moved, '2026-11-18')[0].changes, ['time']);
+});
+test('owner-confirmed recurring rooms are normal defaults while a genuinely different room is marked', () => {
+  const yb = { ...base({ subjectId: 'linal', subject: 'Линейная алгебра', kind: 'lecture', teacher: 'Ржонсницкая Юлия Борисовна', room: '2337' }) };
+  const actual = { ...yb, id: 'itmo-1', room: '2304' };
+  const row = diffTimetableDay([yb], [actual], '2026-11-17')[0];
+  assert.equal(row.lesson.room, '2307'); assert.equal(row.state, 'regular');
+  assert.ok(diffTimetableDay([yb], [{ ...actual, room: '2250' }], '2026-11-17')[0].changes.includes('room'));
+  const vlad = base({ subjectId: 'op', subject: 'Основы программирования', kind: 'practice', teacher: 'Влад Сергей Евгеньевич', room: '2311' });
+  assert.equal(diffTimetableDay([vlad], [{ ...vlad, id: 'itmo-2', room: '2134', kind: 'lab' }], '2026-11-21')[0].state, 'regular');
+  assert.ok(diffTimetableDay([vlad], [{ ...vlad, id: 'itmo-2', room: '2300' }], '2026-11-21')[0].changes.includes('room'));
+});
+test('mathematical-analysis practices retain the original JSON teacher without a synthetic teacher-change alert', () => {
+  const reference = JSON.parse(readFileSync(new URL('../../data/schedule.json', import.meta.url), 'utf8')).cycle.flat();
+  const raw = payload([lesson({ subject: 'Математический анализ', work_type_id: 3, teacher_name: 'Бровкина Екатерина Анатольевна' })]);
+  const before = importPersonalTimetable([raw], FROM, TO, AT);
+  const after = importPersonalTimetable([raw], FROM, TO, AT, before, reference);
+  const practice = after.days['2026-11-18'][0];
+  assert.equal(practice.teacher, 'Мурадова Мариам Баширова'); assert.equal(practice.previous, undefined);
 });

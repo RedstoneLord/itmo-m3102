@@ -1,6 +1,7 @@
 import { M3102_CLASSES, resolveSubjectFolder } from '../data/m3102';
 import { addDays, getWeekday } from '../lib/dates';
 import type { ClassDetails, ClassSession, ClassType, ISODate, ScheduleException, WeekRepeat, Weekday } from '../types/models';
+import { normalizeTimetableLesson } from '../../classic/timetable-changes';
 
 /**
  * Расписание с сайта группы — data/schedule.json в RedstoneLord/itmo-m3102:
@@ -72,14 +73,31 @@ function toDetails(lesson: RawLesson, weekday: Weekday, defaultLocation: string,
   }
   const [startTime, endTime] = times(lesson);
   if (!/^\d{1,2}:\d{2}$/.test(startTime) || !/^\d{1,2}:\d{2}$/.test(endTime)) return null;
+  const type = classType(lesson.kind, weekday, startTime, subjectId);
+  const reference = normalizeTimetableLesson(
+    {
+      id: 'reference',
+      subjectId,
+      subject,
+      start: startTime,
+      end: endTime,
+      kind: type,
+      room: String(lesson.room ?? ''),
+      teacher: String(lesson.teacher ?? ''),
+      location: String(lesson.location || defaultLocation),
+    },
+    weekday,
+    [],
+    true,
+  );
   return {
     subjectId,
     startTime,
     endTime,
-    type: classType(lesson.kind, weekday, startTime, subjectId),
-    room: lesson.room ? String(lesson.room) : undefined,
-    building: String(lesson.location || defaultLocation) || undefined,
-    teacher: String(lesson.teacher ?? ''),
+    type,
+    room: reference.room || undefined,
+    building: reference.location || undefined,
+    teacher: reference.teacher,
   };
 }
 

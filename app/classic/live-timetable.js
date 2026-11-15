@@ -1,4 +1,4 @@
-import { lessonChanges } from './timetable-changes.js';
+import { lessonChanges, normalizeTimetableLesson, roomNumber } from './timetable-changes.js';
 // Shared by the browser editions and the private build-time importer. No credentials belong in this module.
 const SUBJECTS = {
   dm: 'Дискретная математика',
@@ -74,10 +74,12 @@ function readLesson(raw) {
     || !TIME.test(raw.start) || !TIME.test(raw.end) || raw.start >= raw.end
     || typeof raw.id !== 'string' || !/^itmo-\d+$/.test(raw.id)) fail('invalid public lesson');
   // Allowlist, never spread upstream data. In particular notes/meeting links/passwords/ISU are never published.
+  const rawRoom = clean(raw.room);
+  if (rawRoom.length > 300 || /https?:|eyJ[A-Za-z0-9_-]+\./i.test(rawRoom)) fail('unexpected lesson text');
   const value = {
     id: raw.id, subjectId: raw.subjectId, subject: SUBJECTS[raw.subjectId],
     start: raw.start, end: raw.end, kind: raw.kind,
-    room: clean(raw.room), teacher: clean(raw.teacher), location: clean(raw.location),
+    room: roomNumber(rawRoom), teacher: clean(raw.teacher), location: clean(raw.location),
   };
   if (raw.calendarDate !== undefined) {
     if (!validDate(raw.calendarDate)) fail('invalid calendar identity');
@@ -93,14 +95,17 @@ function readPrevious(raw) {
 }
 
 /** Consume complete API responses, one per requested chunk. A missing day is never an empty day. */
-export function importPersonalTimetable(responses, from, to, updatedAt, previous = null) {
+export function importPersonalTimetable(responses, from, to, updatedAt, previous = null, reference = []) {
   const expected = dateRange(from, to), days = {}, ids = new Set(), unknownSubjects = new Set();
   for (const response of responses) {
     if (!response || response.code !== 0 || !Array.isArray(response.data)) fail('API did not report success');
     for (const day of response.data) {
       if (!day || !expected.includes(day.date) || Object.hasOwn(days, day.date) || !Array.isArray(day.lessons)) fail('incomplete or duplicate date coverage');
       const lessons = day.lessons.map((raw) => {
-        try { return readPersonalLesson(raw); } catch (error) {
+        try {
+          const lesson = readPersonalLesson(raw);
+          return lesson && normalizeTimetableLesson(lesson, new Date(`${day.date}T12:00:00Z`).getUTCDay(), reference);
+        } catch (error) {
           if (!(error instanceof Error) || !error.message.startsWith('Timetable: unmapped academic subject ')) throw error;
           // Collect a bounded review report, but never publish a partial list as a complete day.
           if (unknownSubjects.size < 8) unknownSubjects.add(error.message.slice('Timetable: '.length));
@@ -121,6 +126,11 @@ export function importPersonalTimetable(responses, from, to, updatedAt, previous
   const snapshot = { version: 1, source: 'my.itmo', group: 'М3102', updatedAt, from, to, days, removed: {} };
   if (previous) {
     const before = parseLiveTimetable(previous), oldById = new Map(), newById = new Map();
+    // Applying a group correction must not masquerade as a new upstream change.
+    for (const collection of [before.days, before.removed]) for (const [date, lessons] of Object.entries(collection)) {
+      collection[date] = lessons.map((lesson) => ({ ...normalizeTimetableLesson(lesson, new Date(`${date}T12:00:00Z`).getUTCDay(), reference),
+        ...(lesson.previous ? { previous: normalizeTimetableLesson(lesson.previous, new Date(`${lesson.previous.date}T12:00:00Z`).getUTCDay(), reference) } : {}) }));
+    }
     for (const [date, lessons] of Object.entries(before.days)) for (const lesson of lessons) {
       const entries = oldById.get(lesson.id) || [];
       entries.push({ ...lesson, date }); oldById.set(lesson.id, entries);

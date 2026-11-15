@@ -29,7 +29,7 @@ export async function renewSession({ refreshToken, request = fetch, mask = () =>
     accessToken: validToken(tokens?.access_token) && (!tokens.token_type || String(tokens.token_type).toLowerCase() === 'bearer') ? tokens.access_token : null };
 }
 
-export async function fetchTimetable({ accessToken, request = fetch, now = new Date(), previous = null }) {
+export async function fetchTimetable({ accessToken, request = fetch, now = new Date(), previous = null, reference = [] }) {
   if (!validToken(accessToken)) fail('Invalid access-token response. The renewed session was saved; retry the workflow.');
   const today = campusDate(now), from = shiftDate(today, -7), to = shiftDate(today, 41), dates = dateRange(from, to), chunks = [];
   for (let i = 0; i < dates.length; i += 7) {
@@ -47,7 +47,7 @@ export async function fetchTimetable({ accessToken, request = fetch, now = new D
     if (!Array.isArray(returned) || returned.length !== part.length || part.some((date) => !returned.includes(date))) fail('Incomplete timetable response; publication stopped.');
     chunks.push(payload);
   }
-  return importPersonalTimetable(chunks, from, to, now.toISOString(), previous);
+  return importPersonalTimetable(chunks, from, to, now.toISOString(), previous, reference);
 }
 
 function writeAtomic(path, contents) {
@@ -93,7 +93,9 @@ async function main() {
     const response = await fetch(published, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
     if (response.ok) previous = parseLiveTimetable(await response.json());
   } catch { /* The first deployment has no public snapshot; malformed old data is not trusted. */ }
-  const snapshot = await fetchTimetable({ accessToken: session.accessToken, previous });
+  const groupReference = JSON.parse(readFileSync(new URL('../../data/schedule.json', import.meta.url), 'utf8'));
+  if (!Array.isArray(groupReference.cycle) || groupReference.cycle.length !== 14) fail('Timetable: invalid group reference schedule.');
+  const snapshot = await fetchTimetable({ accessToken: session.accessToken, previous, reference: groupReference.cycle.flat() });
   writeAtomic(env.ITMO_TIMETABLE_FILE, JSON.stringify(snapshot));
   console.log(`My ITMO: ${Object.keys(snapshot.days).length} complete days; ${Object.values(snapshot.days).flat().length} shared lessons. Public snapshot ready.`);
 }

@@ -47,7 +47,7 @@ export function shiftDate(date: string, count: number): string;
 export function campusDate(now?: Date): string;
 export function dateRange(from: string, to: string): string[];
 export function isIndividualLesson(lesson: Record<string, unknown>): boolean;
-export function importPersonalTimetable(responses: unknown[], from: string, to: string, updatedAt: string, previous?: LiveTimetable | null): LiveTimetable;
+export function importPersonalTimetable(responses: unknown[], from: string, to: string, updatedAt: string, previous?: LiveTimetable | null, reference?: TimetableLesson[]): LiveTimetable;
 export function parseLiveTimetable(raw: unknown): LiveTimetable;
 export function lessonChanges(before: TimetableLesson, after: TimetableLesson): TimetableDiff['changes'];
 export function diffTimetableDay(baseline: TimetableLesson[], actual: LiveLesson[], date: string, removed?: LiveLesson[]): TimetableDiff[];
