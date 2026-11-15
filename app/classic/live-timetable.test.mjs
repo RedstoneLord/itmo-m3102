@@ -139,3 +139,12 @@ test('mathematical-analysis practices retain the original JSON teacher without a
   const practice = after.days['2026-11-18'][0];
   assert.equal(practice.teacher, 'Мурадова Мариам Баширова'); assert.equal(practice.previous, undefined);
 });
+test('the recurring Saturday DM slot is regular, including consultations, while room changes remain visible', () => {
+  const saturday = base({ start: '17:10', end: '18:40', room: '2407', location: 'Кронверкский пр., д.49, лит.А', teacher: 'Кулешова Екатерина Дмитриевна' });
+  for (const kind of ['practice', 'lab', 'consultation']) {
+    const actual = { ...saturday, id: 'itmo-1', kind };
+    assert.equal(diffTimetableDay([], [actual], '2026-11-21')[0].state, 'regular');
+    assert.deepEqual(diffTimetableDay([], [{ ...actual, room: '2337' }], '2026-12-05')[0].changes, ['room']);
+  }
+  assert.equal(diffTimetableDay([], [{ ...saturday, id: 'itmo-1', start: '18:50', end: '20:20' }], '2026-11-21')[0].state, 'additional');
+});

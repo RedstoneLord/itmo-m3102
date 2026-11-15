@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import originalSchedule from '../../../../data/schedule.json?raw';
 import { dateRange, importPersonalTimetable } from '../../../classic/live-timetable';
+import { parseGroupSchedule } from '../../services/groupSchedule';
 import { groupCalendarEvents } from './calendarExport';
 import { getOccurrencesForDate, takesPlace, type ScheduleData } from './occurrences';
 
@@ -47,6 +49,44 @@ const baseline: ScheduleData = {
 const calendar = (data: ScheduleData) => groupCalendarEvents({ schedule: data, subjects: [], deadlines: [], homework: [], from: FROM, days: 40 });
 
 describe('official timetable overlay', () => {
+  it('keeps the original Math Analysis practice teacher regular on both Friday rotations', () => {
+    const raw = JSON.parse(originalSchedule);
+    const group = parseGroupSchedule(raw);
+    const from = '2026-11-16',
+      to = '2026-11-29';
+    const responses = [
+      {
+        code: 0,
+        data: dateRange(from, to).map((date) => ({
+          date,
+          lessons: ['2026-11-20', '2026-11-27'].includes(date)
+            ? [
+                rawLesson({
+                  pair_id: Number(date.replaceAll('-', '')),
+                  subject: 'Математический анализ',
+                  work_type_id: 3,
+                  time_start: '17:10',
+                  time_end: '18:40',
+                  room: '2138',
+                  teacher_name: 'Бровкина Екатерина Анатольевна',
+                  building: raw.defaultLocation,
+                }),
+              ]
+            : [],
+        })),
+      },
+    ];
+    const old = importPersonalTimetable(responses, from, to, '2026-11-15T09:00:00Z');
+    const live = importPersonalTimetable(responses, from, to, '2026-11-15T10:00:00Z', old, raw.cycle.flat());
+    for (const date of ['2026-11-20', '2026-11-27']) {
+      const practice = getOccurrencesForDate(date, { ...group, semesterStart: '2026-09-01', live }).find(
+        (row) => row.details.subjectId === 'matan' && row.details.type === 'practice',
+      );
+      expect(practice?.details.teacher).toBe('Мурадова Мариам Баширова');
+      expect(practice?.status).toBe('regular');
+      expect(practice?.sourceChange).toBeUndefined();
+    }
+  });
   it('links a room move to one real occurrence, keeping old and new room in the warning', () => {
     const rows = getOccurrencesForDate(DAY, { ...baseline, live: snapshot({ room: '1330' }) });
     expect(rows).toHaveLength(1);

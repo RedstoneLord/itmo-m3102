@@ -38,6 +38,14 @@ export function diffTimetableDay(baseline, actual, date, removed = []) {
   } : {}) }));
   removed = removed.map((lesson) => normalize(lesson));
   baseline = baseline.map((lesson) => normalize(lesson, true));
+  // The group JSON omits this owner-confirmed recurring Saturday slot.
+  // Compare it with its usual details, so real room changes still stand out.
+  if (weekday === 6 && actual.some((lesson) => (lesson.subjectId === 'dm' || nameKey(lesson.subject) === 'дискретная математика')
+    && lesson.start === '17:10' && ['practice', 'lab', 'consultation'].includes(lesson.kind))
+    && !baseline.some((lesson) => (lesson.subjectId === 'dm' || nameKey(lesson.subject) === 'дискретная математика') && lesson.start === '17:10')) {
+    baseline.push({ id: 'default-saturday-dm', subjectId: 'dm', subject: 'Дискретная математика', start: '17:10', end: '18:40',
+      room: '2407', location: 'Кронверкский пр., д.49, лит.А', teacher: 'Кулешова Екатерина Дмитриевна', kind: 'practice' });
+  }
   const old = baseline.filter((lesson) => !lesson.break), unmatched = new Set(old), matches = new Map(), left = new Set(actual);
   const sameSubject = (a, b) => a.subjectId && b.subjectId ? a.subjectId === b.subjectId : nameKey(a.subject) === nameKey(b.subject);
   for (const predicate of [
