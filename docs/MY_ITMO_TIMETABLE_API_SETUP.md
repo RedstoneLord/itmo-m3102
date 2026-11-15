@@ -529,3 +529,15 @@ The shared site already uses the Actions deployment path. The changes are prepar
 publication and authenticated rotation acceptance checks are still pending at this point. The credentialed worker
 reports only numeric token lifetimes (when provided by ITMO) so the hourly cadence can be checked against the live
 session policy without exposing token values.
+
+### First protected run, 16 November 2026
+
+[The first protected run](https://github.com/RedstoneLord/itmo-m3102/actions/runs/43769454238) successfully renewed
+the real session and uploaded its encrypted checkpoint using only the configured refresh-token secret. ITMO returned
+access-token lifetime **1,800 seconds** and refresh-token lifetime **2,592,000 seconds (30 days)**. These are observed
+response durations, not a guarantee against earlier revocation or a future policy change.
+
+Publication stopped on an unmapped academic entry in the longer date range; the old website remained intact.
+The adapter accepts numeric-string sport/booking IDs and reports only plain course titles in explicitly confirmed
+M3102 flows, plus numeric type IDs, for mapping errors. Do not replace the secret for a mapping failure: the encrypted
+checkpoint has already preserved renewal. A mapping correction and a new run can reuse it.

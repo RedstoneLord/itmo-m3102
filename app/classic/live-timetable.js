@@ -12,6 +12,7 @@ const TYPES = { 1: 'lecture', 2: 'lab', 3: 'practice', 5: 'exam', 6: 'credit', 9
 const KINDS = new Set(['lecture', 'lab', 'practice', 'seminar', 'exam', 'credit', 'consultation']);
 const clean = (value) => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
 const nameKey = (value) => clean(value).toLowerCase().replaceAll('ё', 'е').replaceAll('_', ' ');
+const typeId = (value) => typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value;
 const TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const fail = (message) => { throw new Error(`Timetable: ${message}`); };
 
@@ -38,20 +39,26 @@ export function dateRange(from, to) {
 }
 export function isIndividualLesson(lesson) {
   const subject = nameKey(lesson.subject);
-  return lesson.flow_type_id === 3 || lesson.flow_type_id === 5 || lesson.work_type_id === 11 || lesson.work_type_id === 131
+  return [3, 5].includes(typeId(lesson.flow_type_id)) || [11, 131].includes(typeId(lesson.work_type_id))
     || /(?:^|\s|\/)english(?:\s|$)|английский язык|иностранный язык|foreign language|физическ(?:ая|ой) культур|физкультур/.test(subject)
     || ['плавание', 'элективные дисциплины по физической культуре и спорту'].includes(subject);
 }
 function readPersonalLesson(raw) {
   if (!raw || typeof raw !== 'object') fail('invalid lesson');
   if (isIndividualLesson(raw)) return null;
+  const group = clean(raw.group).replaceAll('М', 'M');
+  const confirmedGroup = /(?:^|[,(])M3102(?:[,)]|$)/.test(group);
   const name = nameKey(raw.subject);
   const subjectId = Object.keys(SUBJECTS).find((id) => nameKey(SUBJECTS[id]) === name)
     || (name === 'линейная алгебра и геометрия' ? 'linal' : undefined);
-  if (!subjectId) fail('unmapped academic subject; publication stopped');
+  if (!subjectId) {
+    // Only a plain course title in an explicitly confirmed group may enter diagnostics, never arbitrary API fields.
+    const title = clean(raw.subject), safeTitle = confirmedGroup && /^[\p{L}\p{N}\s.,()+/-]{1,160}$/u.test(title) && !/eyJ[A-Za-z0-9_-]+\./i.test(title);
+    const numeric = (value) => Number.isSafeInteger(typeId(value)) ? typeId(value) : 'unknown';
+    fail(`unmapped academic subject ${safeTitle ? JSON.stringify(title) : '[title withheld]'}; M3102=${confirmedGroup}; work_type_id=${numeric(raw.work_type_id)}; flow_type_id=${numeric(raw.flow_type_id)}; subject_type=${typeof raw.subject}; publication stopped`);
+  }
   // Only the reviewed М3102 academic flows. Latin M appears in the real portal labels.
-  const group = clean(raw.group).replaceAll('М', 'M');
-  if (!/(?:^|[,(])M3102(?:[,)]|$)/.test(group)) fail('academic flow is not confirmed for M3102');
+  if (!confirmedGroup) fail('academic flow is not confirmed for M3102');
   if (!Number.isSafeInteger(raw.pair_id) || raw.pair_id <= 0) fail('missing pair identity');
   const kind = TYPES[raw.work_type_id];
   if (!kind) fail('unmapped academic work type; publication stopped');

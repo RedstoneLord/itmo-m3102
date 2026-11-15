@@ -18,6 +18,9 @@ test('filters actual C1 English, swimming, sports and room bookings; includes th
   assert.equal(value.days['2026-11-18'][1].kind, 'consultation');
   assert.equal(isIndividualLesson({ subject: 'Транспортные системы' }), false);
   assert.equal(isIndividualLesson({ subject: 'Секция графа' }), false);
+  for (const extra of [{ flow_type_id: '3' }, { flow_type_id: '5' }, { work_type_id: '11' }, { work_type_id: '131' }]) {
+    assert.equal(isIndividualLesson({ subject: 'Индивидуальная запись', ...extra }), true);
+  }
 });
 test('shared lectures may list several groups and use Cyrillic М; another group is not accepted', () => {
   assert.equal(snapshot([lesson({ group: 'ДМ 1(M3101,М3102,M3103)', work_type_id: 1 })]).days['2026-11-18'][0].kind, 'lecture');
@@ -26,6 +29,12 @@ test('shared lectures may list several groups and use Cyrillic М; another group
 });
 test('unknown subjects, missing names and unrecognized work types cannot turn into cancellations', () => {
   for (const change of [{ subject: null }, { subject: 'Новый предмет' }, { work_type_id: 999 }]) assert.throws(() => snapshot([lesson(change)]));
+});
+test('mapping diagnostics show only plain course titles in confirmed group flows', () => {
+  assert.throws(() => snapshot([lesson({ subject: 'Новый предмет' })]), /"Новый предмет"; M3102=true; work_type_id=2/);
+  for (const extra of [{ subject: 'Необщий курс', group: 'other' }, { subject: 'https://private.invalid' }, { subject: 'eyJprivate.payload.signature' }]) {
+    assert.throws(() => snapshot([lesson(extra)]), (error) => error.message.includes('[title withheld]') && !error.message.includes(extra.subject));
+  }
 });
 test('requires exact calendar coverage, API success, unique dates, times and pair identity', () => {
   const missing = payload(); missing.data.pop();
