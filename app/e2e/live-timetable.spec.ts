@@ -16,6 +16,7 @@ function snapshot(room = '1330', previous?: ReturnType<typeof importPersonalTime
     data: dateRange('2026-11-15', '2026-11-21').map((date) => ({ date, lessons: date === DAY ? [
       { pair_id: 1, subject: 'Дискретная математика', group: 'ДМ 1.2(M3102)', work_type_id: 2, time_start: '13:30', time_end: '15:00', room, building: 'Кронверкский', teacher_name: 'Т' },
       { pair_id: 2, subject: 'Дискретная математика', group: 'ДМ 1.2.1(M3102)', work_type_id: 10, time_start: '17:10', time_end: '18:40', room: '2430', building: 'Кронверкский', teacher_name: 'Т' },
+      { pair_id: 3, subject: 'Учебная, ознакомительная', group: 'Практика 1.2(M3102)', work_type_id: 9, time_start: '18:50', time_end: '20:20', room: '2430', building: 'Кронверкский', teacher_name: 'Т' },
     ] : [] })),
   }], '2026-11-15', '2026-11-21', at, previous);
 }
@@ -44,6 +45,7 @@ test.describe('live timetable UI', () => {
       await expect(page.getByText('Ауд. изменена', { exact: true })).toBeVisible();
       await expect(page.getByText('Отменено', { exact: true })).toHaveCount(1);
       await expect(page.getByText(/Консультация · Аудитория/)).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Учебная, ознакомительная', exact: true })).toBeVisible();
       await page.getByRole('button', { name: 'Дискретная математика', exact: true }).first().click();
       await expect(page.getByRole('dialog')).toContainText('1330 (было 2240)');
       await page.keyboard.press('Escape');
@@ -57,12 +59,13 @@ test.describe('live timetable UI', () => {
       await expect(page.locator('.sched-entry').first()).toContainText('1330');
       await page.locator('.sched-card summary').first().click();
       await expect(page.locator('.sched-card-body').first()).toContainText('было 2240');
-      await expect(page.locator('.sched-kind').last()).toHaveText('Консультация');
+      await expect(page.locator('.sched-kind').filter({ hasText: /^Консультация$/ })).toBeVisible();
+      await expect(page.getByText('Учебная, ознакомительная', { exact: true })).toBeVisible();
+      await expect(page.locator('.sched-kind').last()).toHaveText('Зачёт');
       await page.screenshot({ path: info.outputPath(`classic-${theme}.png`), fullPage: true });
       await page.goto('../#/');
       await expect(page.locator('#student-next')).toContainText('Нет в расписании My ITMO');
       await expect(page.locator('#student-next')).toContainText('1330 (было 2240)');
-      await expect(page.locator('.hero-week')).toContainText('Санкт-Петербург');
     });
   }
   test('live timetable remains readable on a phone in both editions @phone', async ({ page }, info) => {

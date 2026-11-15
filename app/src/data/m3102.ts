@@ -12,6 +12,8 @@ export const M3102_SUBJECTS: Subject[] = [
   { id: 'linal', name: 'Линейная алгебра', teacherPrimary: 'Ржонсицкая Юлия Борисовна' },
   { id: 'matan', name: 'Математический анализ', teacherPrimary: 'Ржонсицкая Юлия Борисовна' },
   { id: 'op', name: 'Основы программирования', teacherPrimary: 'Хвастунов Александр Павлович' },
+  // Подтверждённый My ITMO поток M3102; разовый зачёт берётся только из датированной API-выгрузки.
+  { id: 'intro-practice', name: 'Учебная, ознакомительная' },
 ].map((subject) => ({ ...subject, archived: false, createdAt: SEED_TIME, updatedAt: SEED_TIME }));
 
 /** Сокращённые папки предметов в репозитории группы (Материалы/ДМ, Записи лекций/ОП…) → id предмета */

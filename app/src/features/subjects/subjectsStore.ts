@@ -37,12 +37,18 @@ export const useSubjectsStore = create<SubjectsStore>()(
     {
       name: storageKey('subjects'),
       storage: localStore,
-      // v1: обновлённые преподаватели М3102 — предметы, добавленные вручную, сохраняются
-      version: 1,
-      migrate: (persisted) => {
+      // v1: преподаватели М3102; v2: ознакомительная практика без сброса сохранённых правок.
+      version: 2,
+      migrate: (persisted, previousVersion) => {
         const seedIds = new Set(M3102_SUBJECTS.map((subject) => subject.id));
         const saved = (persisted as Partial<SubjectsStore>).subjects ?? [];
-        return { subjects: [...M3102_SUBJECTS, ...saved.filter((subject) => !seedIds.has(subject.id))] } as SubjectsStore;
+        const byId = new Map(saved.map((subject) => [subject.id, subject]));
+        return {
+          subjects: [
+            ...M3102_SUBJECTS.map((subject) => (previousVersion < 1 ? subject : (byId.get(subject.id) ?? subject))),
+            ...saved.filter((subject) => !seedIds.has(subject.id)),
+          ],
+        } as SubjectsStore;
       },
     },
   ),

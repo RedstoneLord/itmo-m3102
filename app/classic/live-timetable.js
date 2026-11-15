@@ -7,6 +7,7 @@ const SUBJECTS = {
   aisd: 'Алгоритмы и структуры данных',
   isrpo: 'Инструментальные средства разработки ПО',
   op: 'Основы программирования',
+  'intro-practice': 'Учебная, ознакомительная',
 };
 const TYPES = { 1: 'lecture', 2: 'lab', 3: 'practice', 5: 'exam', 6: 'credit', 9: 'credit', 10: 'consultation' };
 const KINDS = new Set(['lecture', 'lab', 'practice', 'seminar', 'exam', 'credit', 'consultation']);
@@ -93,12 +94,19 @@ function readPrevious(raw) {
 
 /** Consume complete API responses, one per requested chunk. A missing day is never an empty day. */
 export function importPersonalTimetable(responses, from, to, updatedAt, previous = null) {
-  const expected = dateRange(from, to), days = {}, ids = new Set();
+  const expected = dateRange(from, to), days = {}, ids = new Set(), unknownSubjects = new Set();
   for (const response of responses) {
     if (!response || response.code !== 0 || !Array.isArray(response.data)) fail('API did not report success');
     for (const day of response.data) {
       if (!day || !expected.includes(day.date) || Object.hasOwn(days, day.date) || !Array.isArray(day.lessons)) fail('incomplete or duplicate date coverage');
-      const lessons = day.lessons.map(readPersonalLesson).filter(Boolean).map((lesson) => ({ ...lesson, calendarDate: day.date }));
+      const lessons = day.lessons.map((raw) => {
+        try { return readPersonalLesson(raw); } catch (error) {
+          if (!(error instanceof Error) || !error.message.startsWith('Timetable: unmapped academic subject ')) throw error;
+          // Collect a bounded review report, but never publish a partial list as a complete day.
+          if (unknownSubjects.size < 8) unknownSubjects.add(error.message.slice('Timetable: '.length));
+          return null;
+        }
+      }).filter(Boolean).map((lesson) => ({ ...lesson, calendarDate: day.date }));
       for (const lesson of lessons) {
         const key = `${day.date}:${lesson.id}`;
         if (ids.has(key)) fail('duplicate lesson');
@@ -108,6 +116,7 @@ export function importPersonalTimetable(responses, from, to, updatedAt, previous
     }
   }
   if (Object.keys(days).length !== expected.length) fail('incomplete date coverage');
+  if (unknownSubjects.size) fail([...unknownSubjects].join(' | '));
   if (![...Object.values(days)].some((lessons) => lessons.length)) fail('no shared academic lessons; publication stopped');
   const snapshot = { version: 1, source: 'my.itmo', group: 'М3102', updatedAt, from, to, days, removed: {} };
   if (previous) {

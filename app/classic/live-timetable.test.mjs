@@ -36,6 +36,14 @@ test('mapping diagnostics show only plain course titles in confirmed group flows
     assert.throws(() => snapshot([lesson(extra)]), (error) => error.message.includes('[title withheld]') && !error.message.includes(extra.subject));
   }
 });
+test('includes the live-verified introductory-practice credit and reports all unknown courses without partial publication', () => {
+  const value = snapshot([lesson({ subject: 'Учебная, ознакомительная', work_type_id: 9 })]);
+  assert.equal(value.days['2026-11-18'][0].subjectId, 'intro-practice');
+  assert.equal(value.days['2026-11-18'][0].subject, 'Учебная, ознакомительная');
+  assert.equal(value.days['2026-11-18'][0].kind, 'credit');
+  assert.throws(() => snapshot([lesson(), lesson({ subject: 'Первый новый курс' }), lesson({ subject: 'Второй новый курс' })]),
+    (error) => error.message.includes('Первый новый курс') && error.message.includes('Второй новый курс'));
+});
 test('requires exact calendar coverage, API success, unique dates, times and pair identity', () => {
   const missing = payload(); missing.data.pop();
   const duplicate = payload(); duplicate.data[0] = duplicate.data[1];

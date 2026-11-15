@@ -541,3 +541,10 @@ Publication stopped on an unmapped academic entry in the longer date range; the 
 The adapter accepts numeric-string sport/booking IDs and reports only plain course titles in explicitly confirmed
 M3102 flows, plus numeric type IDs, for mapping errors. Do not replace the secret for a mapping failure: the encrypted
 checkpoint has already preserved renewal. A mapping correction and a new run can reuse it.
+
+The next protected run restored the first checkpoint and renewed successfully without any secret edit. It identified
+**«Учебная, ознакомительная»**, `work_type_id: 9`, in a confirmed M3102 flow. This shared introductory-practice credit
+is now explicitly mapped as `intro-practice`, with the exact official title in both editions and the calendar. It is
+not inserted into the fixed repeating cycle. Subject-store migration v2 adds it for existing visitors while preserving
+their saved edits and custom subjects. Unknown-course diagnostics collect a bounded report and still stop the entire
+publication instead of dropping entries from an otherwise complete-looking day.
