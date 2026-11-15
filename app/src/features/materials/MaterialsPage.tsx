@@ -5,10 +5,11 @@ import { Tabs, type TabItem } from '../../components/ui/Tabs';
 import { useSyncStamp } from '../../services/syncStore';
 import { LinksPage } from '../group/LinksPage';
 import { GroupFolder } from '../group/RepoFilePage';
+import { BookmarksTab } from './BookmarksTab';
 import { LectureNotesTab } from './LectureNotesTab';
 import styles from './MaterialsPage.module.css';
 
-type MaterialsSection = 'notes' | 'materials' | 'labs' | 'recordings' | 'links';
+type MaterialsSection = 'notes' | 'materials' | 'labs' | 'recordings' | 'links' | 'bookmarks';
 
 const SECTION_TABS: TabItem<MaterialsSection>[] = [
   { value: 'notes', label: 'Конспекты' },
@@ -16,6 +17,7 @@ const SECTION_TABS: TabItem<MaterialsSection>[] = [
   { value: 'labs', label: 'Лабораторные' },
   { value: 'recordings', label: 'Записи лекций' },
   { value: 'links', label: 'Ссылки' },
+  { value: 'bookmarks', label: 'Закладки' },
 ];
 
 /** Материалы: конспекты группы, учебники, лабораторные, записи лекций и ссылки. */
@@ -38,6 +40,7 @@ export function MaterialsPage() {
           {section === 'materials' && <GroupFolder folder="Материалы" />}
           {section === 'labs' && <GroupFolder folder="Лабораторные" />}
           {section === 'recordings' && <GroupFolder folder="Записи лекций" />}
+          {section === 'bookmarks' && <BookmarksTab />}
         </Swap>
       </div>
     </>

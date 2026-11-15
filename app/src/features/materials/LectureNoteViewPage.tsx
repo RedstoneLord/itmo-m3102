@@ -18,7 +18,7 @@ import { NoteLessonInfo } from './NoteLessonInfo';
 import { NoteCards } from '../cards/NoteCards';
 import { SiteQuiz } from './SiteQuiz';
 import { useMarksStore } from './marksStore';
-import { MarkButton, useMarkHighlights } from './NoteMarks';
+import { MarkButton, useJumpToMark, useMarkHighlights } from './NoteMarks';
 import { LectureNoteDialog } from './LectureNoteDialog';
 import { useLectureNoteDialog } from './useLectureNoteDialog';
 import { useLectureNotesStore } from './lectureNotesStore';
@@ -109,6 +109,7 @@ function NoteView({ note }: { note: LectureNote }) {
   const bookmarked = useMarksStore((state) => Boolean(state.bookmarks[note.id]));
   const toggleBookmark = useMarksStore((state) => state.toggleBookmark);
   useMarkHighlights(contentRef, note.id);
+  useJumpToMark(contentRef, note.id);
   // Конспект группы (.md) — награда ягодами за вдумчивое чтение; путь в репозитории общий с классической версией
   useReadingRewards(
     contentRef,

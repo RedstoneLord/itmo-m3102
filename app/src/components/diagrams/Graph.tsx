@@ -336,6 +336,8 @@ export function GraphView({ model }: { model: GraphModel }) {
   const maxX = Math.max(...model.nodes.map((node) => node.x! + node.w / 2), ...extraX) + pad;
   const maxY = Math.max(...model.nodes.map((node) => node.y! + node.h / 2), ...extraY) + pad;
   const pairs = new Set(model.edges.map((edge) => `${edge.from}>${edge.to}`));
+  // Подписи рёбер рисуются после блоков, поверх них: в тесной схеме подпись не прячется под соседний блок
+  const edgeLabels: { index: number; x: number; y: number; label: string }[] = [];
 
   return (
     <svg
@@ -362,7 +364,7 @@ export function GraphView({ model }: { model: GraphModel }) {
             <g key={index} data-dgm-edge={index}>
               <path className={styles.edgeHit} d={d} />
               <path className={styles.edge} style={edgeStyle} d={d} markerEnd={marker} />
-              {edge.label && at && <EdgeLabel x={at[0]} y={at[1]} label={edge.label} />}
+              {edge.label && at && (edgeLabels.push({ index, x: at[0], y: at[1], label: edge.label }), null)}
             </g>
           );
         }
@@ -374,7 +376,7 @@ export function GraphView({ model }: { model: GraphModel }) {
             <g key={index} data-dgm-edge={index}>
               <path className={styles.edgeHit} d={d} />
               <path className={styles.edge} style={edgeStyle} d={d} markerEnd={marker} />
-              {edge.label && <EdgeLabel x={x} y={top - r * 1.9} label={edge.label} />}
+              {edge.label && (edgeLabels.push({ index, x, y: top - r * 1.9, label: edge.label }), null)}
             </g>
           );
         }
@@ -399,7 +401,7 @@ export function GraphView({ model }: { model: GraphModel }) {
           <g key={index} data-dgm-edge={index}>
             <path className={styles.edgeHit} d={d} />
             <path className={styles.edge} style={edgeStyle} d={d} markerEnd={marker} />
-            {edge.label && <EdgeLabel x={labelX} y={labelY} label={edge.label} />}
+            {edge.label && (edgeLabels.push({ index, x: labelX, y: labelY, label: edge.label }), null)}
           </g>
         );
       })}
@@ -412,6 +414,12 @@ export function GraphView({ model }: { model: GraphModel }) {
               {line}
             </text>
           ))}
+        </g>
+      ))}
+
+      {edgeLabels.map(({ index, x, y, label }) => (
+        <g key={`label-${index}`} data-dgm-edge={index}>
+          <EdgeLabel x={x} y={y} label={label} />
         </g>
       ))}
     </svg>

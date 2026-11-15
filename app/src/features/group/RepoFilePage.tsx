@@ -10,6 +10,7 @@ import { downloadUrl } from '../../lib/download';
 import { quizPageToMarkdown } from '../../components/quiz/parseQuiz';
 import { filePath, isHiddenPath, useGroupStore, type RepoFile } from './groupStore';
 import { LinesSkeleton } from '../../components/ui/LinesSkeleton';
+import { AudioPlayer } from './AudioPlayer';
 import styles from './RepoFilePage.module.css';
 
 const PdfViewer = lazy(() => import('../materials/PdfViewer').then((module) => ({ default: module.PdfViewer })));
@@ -26,6 +27,9 @@ const EXT_LABELS: Record<string, string> = {
   djvu: 'DJVU',
   txt: 'TXT',
 };
+
+/** Записи, которые играют прямо на сайте (AudioPlayer) */
+const AUDIO = new Set(['mp3', 'wav', 'm4a', 'ogg', 'opus', 'flac', 'aac']);
 
 const extension = (name: string) => (name.includes('.') ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : '');
 
@@ -139,7 +143,7 @@ function FolderView({ files, folder, embedded = false }: FolderViewProps) {
           {listing.files.map((entry) => {
             const name = entry.path.slice(entry.path.lastIndexOf('/') + 1);
             const ext = extension(name);
-            const readable = ext === 'pdf' || ext === 'md';
+            const readable = ext === 'pdf' || ext === 'md' || AUDIO.has(ext);
             const body = (
               <>
                 <span className={styles.icon}>{EXT_LABELS[ext] ?? 'ФАЙЛ'}</span>
@@ -149,6 +153,7 @@ function FolderView({ files, folder, embedded = false }: FolderViewProps) {
                     {formatSize(entry.size)}
                     {ext === 'pdf' && ' · читать в браузере'}
                     {ext === 'md' && ' · читать конспект'}
+                    {AUDIO.has(ext) && ' · слушать'}
                   </span>
                 </span>
               </>
@@ -229,6 +234,8 @@ function FileView({ file }: { file: RepoFile }) {
         ) : (
           <LazyMarkdown content={text} sourceRef={file.path} className={styles.prose} />
         )
+      ) : AUDIO.has(ext) ? (
+        <AudioPlayer src={groupRawUrl(file.path)} path={file.path} />
       ) : (
         <p className={styles.state}>Этот файл нельзя открыть в браузере — скачайте его.</p>
       )}

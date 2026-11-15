@@ -1,4 +1,4 @@
-import { BookmarkCheck, ChevronDown, ChevronUp, ExternalLink, Maximize2, Minus, Moon, Plus, Sun } from 'lucide-react';
+import { BookmarkCheck, ChevronDown, ChevronUp, ExternalLink, Expand, Maximize2, Minus, Moon, Plus, Shrink, Sun } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { pdfjs } from 'react-pdf';
 import { IconButton } from '../../components/ui/IconButton';
@@ -51,6 +51,12 @@ export function PdfViewer({ file }: PdfViewerProps) {
   const [pdf, setPdf] = useState<PdfDocument | null>(null);
   const [baseWidth, setBaseWidth] = useState(0);
   const [zoomIndex, setZoomIndex] = useState(ZOOM_STEPS.indexOf(1));
+  const [fullscreen, setFullscreen] = useState(false);
+  useEffect(() => {
+    const update = () => setFullscreen(document.fullscreenElement === rootRef.current);
+    document.addEventListener('fullscreenchange', update);
+    return () => document.removeEventListener('fullscreenchange', update);
+  }, []);
   const [current, setCurrent] = useState(1);
   /** Почему не открылся (текст ошибки pdf.js) — показываем под сообщением, чтобы по скриншоту было видно причину */
   const [failed, setFailed] = useState<string | null>(null);
@@ -217,6 +223,12 @@ export function PdfViewer({ file }: PdfViewerProps) {
   }
 
   const numPages = pdf?.numPages ?? 0;
+  // На весь экран — сам просмотрщик с панелью: страница сайта (меню, шапка) не мешает читать. В iPhone Safari API нет — кнопки нет
+  const canFullscreen = typeof document !== 'undefined' && document.fullscreenEnabled;
+  const toggleFullscreen = () => {
+    const request = document.fullscreenElement ? document.exitFullscreen() : rootRef.current?.requestFullscreen();
+    request?.catch(() => undefined);
+  };
 
   return (
     <div ref={rootRef} className={styles.viewer}>
@@ -249,6 +261,14 @@ export function PdfViewer({ file }: PdfViewerProps) {
             onClick={() => setZoomIndex((index) => index + 1)}
           />
           <IconButton icon={Maximize2} label="По ширине" size="sm" disabled={zoom === 1} onClick={() => setZoomIndex(ZOOM_STEPS.indexOf(1))} />
+          {canFullscreen && (
+            <IconButton
+              icon={fullscreen ? Shrink : Expand}
+              label={fullscreen ? 'Выйти из полноэкранного режима' : 'На весь экран'}
+              size="sm"
+              onClick={toggleFullscreen}
+            />
+          )}
           <IconButton
             icon={dark ? Sun : Moon}
             label={dark ? 'Светлые страницы' : 'Тёмные страницы'}

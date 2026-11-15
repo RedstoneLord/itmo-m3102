@@ -12,6 +12,20 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* «Размер текста» (data-text, settingsStore.textSize): все шрифты в rem — масштабируем корень, в процентах от настройки
+   браузера (её тоже уважаем). Отступы в px не меняются, вёрстка не расползается */
+:root[data-text='sm'] {
+  font-size: 93.75%;
+}
+
+:root[data-text='lg'] {
+  font-size: 112.5%;
+}
+
+:root[data-text='xl'] {
+  font-size: 125%;
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
@@ -41,6 +55,78 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+/* Галочки, переключатели, ползунки и полосы прогресса браузера — в цвет акцента (их много в играх группы) */
+:root {
+  accent-color: var(--color-accent);
+}
+
+/*
+ * Открытый список у нативного <select> — в стиле сайта, а не серым прямоугольником браузера (владелец: «выбор не стильный»).
+ * Касается всех select: наших (главная, редактор схем, проигрыватель массива) и в играх группы (Маджонг, автоспин слотов),
+ * их файлы не трогаем. Закрытое поле каждый оформляет сам. Браузеры без base-select (Firefox, Safari) — родной список.
+ */
+@supports (appearance: base-select) {
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+
+  /* В base-select поле — обычный блок: с заданной высотой текст прилипал к верху. Текст по центру, стрелка справа */
+  select {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  select::picker-icon {
+    color: var(--color-text-muted);
+    transition: rotate var(--duration-base) var(--ease);
+  }
+
+  select:open::picker-icon {
+    rotate: 180deg;
+  }
+
+  ::picker(select) {
+    margin-block: 4px;
+    padding: 4px;
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    background: var(--surface-overlay);
+    backdrop-filter: var(--surface-filter-overlay);
+    box-shadow: var(--shadow-popover);
+    color: var(--color-text);
+  }
+
+  option {
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    cursor: pointer;
+  }
+
+  option:is(:hover, :focus-visible) {
+    background: var(--color-bg-hover);
+    outline: none;
+  }
+
+  option:checked {
+    background: var(--color-accent-soft);
+    color: var(--color-accent-text);
+    font-weight: var(--weight-medium);
+  }
+
+  option::checkmark {
+    color: var(--color-accent-text);
+  }
+
+  option:disabled {
+    color: var(--color-text-muted);
+    cursor: default;
+  }
 }
 
 a {

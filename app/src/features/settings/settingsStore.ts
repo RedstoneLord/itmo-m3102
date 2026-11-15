@@ -25,6 +25,8 @@ interface LocalSettings {
   glow: boolean;
   /** Анимации: все (с живым фоном и плавной прокруткой) / спокойные (фон и ёжик стоят) / минимум (без сдвигов, пружин и Lenis) / выкл (как «уменьшить движение» в системе). Заменила прежние переключатели «Живой фон» и «Плавная прокрутка» */
   motion: MotionLevel;
+  /** Размер текста: масштаб корня, от него считаются все размеры шрифта в rem (отступы в px не меняются). Нет значения — «Обычный» */
+  textSize?: TextSize;
   radius: RadiusPreference;
   /** PDF в тёмных тонах (кнопка в панели PDF); null — как тема сайта */
   pdfDark: boolean | null;
@@ -49,6 +51,8 @@ export type DynamicTheme = 'off' | 'launch' | '15' | '60';
 
 export type AppStyle = 'minimal' | 'aurora' | 'glass';
 
+export type TextSize = 'sm' | 'md' | 'lg' | 'xl';
+
 export type MotionLevel = 'full' | 'calm' | 'minimal' | 'off';
 
 export type Density = 'comfortable' | 'compact';
@@ -70,6 +74,7 @@ interface SettingsStore extends LocalSettings {
         | 'aurora'
         | 'glow'
         | 'motion'
+        | 'textSize'
         | 'radius'
         | 'pdfDark'
         | 'homeOrder'

@@ -195,3 +195,14 @@
     min-width: 44px;
   }
 }
+
+/* На весь экран (кнопка в панели): просмотрщик сам прокручивается, панель прилипает к верху экрана, фон — как у страницы */
+.viewer:fullscreen {
+  overflow-y: auto;
+  padding: var(--space-3);
+  background: var(--color-bg);
+}
+
+.viewer:fullscreen .toolbar {
+  top: 0;
+}

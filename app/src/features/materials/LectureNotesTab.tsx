@@ -17,6 +17,7 @@ import { useSubjectsStore } from '../subjects/subjectsStore';
 import { LectureNoteDialog } from './LectureNoteDialog';
 import { LectureNoteRow } from './LectureNoteRow';
 import { compareLessons } from './noteOrder';
+import { noteTopics } from './noteTopics';
 import { useLectureNoteDialog } from './useLectureNoteDialog';
 import { useLectureNotesStore } from './lectureNotesStore';
 import styles from './MaterialsPage.module.css';
@@ -139,6 +140,7 @@ export function FolderList({ notes, onSelect }: { notes: LectureNote[]; onSelect
     <List className={styles.bigList}>
       {folders.map((folder) => {
         const inside = notes.filter((note) => note.lectureNumber === folder);
+        const topics = noteTopics(inside);
         return (
           <ListItem
             key={folder}
@@ -156,7 +158,8 @@ export function FolderList({ notes, onSelect }: { notes: LectureNote[]; onSelect
                 {folder || 'Без папки'}
               </button>
             }
-            meta={inside.map((note) => note.title).join(' · ')}
+            // Темы занятия по заголовкам его конспектов; нет тем (PDF) — названия конспектов, как раньше
+            meta={(topics.length ? topics : inside.map((note) => note.title)).join(' · ')}
             trailing={<span className={styles.count}>{pluralize(inside.length, NOTE_FORMS)}</span>}
           />
         );

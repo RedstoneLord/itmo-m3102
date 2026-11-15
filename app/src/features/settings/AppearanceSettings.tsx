@@ -9,7 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { slotsAlbum } from '../../lib/slotsAlbum';
 import { ACCENTS, SHUFFLE_EVENT, accentColor } from './appearance';
 import { PALETTE_PAIRS } from '../onboarding/palettePairs';
-import { FIRST_RUN_EVENT, useSettingsStore, type DynamicTheme, type MotionLevel, type RadiusPreference } from './settingsStore';
+import { FIRST_RUN_EVENT, useSettingsStore, type DynamicTheme, type MotionLevel, type RadiusPreference, type TextSize } from './settingsStore';
 import styles from './settings.module.css';
 import { SettingsRow } from './SettingsRow';
 import { STYLE_OPTIONS, THEME_OPTIONS } from './themeOptions';
@@ -34,6 +34,13 @@ const MOTION_HINTS: Record<MotionLevel, string> = {
   off: 'Никакого движения — как «уменьшить движение» в системе.',
 };
 
+const TEXT_OPTIONS: { value: TextSize; label: string }[] = [
+  { value: 'sm', label: 'Мельче' },
+  { value: 'md', label: 'Обычный' },
+  { value: 'lg', label: 'Крупнее' },
+  { value: 'xl', label: 'Крупный' },
+];
+
 const RADIUS_OPTIONS: { value: RadiusPreference; label: string }[] = [
   { value: 'sharp', label: 'Строгие' },
   { value: 'normal', label: 'Обычные' },
@@ -54,7 +61,7 @@ const DYNAMIC_OPTIONS: { value: DynamicTheme; label: string }[] = [
 export function AppearanceSettings() {
   const theme = useSettingsStore((state) => state.theme);
   const setTheme = useSettingsStore((state) => state.setTheme);
-  const { accent, accent2, dynamicTheme, style, aurora, glow, motion, radius, setAppearance } = useSettingsStore();
+  const { accent, accent2, dynamicTheme, style, aurora, glow, motion, textSize, radius, setAppearance } = useSettingsStore();
   const album = slotsAlbum();
   // Те же пары, что в окне быстрой настройки (по умолчанию, пять палитр группы, две готовые), и палитры группы из капсул «Колючего куша»
   const palettes = [
@@ -111,6 +118,19 @@ export function AppearanceSettings() {
 
       <details className={styles.more}>
         <summary className={styles.moreSummary}>Свои цвета и эффекты</summary>
+
+        <SettingsRow label="Размер текста" description="Во всём сайте, включая конспекты. Отступы и кнопки не меняются.">
+          <SegmentedControl
+            label="Размер текста"
+            options={TEXT_OPTIONS}
+            value={textSize ?? 'md'}
+            onChange={(value) => {
+              setAppearance({ textSize: value });
+              // При загрузке data-text ставит index.html до React; здесь — сразу при выборе (так код не лежит в главном куске)
+              document.documentElement.dataset.text = value;
+            }}
+          />
+        </SettingsRow>
 
         <SettingsRow label="Акцент" description="Цвет кнопок, выделений и свечения. Можно выбрать свой." lockedNote={lockedNote}>
           <div className={styles.swatches} role="radiogroup" aria-label="Цвет акцента">

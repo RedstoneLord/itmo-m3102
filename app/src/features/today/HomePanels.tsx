@@ -265,7 +265,7 @@ export function BookmarksPanel() {
   if (!marked.length) return null;
 
   return (
-    <Section title="Закладки и пометки">
+    <Section title="Закладки и пометки" action={<SectionLink to="/materials?tab=bookmarks">Все закладки</SectionLink>}>
       <div className={styles.notes}>
         {marked.map((note) => {
           const count = marks.filter((mark) => mark.noteId === note.id).length;

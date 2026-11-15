@@ -26,6 +26,16 @@ it('без интернета: качаем PDF и картинки из пап�
   expect(plan.stale).toEqual(['Конспекты/старое.pdf']);
 });
 
+it('выключенная папка не качается, а её уже сохранённые файлы удаляются при следующем обновлении', () => {
+  const files = [
+    { path: 'Конспекты/ДМ/Лекция_1/Логика.pdf', size: 10, sha: 'a1' },
+    { path: 'Материалы/ЛА/Учебник.pdf', size: 50, sha: 'c1' },
+  ];
+  const plan = offlinePlan(files, { 'Материалы/ЛА/Учебник.pdf': 'c1' }, ['Материалы/ЛА']);
+  expect(plan.wanted.map((file) => file.path)).toEqual(['Конспекты/ДМ/Лекция_1/Логика.pdf']);
+  expect(plan.stale).toEqual(['Материалы/ЛА/Учебник.pdf']);
+});
+
 /** Запрос, который отвечает, когда скажет тест, и честно обрывается по сигналу */
 function pendingFetch() {
   const waiting: { url: string; reply: (ok: boolean) => void }[] = [];

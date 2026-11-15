@@ -370,28 +370,37 @@ export function routeFlow(
       const tx = pts[i + 1]![0] - pts[i - 1]![0];
       const ty = pts[i + 1]![1] - pts[i - 1]![1];
       const length = Math.hypot(tx, ty) || 1;
-      for (const side of [1, -1]) {
-        const nx = (-ty / length) * side;
-        const ny = (tx / length) * side;
-        const offset = (Math.abs(nx) * lw) / 2 + (Math.abs(ny) * lh) / 2 + 5;
-        const cx = px + nx * offset;
-        const cy = py + ny * offset;
-        const rect = { x0: cx - lw / 2, y0: cy - lh / 2, x1: cx + lw / 2, y1: cy + lh / 2 };
-        let score = s * 0.4 + (side < 0 ? 0.2 : 0);
-        for (let gx = 0; gx <= 4; gx++)
-          for (let gy = 0; gy <= 2; gy++) {
-            const x = rect.x0 + ((rect.x1 - rect.x0) * gx) / 4;
-            const y = rect.y0 + ((rect.y1 - rect.y0) * gy) / 2;
-            if (all.some((n) => inside(n, x, y, 2))) score += 1000;
+      // Направления от точки линии: поперёк неё (как раньше) и, запасом, влево/вправо/вверх/вниз — у диагонали между тесными
+      // блоками оба «поперёк» упираются в блоки, а сбоку от линии место есть. Вплотную, потом дальше — штраф за каждый шаг
+      const directions = [
+        [-ty / length, tx / length, 0],
+        [ty / length, -tx / length, 0.2],
+        [-1, 0, 4],
+        [1, 0, 4],
+        [0, -1, 4],
+        [0, 1, 4],
+      ] as const;
+      for (const [nx, ny, extra] of directions)
+        for (const away of [0, 14, 30, 48, 70]) {
+          const offset = (Math.abs(nx) * lw) / 2 + (Math.abs(ny) * lh) / 2 + 5 + away;
+          const cx = px + nx * offset;
+          const cy = py + ny * offset;
+          const rect = { x0: cx - lw / 2, y0: cy - lh / 2, x1: cx + lw / 2, y1: cy + lh / 2 };
+          let score = s * 0.4 + extra + away * 3;
+          // Пересечение с блоком — прямоугольником целиком: сетка точек пропускала широкие блоки между узлами сетки
+          if (
+            all.some((n) => rect.x0 < n.x + n.w / 2 + 2 && rect.x1 > n.x - n.w / 2 - 2 && rect.y0 < n.y + n.h / 2 + 2 && rect.y1 > n.y - n.h / 2 - 2)
+          )
+            score += 1000;
+          // Чужая линия под подписью — сильный штраф; своя — слабый: подпись стоит рядом с ней, но не поперёк
+          // (с полным штрафом изгиб кривой отталкивал подпись за соседний блок)
+          for (const other of edges) {
+            const crossing = other.route!.pts.filter(([x, y]) => x > rect.x0 - 2 && x < rect.x1 + 2 && y > rect.y0 - 2 && y < rect.y1 + 2).length;
+            score += other === e ? Math.min(24, 3 * crossing) : Math.min(60, 8 * crossing);
           }
-        for (const other of edges)
-          score += Math.min(
-            60,
-            8 * other.route!.pts.filter(([x, y]) => x > rect.x0 - 2 && x < rect.x1 + 2 && y > rect.y0 - 2 && y < rect.y1 + 2).length,
-          );
-        for (const q of placed) if (rect.x0 < q.x1 + 2 && rect.x1 > q.x0 - 2 && rect.y0 < q.y1 + 2 && rect.y1 > q.y0 - 2) score += 500;
-        if (!best || score < best.score) best = { score, rect, cx, cy };
-      }
+          for (const q of placed) if (rect.x0 < q.x1 + 2 && rect.x1 > q.x0 - 2 && rect.y0 < q.y1 + 2 && rect.y1 > q.y0 - 2) score += 500;
+          if (!best || score < best.score) best = { score, rect, cx, cy };
+        }
     }
     placed.push(best!.rect);
     return [best!.cx, best!.cy];

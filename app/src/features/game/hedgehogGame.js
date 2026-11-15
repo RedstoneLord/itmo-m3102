@@ -1514,5 +1514,6 @@ function mount(container,opts){
 
 
 export const HedgehogGame = { mount };
-/* Правка поверх оригинала: рисунок ёжика и список шляп нужны странице коллекции — примерка шляпы без запуска игры */
-export { drawHog, HATS };
+/* Правка поверх оригинала: рисунок ёжика и список шляп нужны странице коллекции — примерка шляпы без запуска игры;
+   камни, брёвна, улитка и угощения — ёжику на главной (components/hedgehog/GameHogLane.tsx) */
+export { drawHog, HATS, drawObstacle, drawPickup };

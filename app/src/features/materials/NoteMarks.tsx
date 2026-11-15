@@ -1,6 +1,8 @@
 import { Highlighter, Trash2 } from 'lucide-react';
 import { useEffect, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { useSearchParams } from 'react-router';
+import { jumpTo } from '../../lib/smoothScroll';
 import { findTextRange } from '../../lib/textRange';
 import { useMarksStore } from './marksStore';
 import styles from './NoteMarks.module.css';
@@ -35,6 +37,31 @@ export function useMarkHighlights(contentRef: RefObject<HTMLElement | null>, not
       CSS.highlights.delete(HIGHLIGHT);
     };
   }, [contentRef, marks, noteId]);
+}
+
+/**
+ * Пришли по ссылке на пометку (`?mark=<id>`, «Материалы → Закладки»): когда её текст появился в конспекте (разделы дорисовываются
+ * не сразу) — прокручиваем к нему, на треть экрана сверху, и убираем параметр из адреса, чтобы «Назад» не прыгало снова.
+ */
+export function useJumpToMark(contentRef: RefObject<HTMLElement | null>, noteId: string) {
+  const [params, setParams] = useSearchParams();
+  const markId = params.get('mark');
+  useEffect(() => {
+    if (!markId) return undefined;
+    const mark = useMarksStore.getState().marks.find((item) => item.id === markId && item.noteId === noteId);
+    const started = performance.now();
+    let timer = 0;
+    const tryJump = () => {
+      const range = mark && contentRef.current && findTextRange(contentRef.current, mark.text);
+      if (range) {
+        jumpTo(scrollY + range.getBoundingClientRect().top - innerHeight / 3);
+        setParams({}, { replace: true });
+      } else if (mark && performance.now() - started < 6000) timer = window.setTimeout(tryJump, 200);
+      else setParams({}, { replace: true });
+    };
+    timer = window.setTimeout(tryJump, 300);
+    return () => clearTimeout(timer);
+  }, [contentRef, markId, noteId, setParams]);
 }
 
 /** Кнопка «Пометить» под выделенным в конспекте текстом */

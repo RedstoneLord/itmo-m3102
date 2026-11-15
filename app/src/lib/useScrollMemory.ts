@@ -5,6 +5,8 @@ import { jumpTo } from './smoothScroll';
 const positions = new Map<string, number>();
 /** Запись истории, которой принадлежит текущая прокрутка. Меняется до scrollTo, чтобы сброс наверх не затёр прошлую */
 let activeKey = '';
+/** Страница прошлой записи: замена адреса на той же странице (убрали ?mark=, ?u=, ?meme=) — не переход, прокрутку не трогаем */
+let activePath = '';
 
 /**
  * Прокрутка как в обычном сайте: «Назад»/«Вперёд» возвращают туда, где читал, новый переход — наверх.
@@ -22,7 +24,10 @@ export function useScrollMemory() {
   }, []);
 
   useLayoutEffect(() => {
+    const samePage = navigationType === 'REPLACE' && location.pathname === activePath;
     activeKey = location.key;
+    activePath = location.pathname;
+    if (samePage) return;
     if (navigationType !== 'POP') {
       jumpTo(0);
       return;

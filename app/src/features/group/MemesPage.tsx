@@ -1,5 +1,6 @@
-import { Plus, X } from 'lucide-react';
+import { Check, Link2, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDeleteModal } from '../../components/ui/ConfirmDeleteModal';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -55,6 +56,10 @@ export function MemesPage() {
   const [memes, setMemes] = useState<Meme[] | null>(null);
   const [error, setError] = useState('');
   const [open, setOpen] = useState<Meme | null>(null);
+  const [copied, setCopied] = useState(false);
+  // Ссылка на один мем — `#/memes?meme=<id>` (как у классической версии): открываем его, когда список загрузился
+  const [params, setParams] = useSearchParams();
+  const linked = params.get('meme');
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState<Meme | null>(null);
 
@@ -81,6 +86,8 @@ export function MemesPage() {
   }
 
   const sorted = [...(memes ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const linkedMeme = linked ? memes?.find((meme) => meme.id === linked) : undefined;
+  if (linkedMeme && open === null) setOpen(linkedMeme);
 
   return (
     <>
@@ -121,7 +128,31 @@ export function MemesPage() {
         </div>
       )}
 
-      <Modal open={open !== null} onClose={() => setOpen(null)} title={open?.title || 'Мем'} size="lg">
+      <Modal
+        open={open !== null}
+        onClose={() => {
+          setOpen(null);
+          setCopied(false);
+          if (linked) setParams({}, { replace: true });
+        }}
+        title={open?.title || 'Мем'}
+        size="lg"
+        footer={
+          <Button
+            variant="secondary"
+            icon={copied ? Check : Link2}
+            onClick={() =>
+              open &&
+              void navigator.clipboard
+                .writeText(`${location.origin}${location.pathname}#/memes?meme=${encodeURIComponent(open.id)}`)
+                .then(() => setCopied(true))
+                .catch(() => undefined)
+            }
+          >
+            {copied ? 'Ссылка скопирована' : 'Скопировать ссылку'}
+          </Button>
+        }
+      >
         {open && <img className={styles.full} src={groupRawUrl(open.file)} alt={open.title || 'Мем'} />}
       </Modal>
       <UploadMemeDialog open={uploading} onClose={() => setUploading(false)} onUploaded={setMemes} />

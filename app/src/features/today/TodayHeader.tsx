@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
-import { useState } from 'react';
-import { HedgehogLane } from '../../components/hedgehog/HedgehogLane';
+import { lazy, Suspense, useState } from 'react';
 import { RunawayHedgehog } from '../../components/hedgehog/RunawayHedgehog';
 import { IconButton } from '../../components/ui/IconButton';
 import { pickGreeting, RUNAWAY_GREETING, splitAccentPeriod } from '../../data/greetings';
@@ -12,6 +11,9 @@ import { useSyncStamp } from '../../services/syncStore';
 import type { ISODate } from '../../types/models';
 import { isVacation } from '../schedule/occurrences';
 import styles from './TodayHeader.module.css';
+
+// Ёжик из игры — отдельным куском: ему всё равно ждать модуль игры, а главный кусок без запаса
+const GameHogLane = lazy(() => import('../../components/hedgehog/GameHogLane').then((module) => ({ default: module.GameHogLane })));
 
 interface TodayHeaderProps {
   date: ISODate;
@@ -45,12 +47,23 @@ export function TodayHeader({ date, week, onCustomize }: TodayHeaderProps) {
           <strong>
             {getWeekdayName(date)}, {formatFullDate(date)}
           </strong>
-          <span className={styles.chip}>{isVacation(date) ? 'Каникулы' : WEEK_PARITY_LABELS[week.weekInCycle]}</span>
+          {/* «12-я неделя · нечётная»; до начала семестра номера нет — только чётность */}
+          <span className={styles.chip}>
+            {isVacation(date)
+              ? 'Каникулы'
+              : week.number >= 1
+                ? `${week.number}-я неделя · ${WEEK_PARITY_LABELS[week.weekInCycle].split(' ')[0]!.toLowerCase()}`
+                : WEEK_PARITY_LABELS[week.weekInCycle]}
+          </span>
           <IconButton className={styles.customize} icon={SlidersHorizontal} label="Настроить главную" size="sm" onClick={onCustomize} />
         </div>
       </div>
       {/* Ёжик бегает по низу шапки, как на сайте группы; «вырвался на свободу» — бегает по всему экрану */}
-      {!runaway && <HedgehogLane />}
+      {!runaway && (
+        <Suspense fallback={null}>
+          <GameHogLane />
+        </Suspense>
+      )}
       {runaway && <RunawayHedgehog />}
     </header>
   );

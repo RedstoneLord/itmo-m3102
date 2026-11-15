@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { pluralize } from '../../lib/pluralize';
-import { offlinePlan, useOfflineStore } from '../../services/offline';
+import { offlineFiles, offlineFolder, offlinePlan, useOfflineStore } from '../../services/offline';
+import { Checkbox } from '../../components/ui/Checkbox';
 import { useGroupStore } from '../group/groupStore';
 import { SettingsRow } from './SettingsRow';
 import styles from './settings.module.css';
@@ -31,9 +32,9 @@ function useStorageEstimate(deps: unknown) {
 /** «Работа без интернета»: всё нужное для конспектов — на устройство одной кнопкой, как на сайте группы */
 export function OfflineSettings() {
   const files = useGroupStore((state) => state.files);
-  const { saved, auto, status, progress, error, setAuto, download, clear } = useOfflineStore();
+  const { saved, auto, skip, status, progress, error, setAuto, download, clear } = useOfflineStore();
   const savedCount = Object.keys(saved).length;
-  const plan = offlinePlan(files, saved);
+  const plan = offlinePlan(files, saved, skip);
   const savedBytes = plan.wanted.filter((file) => saved[file.path]).reduce((sum, file) => sum + file.size, 0);
   const missingBytes = plan.missing.reduce((sum, file) => sum + file.size, 0);
   const estimate = useStorageEstimate(savedCount + status);
@@ -61,7 +62,7 @@ export function OfflineSettings() {
             </Button>
           )}
           <Button variant="secondary" icon={CloudDownload} disabled={running || files.length === 0 || upToDate} onClick={() => void download()}>
-            {running ? 'Скачивание…' : savedCount > 0 ? 'Обновить' : 'Скачать всё'}
+            {running ? 'Скачивание…' : savedCount > 0 ? 'Обновить' : 'Скачать'}
           </Button>
         </div>
       </SettingsRow>
@@ -81,6 +82,8 @@ export function OfflineSettings() {
         </p>
       )}
 
+      {files.length > 0 && <OfflineFolders />}
+
       <SettingsRow label="Обновлять автоматически" description="После каждой синхронизации докачивать новые и изменённые файлы и удалять пропавшие.">
         <SegmentedControl
           label="Обновлять автоматически"
@@ -90,5 +93,42 @@ export function OfflineSettings() {
         />
       </SettingsRow>
     </>
+  );
+}
+
+/**
+ * Какие папки держать на устройстве: предмет конспектов, учебники, лабораторные — у каждой размер и состояние
+ * («сохранено», «есть обновление», «не скачано»). Выключенную папку следующее «Обновить» удалит с устройства.
+ */
+function OfflineFolders() {
+  const files = useGroupStore((state) => state.files);
+  const { saved, skip, status, toggleFolder } = useOfflineStore();
+  const all = offlineFiles(files);
+  const folders = [...new Set(all.map((file) => offlineFolder(file.path)))];
+  return (
+    <details className={styles.more}>
+      <summary className={styles.moreSummary}>Выбрать папки</summary>
+      <ul className={styles.offlineFolders}>
+        {folders.map((folder) => {
+          const inside = all.filter((file) => offlineFolder(file.path) === folder);
+          const bytes = inside.reduce((sum, file) => sum + file.size, 0);
+          const done = inside.filter((file) => saved[file.path] !== undefined && (file.sha === undefined || saved[file.path] === file.sha)).length;
+          const state = skip.includes(folder) ? 'не скачивается' : done === inside.length ? 'сохранено' : done > 0 ? 'есть обновление' : 'не скачано';
+          return (
+            <li key={folder} className={styles.offlineFolder}>
+              <Checkbox
+                label={folder.replace('/', ' · ').replace(/_/g, ' ')}
+                checked={!skip.includes(folder)}
+                disabled={status === 'running'}
+                onChange={() => toggleFolder(folder)}
+              />
+              <span className={styles.offlineFolderMeta}>
+                {mb(bytes)} · {state}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </details>
   );
 }

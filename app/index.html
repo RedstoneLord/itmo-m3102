@@ -32,6 +32,7 @@
           document.documentElement.dataset.aurora = style === 'glass' || (style === 'aurora' && s.aurora !== false) ? 'on' : 'off';
           document.documentElement.dataset.glow = style !== 'minimal' && s.glow !== false ? 'on' : 'off';
           if (s.motion) document.documentElement.dataset.motion = s.motion;
+          if (s.textSize) document.documentElement.dataset.text = s.textSize;
         } catch (e) {}
       })();
     </script>

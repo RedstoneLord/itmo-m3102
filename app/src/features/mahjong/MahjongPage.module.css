@@ -9,3 +9,143 @@
   --radius: var(--radius-lg);
   --rs: 1;
 }
+
+/*
+ * Интерфейс игры группы (css/mahjong.css, его файл не трогаем) — в стиле сайта: заголовок как у страниц, плитки на токенах
+ * поверхностей (стекло в Liquid Glass, плоско в Minimalism), скругления из настройки, кнопки как Button. Само сукно и кости —
+ * доска игры, их не меняем. Селекторы через .host — специфичнее его `.mj-page …`, порядок CSS не важен.
+ */
+.host :global(.mj-page) {
+  max-width: none;
+}
+
+.host :global(.mj-page .mj-intro h1) {
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 1rem + 1.2vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Подпись над заголовком — обычным регистром, без разрядки (капс на сайте не используем) */
+.host :global(.mj-page .sched-eyebrow) {
+  font-size: var(--text-sm);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.host :global(.mj-page .sub),
+.host :global(.mj-page .mj-back) {
+  font-size: var(--text-sm);
+}
+
+.host :global(:is(.mj-hero, .mj-stats > div, .mj-welcome, .mj-victory)) {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--surface-shadow);
+  backdrop-filter: var(--surface-filter);
+}
+
+.host :global(.mj-hero h2),
+.host :global(:is(.mj-welcome, .mj-victory) h2) {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.host :global(.mj-stats b),
+.host :global(.mj-harvest strong) {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.host :global(.mj-notice) {
+  border-color: var(--surface-border);
+  border-radius: var(--radius-md);
+}
+
+/* Кнопки — как Button сайта: вторичная — фон поля и рамка, главная — градиент акцентов */
+.host :global(.mj-page :is(.btn2, .mj-boardHeading button)) {
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--control-bg);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.host :global(.mj-page .btn-primary) {
+  border-color: transparent;
+  background: var(--accent-gradient);
+  background-origin: border-box;
+  color: var(--color-on-accent);
+}
+
+.host :global(.mj-page select) {
+  min-height: 40px;
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--control-bg);
+  font-size: var(--text-sm);
+}
+
+/* Подсказка, перемешать, отмена — те же вторичные кнопки, крупные, с иконкой над подписью (вместо зелёных с жёлтой рамкой) */
+.host :global(.mj-page .mj-tools > button) {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--surface-shadow);
+  color: var(--color-text);
+  font-weight: var(--weight-medium);
+}
+
+.host :global(.mj-page .mj-tools > button > svg) {
+  filter: none;
+}
+
+@media (hover: hover) {
+  .host :global(.mj-page :is(.btn2, .mj-boardHeading button):not(:disabled):hover) {
+    background: var(--color-bg-hover);
+  }
+
+  .host :global(.mj-page .btn-primary:not(:disabled):hover) {
+    background: var(--accent-gradient-hover);
+  }
+
+  .host :global(.mj-page .mj-tools > button:not(:disabled):hover) {
+    border-color: var(--color-border-hover);
+    filter: none;
+  }
+}
+
+.host :global(.mj-page :is(button, a):focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Прогресс сада — полоса акцентов, как остальные полосы сайта */
+.host :global(.mj-progress progress) {
+  background: var(--color-control-track);
+}
+
+.host :global(.mj-progress progress::-webkit-progress-bar) {
+  background: var(--color-control-track);
+}
+
+.host :global(.mj-progress progress::-webkit-progress-value) {
+  background: var(--accent-gradient);
+}
+
+.host :global(.mj-progress progress::-moz-progress-bar) {
+  background: var(--accent-gradient);
+}
+
+/* Сукно — доска игры, но скругление — как у остальных карточек */
+.host :global(.mj-table) {
+  border-radius: var(--radius-lg);
+}
+
+.host :global(.mj-rules) {
+  border-top-color: var(--surface-border);
+}

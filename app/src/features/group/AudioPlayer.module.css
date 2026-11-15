@@ -1,0 +1,75 @@
+.player {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 640px;
+  padding: var(--space-5);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--surface-shadow);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.timeline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.time {
+  min-width: 44px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.time:last-child {
+  text-align: right;
+}
+
+/* Полоса перемотки: пройденное — градиентом акцентов, остальное — дорожка */
+.range {
+  width: 100%;
+  height: 6px;
+  margin: 0;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--color-accent), var(--color-accent-2)) 0 / var(--progress) 100% no-repeat,
+    var(--color-control-track);
+  appearance: none;
+  cursor: pointer;
+}
+
+.range::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-bg-elevated);
+  border-radius: 50%;
+  background: var(--color-accent);
+  appearance: none;
+}
+
+.range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-bg-elevated);
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.range:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 4px;
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}

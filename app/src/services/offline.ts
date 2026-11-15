@@ -22,12 +22,15 @@ const FETCH_TIMEOUT = 5 * 60_000;
 let operation = 0;
 let stop = () => {};
 
-export const offlineFiles = (files: RepoFile[]) =>
-  files.filter((file) => FOLDERS.some((folder) => file.path.startsWith(folder)) && SAVED.test(file.path));
+/** Папка, которую можно выключить в «Работе без интернета»: два первых уровня пути («Конспекты/Математический_анализ») */
+export const offlineFolder = (path: string) => path.split('/').slice(0, 2).join('/');
 
-/** Что скачать и что удалить: сохранённые версии против текущего дерева */
-export function offlinePlan(files: RepoFile[], saved: Record<string, string>) {
-  const wanted = offlineFiles(files);
+export const offlineFiles = (files: RepoFile[], skip: string[] = []) =>
+  files.filter((file) => FOLDERS.some((folder) => file.path.startsWith(folder)) && SAVED.test(file.path) && !skip.includes(offlineFolder(file.path)));
+
+/** Что скачать и что удалить: сохранённые версии против текущего дерева; файлы выключенных папок удаляются */
+export function offlinePlan(files: RepoFile[], saved: Record<string, string>, skip: string[] = []) {
+  const wanted = offlineFiles(files, skip);
   const paths = new Set(wanted.map((file) => file.path));
   return {
     wanted,
@@ -40,10 +43,13 @@ interface OfflineStore {
   /** Путь → sha сохранённой версии */
   saved: Record<string, string>;
   auto: boolean;
+  /** Папки, которые не скачивать (offlineFolder): по умолчанию — все включены */
+  skip: string[];
   status: 'idle' | 'running' | 'error';
   progress: { files: number; totalFiles: number; bytes: number; totalBytes: number } | null;
   error: string;
   setAuto: (auto: boolean) => void;
+  toggleFolder: (folder: string) => void;
   download: () => Promise<void>;
   clear: () => Promise<void>;
 }
@@ -63,10 +69,13 @@ export const useOfflineStore = create<OfflineStore>()(
     (set, get) => ({
       saved: {},
       auto: true,
+      skip: [],
       status: 'idle',
       progress: null,
       error: '',
       setAuto: (auto) => set({ auto }),
+      toggleFolder: (folder) =>
+        set((state) => ({ skip: state.skip.includes(folder) ? state.skip.filter((item) => item !== folder) : [...state.skip, folder] })),
 
       download: async () => {
         if (get().status === 'running') return;
@@ -75,7 +84,7 @@ export const useOfflineStore = create<OfflineStore>()(
         stop = () => abort.abort();
         // «Очистить» и новая загрузка меняют номер операции — запоздавшие ответы старой больше ничего не пишут
         const current = () => id === operation;
-        const { missing, stale } = offlinePlan(useGroupStore.getState().files, get().saved);
+        const { missing, stale } = offlinePlan(useGroupStore.getState().files, get().saved, get().skip);
         set({
           status: 'running',
           error: '',
@@ -145,15 +154,15 @@ export const useOfflineStore = create<OfflineStore>()(
     {
       name: storageKey('offline'),
       storage: localStore,
-      partialize: ({ saved, auto }) => ({ saved, auto }),
+      partialize: ({ saved, auto, skip }) => ({ saved, auto, skip }),
     },
   ),
 );
 
 /** После синхронизации: если раньше уже скачивали и включено «Обновлять автоматически» — докачать новое */
 export function updateOfflineIfEnabled() {
-  const { auto, saved, download } = useOfflineStore.getState();
+  const { auto, saved, skip, download } = useOfflineStore.getState();
   if (!auto || Object.keys(saved).length === 0) return;
-  const { missing, stale } = offlinePlan(useGroupStore.getState().files, saved);
+  const { missing, stale } = offlinePlan(useGroupStore.getState().files, saved, skip);
   if (missing.length || stale.length) void download();
 }
