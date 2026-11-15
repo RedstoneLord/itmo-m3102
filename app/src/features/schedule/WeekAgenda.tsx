@@ -8,6 +8,7 @@ import { OccurrenceList } from './DayView';
 import type { OccurrenceAction } from './OccurrenceMenuItems';
 import { takesPlace, type ClassOccurrence, type DaySchedule } from './occurrences';
 import styles from './WeekAgenda.module.css';
+import { ScheduleChanges } from './ScheduleSource';
 
 interface WeekAgendaProps {
   days: DaySchedule[];
@@ -44,6 +45,7 @@ export function WeekAgenda({ days, today, time, onAddDate, onAction }: WeekAgend
                 </button>
               )}
             </header>
+            <ScheduleChanges occurrences={day.occurrences} />
             {day.occurrences.length > 0 && <OccurrenceList occurrences={day.occurrences} today={today} time={time} onAction={onAction} />}
           </section>
         );

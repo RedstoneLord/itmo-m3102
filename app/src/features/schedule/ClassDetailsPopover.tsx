@@ -18,6 +18,7 @@ import { labelMatches, lessonNumber } from './lessons';
 import type { ClassOccurrence } from './occurrences';
 import { useScheduleData } from './scheduleStore';
 import styles from './ClassDetailsPopover.module.css';
+import { ClassChangeAlert } from './ScheduleSource';
 
 interface ClassDetailsPopoverProps {
   occurrence: ClassOccurrence;
@@ -93,6 +94,7 @@ export function ClassDetailsPopover({ occurrence, onClose, onEdit, anchorRef, al
       transition={SPRING_SNAPPY}
       onClick={(event) => event.stopPropagation()}
     >
+      <ClassChangeAlert occurrence={occurrence} />
       <Badge tone={CLASS_TYPE_TONES[details.type]}>{CLASS_TYPE_LABELS[details.type]}</Badge>
       <p className={styles.subject}>{subjectName}</p>
 

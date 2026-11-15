@@ -12,4 +12,4 @@ export function subjectColorId(subject) {
   return index >= 0 ? index : [...name].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 7) % 8;
 }
 export const lessonKind = (kind) =>
-  ({ lecture: 'Лекция', practice: 'Практика', lab: 'Лабораторная', seminar: 'Семинар', other: 'Занятие' })[kind] || 'Занятие';
+  ({ lecture: 'Лекция', practice: 'Практика', lab: 'Лабораторная', seminar: 'Семинар', consultation: 'Консультация', exam: 'Экзамен', credit: 'Зачёт', other: 'Занятие' })[kind] || 'Занятие';

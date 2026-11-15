@@ -27,7 +27,7 @@ export function DayOccurrenceRow({ occurrence, today, time, onAction }: DayOccur
   const subjectName = useSubjectName(occurrence.details.subjectId);
   const isNow = isHappeningNow(occurrence, today, time);
   const isCancelled = !takesPlace(occurrence);
-  const moveNote = describeMove(occurrence);
+  const moveNote = occurrence.sourceChange?.message || describeMove(occurrence);
   const { details } = occurrence;
   const [popoverOpen, setPopoverOpen] = useState(false);
   const titleRef = useRef<HTMLButtonElement>(null);

@@ -11,6 +11,7 @@ import { DayOccurrenceRow, timelineClass } from './DayOccurrenceRow';
 import type { OccurrenceAction } from './OccurrenceMenuItems';
 import { nowMarkerIndex, takesPlace, type ClassOccurrence, type DaySchedule } from './occurrences';
 import styles from './DayView.module.css';
+import { ScheduleChanges } from './ScheduleSource';
 
 interface DayViewProps {
   days: DaySchedule[];
@@ -55,12 +56,23 @@ export function DayView({ days, selectedDate, today, time, onSelectDate, onActio
               aria-selected={isSelected}
               tabIndex={isSelected ? 0 : -1}
               className={cn(styles.day, isSelected && styles.daySelected)}
+              title={day.occurrences.some((item) => item.sourceChange) ? 'Есть изменения в расписании' : undefined}
               onClick={() => onSelectDate(day.date)}
             >
               <span className={styles.weekday}>{getShortWeekdayName(day.date)}</span>
               <span className={cn(styles.dayNumber, isToday && styles.dayNumberToday)}>{getDayOfMonth(day.date)}</span>
               {/* Точек столько, сколько пар (до шести) — видно, насколько загружен день */}
               <span className={styles.dots} aria-label={`${day.occurrences.length} пар`}>
+                {day.occurrences.some((item) => item.sourceChange) && (
+                  <span
+                    style={{
+                      background: day.occurrences.some((item) => item.sourceChange && !takesPlace(item))
+                        ? 'var(--color-danger)'
+                        : 'var(--color-warning)',
+                    }}
+                    aria-label="Есть изменения"
+                  />
+                )}
                 {day.occurrences.slice(0, 6).map((occurrence) => (
                   <span key={occurrence.key} className={styles.dot} />
                 ))}
@@ -70,6 +82,7 @@ export function DayView({ days, selectedDate, today, time, onSelectDate, onActio
         })}
       </div>
 
+      {selected && <ScheduleChanges occurrences={selected.occurrences} />}
       {/* Свайп влево-вправо — следующий/предыдущий день; за край недели — соседняя неделя */}
       <div className={styles.swipe} onTouchStart={swipe.start} onTouchEnd={swipe.end}>
         <Swap id={selected?.date ?? ''} direction={direction}>

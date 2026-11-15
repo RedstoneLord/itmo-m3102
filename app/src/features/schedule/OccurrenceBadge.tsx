@@ -9,8 +9,23 @@ interface OccurrenceBadgeProps {
 
 /** Метка «Сейчас» или вид исключения. У обычного занятия ничего не показывает. */
 export function OccurrenceBadge({ occurrence, isNow = false }: OccurrenceBadgeProps) {
+  const change = occurrence.sourceChange;
+  if (change && occurrence.status !== 'cancelled' && occurrence.status !== 'movedAway') {
+    const label = change.changes.includes('room')
+      ? 'Ауд. изменена'
+      : change.changes.includes('time') || change.changes.includes('date')
+        ? 'Перенесено'
+        : occurrence.status === 'additional'
+          ? 'Дополнительно'
+          : 'Уточнено';
+    return (
+      <>
+        {isNow && <Badge tone="accent">Сейчас</Badge>}
+        <Badge tone="warning">{label}</Badge>
+      </>
+    );
+  }
   if (isNow) return <Badge tone="accent">Сейчас</Badge>;
-
   const badge = OCCURRENCE_BADGES[occurrence.status];
   return badge ? <Badge tone={badge.tone}>{badge.label}</Badge> : null;
 }

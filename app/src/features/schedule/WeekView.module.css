@@ -139,3 +139,7 @@
   border-radius: 50%;
   background: var(--color-accent);
 }
+.changes {
+  color: var(--color-warning);
+  font-weight: var(--weight-bold);
+}

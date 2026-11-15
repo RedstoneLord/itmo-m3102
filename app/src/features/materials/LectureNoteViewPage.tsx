@@ -1,5 +1,5 @@
 import { ArrowLeft, Bookmark, BookmarkCheck, Download, ExternalLink, FileDown, LoaderCircle, Pencil, Printer, Trash } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { SECTIONS } from '../../app/navigation';
 import { ConfirmDeleteModal, useConfirmDelete } from '../../components/ui/ConfirmDeleteModal';
@@ -19,13 +19,14 @@ import { NoteCards } from '../cards/NoteCards';
 import { SiteQuiz } from './SiteQuiz';
 import { useMarksStore } from './marksStore';
 import { MarkButton, useJumpToMark, useMarkHighlights } from './NoteMarks';
-import { LectureNoteDialog } from './LectureNoteDialog';
 import { useLectureNoteDialog } from './useLectureNoteDialog';
 import { useLectureNotesStore } from './lectureNotesStore';
 import { NotePager, NoteSidebar, ReadingProgress, useSiblingNotes, useToc } from './NoteReader';
 import { noteTitle } from './noteOrder';
 import { useReadingRewards } from '../rewards/useReadingRewards';
 import styles from './LectureNoteViewPage.module.css';
+
+const LectureNoteDialog = lazy(() => import('./LectureNoteDialog').then((module) => ({ default: module.LectureNoteDialog })));
 
 /**
  * Отдельная страница для чтения конспекта — раньше открывался в модалке рядом с
@@ -219,7 +220,11 @@ function NoteView({ note }: { note: LectureNote }) {
       <NoteSidebar note={note} siblings={siblings} toc={toc} contentRef={contentRef} />
       {note.contentType === 'markdown' && <MarkButton contentRef={contentRef} noteId={note.id} />}
 
-      <LectureNoteDialog target={dialog.target} onClose={dialog.close} />
+      {dialog.target && (
+        <Suspense fallback={null}>
+          <LectureNoteDialog target={dialog.target} onClose={dialog.close} />
+        </Suspense>
+      )}
       <ConfirmDeleteModal
         open={confirmDelete.target !== null}
         title={confirmDelete.target ? title : ''}

@@ -21,6 +21,7 @@ import { ReviewBanner, SubjectsPanel } from './SubjectsPanel';
 import { TodayHeader } from './TodayHeader';
 import { TodaySchedule } from './TodaySchedule';
 import styles from './TodayPage.module.css';
+import { ScheduleSource } from '../schedule/ScheduleSource';
 
 /** «Сейчас» и дедлайны стоят рядом (8 + 4 колонки из 12), если идут подряд; остальные крупные блоки — во всю ширину */
 function featureSpan(ids: HomeBlockId[], at: number) {
@@ -55,7 +56,16 @@ export function TodayPage() {
   const renderBlock = (id: HomeBlockId) => {
     switch (id) {
       case 'next':
-        return <NextClassBlock status={classStatus} occurrences={railOccurrences} date={railDate} today={today} time={time} />;
+        return (
+          <NextClassBlock
+            status={classStatus}
+            occurrences={railOccurrences}
+            todayOccurrences={todayOccurrences}
+            date={railDate}
+            today={today}
+            time={time}
+          />
+        );
       case 'review':
         return <ReviewBanner today={today} />;
       case 'schedule':
@@ -82,6 +92,7 @@ export function TodayPage() {
   return (
     <>
       <TodayHeader date={today} week={week} onCustomize={() => setCustomizing(true)} />
+      <ScheduleSource date={today} />
 
       <div className={styles.groups}>
         {groupBlocks(visible).map((group) => (

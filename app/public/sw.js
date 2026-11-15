@@ -79,6 +79,23 @@ self.addEventListener('fetch', (event) => {
   if (url.origin === self.location.origin && /\/classic(\/|$)/.test(url.pathname)) return;
   // Переключатель стиля (/switch/): файл без хеша в имени, а ниже для своего домена кеш «сначала кеш» — правки не доезжали бы
   if (url.origin === self.location.origin && /\/switch\//.test(url.pathname)) return;
+  // Датированное расписание и подписка обновляются без выпуска кода: всегда сеть, затем сохранённая копия.
+  if (url.origin === self.location.origin && /\/(?:timetable-live\.json|m3102\.ics)$/.test(url.pathname)) {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request);
+        if (!response.ok) throw new Error('unavailable');
+        return put(request, response);
+      } catch {
+        const hit = await caches.match(request, MATCH);
+        if (!hit) return Response.error();
+        const headers = new Headers(hit.headers);
+        headers.set('X-M3102-Saved', '1');
+        return new Response(hit.body, { status: hit.status, headers });
+      }
+    })());
+    return;
+  }
 
   if (request.mode === 'navigate') {
     event.respondWith(

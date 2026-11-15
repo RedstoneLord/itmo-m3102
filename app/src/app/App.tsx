@@ -3,12 +3,11 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router';
 import { useSettingsStore } from '../features/settings/settingsStore';
 import { AppShell } from '../components/layout/AppShell';
 import { EditModeProvider } from '../features/settings/EditModeContext';
-import { TodayPage } from '../features/today/TodayPage';
 import { useSyncStore } from '../services/syncStore';
 import { SCHEDULE_MONTH_PATH, SECTIONS } from './navigation';
 
 /**
- * Страницы грузятся отдельными кусками: при открытии сайта качается только главная (web.dev: code splitting
+ * Страницы, включая главную, грузятся отдельными кусками: при открытии качается только выбранный раздел (web.dev: code splitting
  * по маршрутам). Остальные докачиваются в простое браузера — переход по меню всё равно мгновенный.
  */
 const loaders: (() => Promise<unknown>)[] = [];
@@ -26,6 +25,7 @@ function page<M>(load: () => Promise<M>, name: keyof M, prefetch = true) {
   };
 }
 
+const TodayPage = page(() => import('../features/today/TodayPage'), 'TodayPage');
 const DeadlinesPage = page(() => import('../features/deadlines/DeadlinesPage'), 'DeadlinesPage');
 const DesignSystemPage = page(() => import('../features/design/DesignSystemPage'), 'DesignSystemPage', false);
 const DiagramEditorPage = page(() => import('../features/diagrams/DiagramEditorPage'), 'DiagramEditorPage', false);

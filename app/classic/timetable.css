@@ -331,3 +331,31 @@ html:root[data-site-style] .month-previews a {
     font-size: 1.125rem;
   }
 }
+/* Датированная выгрузка My ITMO: статусы дополняют текст, не полагаются на цвет. */
+html:root[data-site-style] .live-source {
+  margin: 10px 0 14px;
+  font-size: .875rem;
+  line-height: 1.6;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+html:root[data-site-style] .live-source[data-saved='true'] { color: var(--warn); }
+html:root[data-site-style] .live-change,
+html:root[data-site-style] .live-day-banner {
+  display: block;
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--border));
+  border-radius: var(--control-radius);
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 8%, var(--card));
+  font-size: .875rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+html:root[data-site-style] .live-missing { color: var(--danger); border-color: var(--danger); background: color-mix(in srgb, var(--danger) 6%, var(--card)); }
+html:root[data-site-style] .live-change-badge { color: var(--warn); font-size: .875rem; font-weight: 700; }
+html:root[data-site-style] .live-cancelled .timetable-subject,
+html:root[data-site-style] .live-cancelled .timetable-time,
+html:root[data-site-style] .home-today-row.live-cancelled > div > strong { text-decoration: line-through; }
+html:root[data-site-style] .live-home-cancel { margin-bottom: 10px; color: var(--danger); }

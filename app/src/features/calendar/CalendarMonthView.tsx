@@ -5,6 +5,7 @@ import { getCalendarEntriesForDate, type CalendarData, type CalendarEntry } from
 import { MonthCell } from './MonthCell';
 import { getMonthGridDates } from './monthGrid';
 import styles from './CalendarMonthView.module.css';
+import { getOccurrencesForDate, takesPlace } from '../schedule/occurrences';
 
 const WEEKDAY_HEADERS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
@@ -56,6 +57,13 @@ export function CalendarMonthView({ anchor, today, data, onOpenDay, onEditTask, 
             isCurrentMonth={date.slice(0, 7) === currentMonth}
             isToday={date === today}
             entries={getCalendarEntriesForDate(date, data)}
+            scheduleChange={
+              getOccurrencesForDate(date, data.schedule).some((item) => item.sourceChange && !takesPlace(item))
+                ? 'cancelled'
+                : getOccurrencesForDate(date, data.schedule).some((item) => item.sourceChange)
+                  ? 'changed'
+                  : undefined
+            }
             onOpenDay={onOpenDay}
             onSelectEntry={selectEntry}
             onAddEvent={onAddEvent}
