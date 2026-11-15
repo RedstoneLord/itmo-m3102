@@ -53,7 +53,7 @@ export interface Subject extends BaseEntity {
 /** День недели: 1 — понедельник … 7 — воскресенье */
 export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
-export type ClassType = 'lecture' | 'lab' | 'seminar' | 'practice';
+export type ClassType = 'lecture' | 'lab' | 'seminar' | 'practice' | 'consultation' | 'exam' | 'credit';
 
 /** 1 — нечётная неделя, 2 — чётная, см. lib/studyWeek.ts */
 export type WeekInCycle = 1 | 2;

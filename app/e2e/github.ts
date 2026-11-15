@@ -14,6 +14,7 @@ export const PDF_PAGES = 6;
 export async function mockGithub(page: Page) {
   // На весь контекст, а не на страницу: PDF качает воркер pdf.js, его запросы page.route не видит
   const context = page.context();
+  await context.route('**/data/timetable-live.json', (route) => route.fulfill({ status: 404 }));
   await context.route(
     (url) => url.hostname !== '127.0.0.1' && url.hostname !== 'localhost',
     (route) => route.abort(),

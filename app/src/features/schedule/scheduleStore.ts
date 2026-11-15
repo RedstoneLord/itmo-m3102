@@ -6,6 +6,7 @@ import { localStore, storageKey } from '../../lib/storage';
 import { useSemesterSettingsStore } from '../settings/semesterSettingsStore';
 import type { ClassDetails, ClassSession, ID, ScheduleException, WeekRepeat, Weekday } from '../../types/models';
 import type { ScheduleData } from './occurrences';
+import type { LiveTimetable } from '../../../classic/live-timetable';
 
 export interface ClassDraft extends ClassDetails {
   weekday: Weekday;
@@ -31,6 +32,8 @@ export type ExceptionDraft =
 interface ScheduleStore {
   classes: ClassSession[];
   exceptions: ScheduleException[];
+  liveTimetable: LiveTimetable | null;
+  liveError: boolean;
   addClass: (draft: ClassDraft) => void;
   updateClass: (id: ID, draft: ClassDraft) => void;
   /** Удаляет занятие вместе со всеми его исключениями */
@@ -48,6 +51,8 @@ export const useScheduleStore = create<ScheduleStore>()(
     (set) => ({
       classes: M3102_CLASSES,
       exceptions: [],
+      liveTimetable: null,
+      liveError: false,
 
       addClass: (draft) => set((state) => ({ classes: [...state.classes, createEntity(draft)] })),
 
@@ -95,5 +100,7 @@ export function useScheduleData(): ScheduleData {
   const exceptions = useScheduleStore((state) => state.exceptions);
   const semesterStart = useSemesterSettingsStore((state) => state.semesterStart);
   const weekOneStart = useSemesterSettingsStore((state) => state.weekOneStart);
-  return { classes, exceptions, semesterStart, weekOneStart };
+  const live = useScheduleStore((state) => state.liveTimetable);
+  const liveError = useScheduleStore((state) => state.liveError);
+  return { classes, exceptions, semesterStart, weekOneStart, live, liveError };
 }

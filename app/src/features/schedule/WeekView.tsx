@@ -49,6 +49,11 @@ export function WeekView({ days, today, time, onAddDate, onAction }: WeekViewPro
           <div key={day.date} className={cn(styles.header, day.date === today && styles.headerToday)}>
             <span className={styles.weekday}>{getShortWeekdayName(day.date)}</span>
             <span className={styles.dayNumber}>{getDayOfMonth(day.date)}</span>
+            {day.occurrences.some((item) => item.sourceChange) && (
+              <span className={styles.changes} role="img" aria-label="Есть изменения в расписании" title="Есть изменения в расписании">
+                !
+              </span>
+            )}
             {isEditMode && (
               <button type="button" className={styles.addButton} aria-label="Добавить пару" title="Добавить пару" onClick={() => onAddDate(day.date)}>
                 <Plus size={13} strokeWidth={2} aria-hidden />

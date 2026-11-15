@@ -6,7 +6,7 @@ import type { HomeworkItem } from '../homework/homeworkStore';
 import { CLASS_TYPE_LABELS, describeMove } from './labels';
 import { getOccurrencesForDate, type ScheduleData } from './occurrences';
 
-/** Ссылка-подписка: файл собирает GitHub при каждой сборке сайта и раз в сутки (scripts/build-ics.ts) */
+/** Ссылка-подписка: файл собирает GitHub при публикации и каждый час из той же выгрузки My ITMO. */
 export const SUBSCRIPTION_URL = 'https://redstonelord.github.io/itmo-m3102/m3102.ics';
 
 /** Дедлайн «до 23:59» напоминает накануне в 9:00 (15 ч до полуночи дня сдачи) */
@@ -33,12 +33,15 @@ export function groupCalendarEvents({ schedule, subjects, deadlines, homework, f
 
   for (let offset = 0; offset < days; offset++) {
     const date = addDays(from, offset);
+    // When the official feed is connected, do not export unverified future repetitions as real classes.
+    if (schedule.live && !Object.hasOwn(schedule.live.days, date)) continue;
     for (const occurrence of getOccurrencesForDate(date, schedule)) {
       // Перенесённая отсюда пара покажется в новый день как movedHere — здесь её не дублируем
       if (occurrence.status === 'movedAway') continue;
       const { details } = occurrence;
       const notes = [
         details.teacher,
+        occurrence.sourceChange?.message,
         details.subgroup && `Группа: ${details.subgroup}`,
         describeMove(occurrence),
         occurrence.status === 'replaced' && 'Замена',
@@ -47,7 +50,7 @@ export function groupCalendarEvents({ schedule, subjects, deadlines, homework, f
         details.notes,
       ].filter(Boolean);
       events.push({
-        uid: `${occurrence.key}@m3102`,
+        uid: `${occurrence.calendarUid ?? occurrence.key}@m3102`,
         title: `${subjectName(details.subjectId)} — ${CLASS_TYPE_LABELS[details.type]}`,
         date,
         startTime: details.startTime,

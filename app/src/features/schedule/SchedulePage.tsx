@@ -25,6 +25,7 @@ import { useEditMode } from '../settings/EditModeContext';
 import { useScheduleData } from './scheduleStore';
 import { useScheduleDialogs } from './useScheduleDialogs';
 import { WeekView } from './WeekView';
+import { ScheduleSource } from './ScheduleSource';
 
 /**
  * Расписание: день, неделя и месяц. Месяц — бывший «Календарь»: к парам добавлены личные задачи и события, дедлайны группы и ДЗ.
@@ -116,6 +117,7 @@ export function SchedulePage() {
         }
       />
 
+      <ScheduleSource date={selectedDate} />
       <ScheduleToolbar
         weekInCycle={week.weekInCycle}
         view={view}

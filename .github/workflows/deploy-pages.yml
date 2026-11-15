@@ -1,31 +1,91 @@
-# ШАБЛОН (выключен: лежит в app/ci/, а не в .github/workflows/, поэтому сам не запускается).
-# Публикует оба сайта одним адресом: классический (корень репозитория) — в корне, приложение (app/) — в /app/.
-# Чтобы включить при слиянии: 1) скопировать файл в .github/workflows/deploy-pages.yml;
-# 2) Settings → Pages → Source: GitHub Actions (сейчас — «Deploy from a branch»: master);
-# 3) убедиться, что ветка в `on.push.branches` — основная (master).
-# Сборка: npm run site -- --fresh (app/scripts/assemble-classic.ts) складывает классический сайт и app/dist в app/site.
+# Один выпуск двух оформлений. Почасовые данные My ITMO публикуются артефактом Pages, без git-коммитов.
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [master]
   workflow_dispatch:
-  # Раз в сутки (05:00 МСК) — пересобрать календарь-подписку m3102.ics, даже если в коде ничего не менялось:
-  # у группы меняются расписание, дедлайны и ДЗ
+  # Каждый час, вне пика начала часа; расписание Actions выполняется с возможной задержкой.
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '17 * * * *'
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Не прерываем обмен/сохранение ротирующегося refresh token. Все запуски используют один замок.
+  cancel-in-progress: false
 
 jobs:
+  timetable:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: itmo-timetable-sync
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify private timetable configuration
+        env:
+          ITMO_REFRESH_TOKEN: ${{ secrets.ITMO_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$ITMO_REFRESH_TOKEN" ]; then
+            echo 'Configure ITMO_REFRESH_TOKEN in environment itmo-timetable-sync. See docs/MY_ITMO_TIMETABLE_API_SETUP.md.'
+            exit 1
+          fi
+      - name: Locate the latest encrypted session
+        id: session
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ITMO_REFRESH_TOKEN: ${{ secrets.ITMO_REFRESH_TOKEN }}
+        run: node app/scripts/sync-itmo-timetable.mjs locate
+      - uses: actions/download-artifact@v4
+        if: steps.session.outputs.artifact-id != ''
+        with:
+          artifact-ids: ${{ steps.session.outputs.artifact-id }}
+          run-id: ${{ steps.session.outputs.run-id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/itmo-private
+          merge-multiple: true
+      - name: Renew and encrypt the ITMO session
+        env:
+          ITMO_REFRESH_TOKEN: ${{ secrets.ITMO_REFRESH_TOKEN }}
+          ITMO_SESSION_FILE: ${{ runner.temp }}/itmo-private/session.json.enc
+          ITMO_EXPECT_SESSION: ${{ steps.session.outputs.artifact-id != '' }}
+        run: node app/scripts/sync-itmo-timetable.mjs renew
+      # Save rotation durably BEFORE any timetable request. Later job/build failures keep this checkpoint usable.
+      - name: Save the encrypted session checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.session.outputs.name }}
+          path: ${{ runner.temp }}/itmo-private/session.json.enc
+          if-no-files-found: error
+          retention-days: 7
+      - name: Fetch and validate the shared timetable
+        env:
+          ITMO_REFRESH_TOKEN: ${{ secrets.ITMO_REFRESH_TOKEN }}
+          ITMO_SESSION_FILE: ${{ runner.temp }}/itmo-private/session.json.enc
+          ITMO_TIMETABLE_FILE: ${{ runner.temp }}/itmo/timetable-live.json
+        run: node app/scripts/sync-itmo-timetable.mjs fetch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: itmo-public-timetable
+          path: ${{ runner.temp }}/itmo/timetable-live.json
+          if-no-files-found: error
+          retention-days: 2
+          overwrite: true
+
   build:
+    needs: timetable
+    outputs:
+      pages-artifact-name: ${{ steps.site-data.outputs.pages-artifact-name }}
     # Фиксируем окружение браузерных проверок на время миграции ubuntu-latest.
     runs-on: ubuntu-24.04
     # Проект сайта — в app/, в корне репозитория лежит классический сайт группы и документация
@@ -34,6 +94,17 @@ jobs:
         working-directory: app
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: itmo-public-timetable
+          path: ${{ runner.temp }}/itmo
+      - name: Use the validated public snapshot
+        id: site-data
+        run: |
+          echo "ITMO_TIMETABLE_FILE=$RUNNER_TEMP/itmo/timetable-live.json" >> "$GITHUB_ENV"
+          echo "pages-artifact-name=github-pages-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -41,10 +112,10 @@ jobs:
           cache-dependency-path: app/package-lock.json
       - run: npm ci
       - run: npm run format:check
-      - run: npm test
+      - run: npm test -- --maxWorkers=4
+      - run: npm run test:classic
+      - run: npm run test:itmo
       - run: npm run build
-      # Календарь-подписка для Google и Apple Календаря (scripts/build-ics.ts)
-      - run: npm run ics
       # Бюджет размера сборки (scripts/check-size.mjs)
       - run: npm run size
       # Готовый сайт: классический сайт группы (из корня репозитория, с самыми свежими data/ и Дедлайны/) — в корне адреса,
@@ -52,6 +123,13 @@ jobs:
       - run: npm run site -- --fresh
         env:
           GITHUB_TOKEN: ${{ github.token }}
+      # Подписка использует тот же проверенный My ITMO и те же групповые файлы, что уже лежат в Pages.
+      - run: npm run ics
+        env:
+          ITMO_DATA_DIR: site
+      - run: |
+          cp dist/m3102.ics site/m3102.ics
+          cp dist/m3102.ics site/app/m3102.ics
       # Автотесты в браузере по собранному сайту (e2e/); упали — трассы в артефакте e2e-traces
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
@@ -60,6 +138,7 @@ jobs:
         with:
           name: e2e-traces
           path: app/test-results
+          overwrite: true
       # Lighthouse по собранному сайту (lighthouserc.json): доступность, практики и сдвиг вёрстки — порог,
       # производительность — только предупреждение (эмуляция слабого телефона шумит). Отчёт — в артефакте
       - run: npm run lighthouse
@@ -68,16 +147,23 @@ jobs:
         with:
           name: lighthouse
           path: app/lighthouse-report
+          overwrite: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: app/site
+          name: ${{ steps.site-data.outputs.pages-artifact-name }}
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.build.outputs.pages-artifact-name }}

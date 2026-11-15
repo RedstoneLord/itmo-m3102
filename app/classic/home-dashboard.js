@@ -1,8 +1,9 @@
+import { liveChangeMarkup, liveStatusMarkup } from './live-schedule.js';
 import { subjectColorId } from './timetable-model.js';
 import { esc, read, nice, fileHref, CONTENT, validTree } from './student-core.js';
 import { json, loadTree, freshnessSnapshot, refreshSources } from './student-data.js';
 import { ensureSchedule, getSchedule, reloadSchedule } from './schedule-ui.js';
-import { lessonsOn, addDays, dateKey, weekParity, isVacation } from './schedule.js';
+import { lessonsOn, occurrencesOn, addDays, dateKey, weekParity, isVacation } from './schedule.js';
 import { HOME_BLOCKS, campusNow, duration, normalizeRecent } from './home-preferences.js';
 import { homeLayout, mountHomeSettings } from './home-setup.js';
 import { plainMathText } from './student-text.js';
@@ -28,7 +29,7 @@ let disposeMascot = () => {},
   queueRefresh = async () => {},
   homeRefresh = async () => {},
   notesFlight;
-const kind = (lesson) => ({ lecture: 'Лекция', practice: 'Практика', lab: 'Лабораторная', other: 'Занятие' })[lesson.kind] || 'Занятие';
+const kind = (lesson) => ({ lecture: 'Лекция', practice: 'Практика', lab: 'Лабораторная', other: 'Занятие', consultation:'Консультация', exam:'Экзамен', credit:'Зачёт' })[lesson.kind] || 'Занятие';
 const instant = (date, time) => new Date(`${dateKey(date)}T${time}:00+03:00`);
 export function updateHomeTime() {
   const node = document.querySelector('#student-next');
@@ -106,8 +107,13 @@ export function updateHomeTime() {
       node.dataset.lesson = lesson.id + dateKey(date);
     }
   }
+  const changes=occurrencesOn(now,schedule).filter(l=>l.cancelled);
+  const notices=`${liveStatusMarkup(schedule,dateKey(now))}${changes.map(l=>`<div class="live-home-cancel"><del>${esc(l.start)} · ${esc(l.subject)}</del>${liveChangeMarkup(l)}</div>`).join('')}${found ? liveChangeMarkup(found.lesson) : ''}`;
+  let noticeBox=node.querySelector('[data-live-notices]');
+  if(!noticeBox){noticeBox=document.createElement('div');noticeBox.dataset.liveNotices='';node.prepend(noticeBox);}
+  setMarkup(noticeBox,notices);
   const today = document.getElementById('home-today');
-  const lessons = lessonsOn(now, schedule);
+  const lessons = occurrencesOn(now, schedule);
   setMarkup(
     today,
     lessons.length
@@ -115,7 +121,7 @@ export function updateHomeTime() {
           .map((l) => {
             const end = instant(now, l.end),
               start = instant(now, l.start);
-            return `<div data-subject-color="${subjectColorId(l.subject)}" class="home-today-row${l.break ? ' is-break' : ''}"><span class="lesson-interval">${esc(l.start)}–${esc(l.end)}</span><div><strong>${esc(l.break ? 'Перерыв' : l.subject)}</strong>${l.break ? '' : `<p>${kind(l)} · Ауд. ${esc(l.room || 'уточняется')}</p><small>${end <= realNow ? 'Завершено' : start <= realNow ? 'Идёт сейчас' : 'Предстоит'}</small>`}</div></div>`;
+            return `<div data-subject-color="${subjectColorId(l.subject)}" class="home-today-row${l.cancelled ? ' live-cancelled' : ''}${l.break ? ' is-break' : ''}"><span class="lesson-interval">${esc(l.start)}–${esc(l.end)}</span><div><strong>${esc(l.break ? 'Перерыв' : l.subject)}</strong>${l.break ? '' : `<p>${kind(l)} · Ауд. ${esc(l.room || 'уточняется')}</p>${liveChangeMarkup(l)}<small>${l.cancelled ? 'Не проводится' : end <= realNow ? 'Завершено' : start <= realNow ? 'Идёт сейчас' : 'Предстоит'}</small>`}</div></div>`;
           })
           .join('')}</div>${warning}`
       : emptyState(

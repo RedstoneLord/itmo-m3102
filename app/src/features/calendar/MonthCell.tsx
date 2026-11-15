@@ -18,6 +18,7 @@ interface MonthCellProps {
   isCurrentMonth: boolean;
   isToday: boolean;
   entries: CalendarEntry[];
+  scheduleChange?: 'cancelled' | 'changed';
   onOpenDay: (date: ISODate) => void;
   onSelectEntry: (entry: CalendarEntry) => void;
   onAddEvent: (date: ISODate) => void;
@@ -27,7 +28,7 @@ interface MonthCellProps {
  * Один день месячной сетки: номер дня, до трёх компактных записей и «+N more».
  * И номер дня, и «+N more» открывают дневной вид — там записей помещается сколько угодно.
  */
-export function MonthCell({ date, index, isCurrentMonth, isToday, entries, onOpenDay, onSelectEntry, onAddEvent }: MonthCellProps) {
+export function MonthCell({ date, index, isCurrentMonth, isToday, entries, scheduleChange, onOpenDay, onSelectEntry, onAddEvent }: MonthCellProps) {
   const { isEditMode } = useEditMode();
   // Полоски на телефоне тоньше строк — помещается на одну больше
   const visible = entries.slice(0, NARROW.matches ? MAX_VISIBLE + 1 : MAX_VISIBLE);
@@ -44,6 +45,17 @@ export function MonthCell({ date, index, isCurrentMonth, isToday, entries, onOpe
         <button type="button" className={cn(styles.dayNumber, isToday && styles.today)} onClick={() => onOpenDay(date)}>
           {getDayOfMonth(date)}
         </button>
+        {scheduleChange && (
+          <span
+            className={styles.change}
+            data-cancelled={scheduleChange === 'cancelled'}
+            role="img"
+            aria-label="Есть изменения в расписании"
+            title="Есть изменения в расписании"
+          >
+            !
+          </span>
+        )}
         {isEditMode && (
           <button type="button" className={styles.addButton} aria-label="Добавить событие" onClick={() => onAddEvent(date)}>
             <Plus size={11} strokeWidth={2} aria-hidden />

@@ -9,6 +9,9 @@ export const CLASS_TYPE_LABELS: Record<ClassType, string> = {
   lab: 'Лабораторная',
   seminar: 'Семинар',
   practice: 'Практика',
+  consultation: 'Консультация',
+  exam: 'Экзамен',
+  credit: 'Зачёт',
 };
 
 /** Для узких карточек недели: «Лабораторная» не помещается в колонку на телефоне */
@@ -25,6 +28,9 @@ export const CLASS_TYPE_TONES: Record<ClassType, BadgeTone> = {
   practice: 'practice',
   lab: 'lab',
   seminar: 'consultation',
+  consultation: 'consultation',
+  exam: 'danger',
+  credit: 'consultation',
 };
 
 /** CSS-переменная цвета типа занятия — для полоски слева и точек в календаре */

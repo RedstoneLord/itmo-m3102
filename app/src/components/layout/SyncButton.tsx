@@ -25,10 +25,20 @@ export function SyncButton() {
       ? 'Синхронизация с GitHub…'
       : status === 'error'
         ? `Ошибка синхронизации: ${error}`
-        : 'Синхронизировать: конспекты, дедлайны, ДЗ, ссылки и файлы группы';
+        : 'Синхронизировать: расписание My ITMO, конспекты, дедлайны, ДЗ, ссылки и файлы группы';
 
   return (
-    <button type="button" className={styles.button} onClick={run} disabled={status === 'syncing'} aria-label={label} title={label}>
+    <button
+      type="button"
+      className={styles.button}
+      onClick={() => {
+        void import('../../services/liveTimetable').then(({ refreshLiveTimetable }) => refreshLiveTimetable());
+        void run();
+      }}
+      disabled={status === 'syncing'}
+      aria-label={label}
+      title={label}
+    >
       {status === 'syncing' ? (
         <motion.span className={styles.rolling} animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}>
           <HedgehogSvg size={22} />

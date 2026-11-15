@@ -232,6 +232,51 @@ export function patchClassicModule(path: string, source: string): string {
       '＋ Добавить ДЗ</button>',
     );
     result = "import { campusNow } from './home-preferences.js';\n" + result.replaceAll('new Date()', 'campusNow()');
+    result =
+      "import { cancelledLessonMarkup, liveChangeMarkup, liveChangeLabel, liveDayBanner, liveStatusMarkup } from './live-schedule.js';\nimport { occurrencesOn } from './schedule.js';\n" +
+      result;
+    result = replaceRequired(
+      result,
+      'function lessonMarkup(lesson, date, index) {',
+      'function lessonMarkup(lesson, date, index) {\n  if(lesson.cancelled)return cancelledLessonMarkup(lesson);\n  index=lessonsOn(date,data).findIndex(item=>item.id===lesson.id);',
+    );
+    result = replaceRequired(
+      result,
+      "other: 'Занятие'",
+      "other: 'Занятие', seminar:'Семинар', consultation:'Консультация', exam:'Экзамен', credit:'Зачёт'",
+    );
+    result = replaceRequired(
+      result,
+      '<strong>${esc(lesson.subject)}</strong><small>',
+      '<strong>${esc(lesson.subject)}</strong>${lesson.sourceChange ? `<span class="live-change-badge">${liveChangeLabel(lesson)}</span>` : \'\'}<small>',
+    );
+    result = replaceRequired(
+      result,
+      'ауд. ${esc(lesson.room)}`',
+      "ауд. ${esc(lesson.room)}${lesson.previousRoom && lesson.previousRoom !== lesson.room ? ` (было ${esc(lesson.previousRoom)})` : ''}`",
+    );
+    result = replaceRequired(result, '<div class="sched-card-body"><p>', '<div class="sched-card-body">${liveChangeMarkup(lesson)}<p>');
+    result = replaceRequired(
+      result,
+      'const lessons = lessonsOn(date, data);',
+      'const lessons = occurrencesOn(date, data);\n  const source=liveStatusMarkup(data,dateKey(date));',
+    );
+    result = replaceRequired(
+      result,
+      'if (!lessons.length) return `<div class="sched-empty">',
+      'if (!lessons.length) return `${source}<div class="sched-empty">',
+    );
+    result = replaceRequired(
+      result,
+      'return `<div class="sched-timeline">',
+      'return `${source}${liveDayBanner(lessons)}<div class="sched-timeline">',
+    );
+    result = replaceRequired(result, '${data.overrides[key] ?', '${data.overrides[key] || occurrencesOn(date,data).some(item=>item.sourceChange) ?');
+    result = replaceRequired(
+      result,
+      "entry.classList.toggle('is-current', minute >= start && minute < end);",
+      "entry.classList.toggle('is-current', !entry.dataset.cancelled && minute >= start && minute < end);",
+    );
     result = replaceRequired(
       result,
       'data-lesson="${esc(lesson.id)}"',
@@ -242,6 +287,8 @@ export function patchClassicModule(path: string, source: string): string {
       'export async function ensureSchedule() {',
       'export async function reloadSchedule() { data = null; loading = null; return ensureSchedule(); }\nexport async function ensureSchedule() {',
     );
+    result +=
+      "\nconst pollSchedule=()=>{if(document.visibilityState==='visible')reloadSchedule().catch(()=>{});};\nsetInterval(pollSchedule,300000);window.addEventListener('online',pollSchedule);document.addEventListener('visibilitychange',pollSchedule);\n";
     return replaceRequired(result, '}).catch(error => {', '}).catch(error => { loading = null;');
   }
   if (path === 'js/schedule.js' || path === 'js/homework.js') {
@@ -288,7 +335,15 @@ export function patchClassicModule(path: string, source: string): string {
         'aria-label="Удалить задание в моей копии">${ic(\'trash\', 20)}</button>',
       );
     }
-    if (path === 'js/schedule.js') result = replaceRequired(result, 'stale: false', "stale: response.headers.has('X-M3102-Saved')");
+    if (path === 'js/schedule.js') {
+      result = "import { loadLiveSnapshot, liveRowsOn } from './live-schedule.js';\n" + result;
+      result = replaceRequired(result, 'stale: false', "stale: response.headers.has('X-M3102-Saved')");
+      result = replaceRequired(result, 'export function lessonsOn(date, schedule) {', 'function baseLessonsOn(date, schedule) {');
+      result = replaceRequired(result, 'export async function loadSchedule() {', 'async function loadBaseSchedule() {');
+      result += `\nexport function occurrencesOn(date,schedule){return liveRowsOn(dateKey(date),baseLessonsOn(date,schedule),schedule.live);}
+export function lessonsOn(date,schedule){return occurrencesOn(date,schedule).filter(item=>!item.cancelled);}
+export async function loadSchedule(){const result=await loadBaseSchedule();const live=await loadLiveSnapshot();for(const data of [result.base,result.data]){Object.defineProperties(data,{live:{value:live.snapshot,configurable:true},liveSaved:{value:live.saved,configurable:true}});}return result;}\n`;
+    }
     return result;
   }
   return source;

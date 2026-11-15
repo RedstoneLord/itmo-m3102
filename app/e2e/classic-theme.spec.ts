@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 // Проверяем настоящую собранную классическую страницу, включая каскад всех её стилей.
 // CDN не нужен для главной и настроек; marked.use вызывается при запуске страницы.
 async function openClassic(page: Page, theme: 'auto' | 'light' | 'dark') {
+  await page.context().route('**/data/timetable-live.json', (route) => route.fulfill({ status: 404 }));
   await page.context().route(url => !['127.0.0.1', 'localhost'].includes(url.hostname), route => {
     if (route.request().url().includes('/marked/')) {
       return route.fulfill({ contentType: 'text/javascript', body: 'window.marked = { use() {} };' });

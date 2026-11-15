@@ -169,7 +169,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin === base.origin) {
     if (!url.pathname.startsWith(base.pathname) || url.pathname.startsWith(`${base.pathname}app/`)) return;
     const path = decodeURIComponent(url.pathname.slice(base.pathname.length));
-    return event.respondWith(serve(request, !path.startsWith('data/') && !path.startsWith('Дедлайны/'), event));
+    return event.respondWith(serve(request, path !== 'm3102.ics' && !path.startsWith('data/') && !path.startsWith('Дедлайны/'), event));
   }
   if (url.hostname === 'raw.githubusercontent.com' || url.hostname === 'api.github.com') return event.respondWith(serve(request, false, event));
   if (url.hostname === 'cdnjs.cloudflare.com') return event.respondWith(serve(request, true, event));

@@ -18,6 +18,7 @@ import { createHash } from 'node:crypto';
 import { writeHomeAssets } from './classic-home-assets';
 import { freezeClassicRelease } from './classic-release';
 import { patchClassicIndex, patchClassicModule } from '../src/lib/classicPatch';
+import { parseLiveTimetable } from '../classic/live-timetable';
 
 const REPO = 'RedstoneLord/itmo-m3102';
 const APP = fileURLToPath(new URL('..', import.meta.url));
@@ -129,7 +130,6 @@ function studentAssets(out: string): void {
 
 function shellManifest(out: string): void {
   const paths = ['index.html', 'site.css', ...['js', 'css', 'img', 'fonts', 'switch', 'ai'].flatMap((dir) => pathsBelow(out, dir))];
-  if (existsSync(join(out, 'm3102.ics'))) paths.push('m3102.ics');
   const release = freezeClassicRelease(out, paths);
   const frozenPaths = ['index.html', ...pathsBelow(out, `releases/${release}`), ...paths.filter(p => p.startsWith('ai/') || p === 'm3102.ics')];
   const files = frozenPaths.map((url) => ({ url: encodePath(url), revision: createHash('sha256').update(readFileSync(join(out, url))).digest('hex'), size: statSync(join(out, url)).size }));
@@ -205,6 +205,16 @@ try {
       }
     } else {
       console.log(`Сайт собран в ${where} из корня репозитория`);
+    }
+    // Public, schema-checked data only. Copy AFTER --fresh so upstream files cannot overwrite it.
+    if (process.env.ITMO_TIMETABLE_FILE) {
+      const snapshot = parseLiveTimetable(JSON.parse(readFileSync(process.env.ITMO_TIMETABLE_FILE, 'utf8')));
+      const targets = siteMode ? [join(OUT, 'data'), join(OUT, 'app', 'data'), join(APP, 'dist', 'data')] : [join(OUT, 'data')];
+      for (const target of targets) {
+        mkdirSync(target, { recursive: true });
+        writeFileSync(join(target, 'timetable-live.json'), JSON.stringify(snapshot));
+      }
+      console.log('Датированное расписание My ITMO добавлено в оба оформления.');
     }
   }
 } catch (error) {

@@ -44,6 +44,7 @@ const deadlines = [
 const marked = `window.marked={use(){},parse(text){return '<h1>Теорема</h1><p>Доказательство для личной закладки.</p>'}};`;
 const pdfjs = `window.pdfjsLib={GlobalWorkerOptions:{},getDocument(){return {promise:Promise.resolve({numPages:4,getPage(n){return Promise.resolve({getViewport({scale}){return {width:600*scale,height:800*scale}},render({canvasContext,viewport}){canvasContext.fillStyle='white';canvasContext.fillRect(0,0,viewport.width,viewport.height);return {promise:Promise.resolve()}}})}})}}};`;
 async function setup(page: Page, identity = false) {
+  await page.context().route('**/data/timetable-live.json', (route) => route.fulfill({ status: 404 }));
   await page.clock.install({ time: new Date('2026-11-14T12:00:00+03:00') });
   await page.context().route(
     (url) => !['localhost', '127.0.0.1'].includes(url.hostname),

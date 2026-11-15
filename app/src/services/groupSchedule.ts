@@ -40,7 +40,15 @@ export interface GroupSchedule {
   unknownSubjects: string[];
 }
 
-const KINDS: Record<string, ClassType> = { lecture: 'lecture', practice: 'practice', lab: 'lab', seminar: 'seminar' };
+const KINDS: Record<string, ClassType> = {
+  lecture: 'lecture',
+  practice: 'practice',
+  lab: 'lab',
+  seminar: 'seminar',
+  consultation: 'consultation',
+  exam: 'exam',
+  credit: 'credit',
+};
 const SYNC_TIME = '2026-09-01T00:00:00.000Z';
 
 function times(lesson: RawLesson): [string, string] {
@@ -76,7 +84,12 @@ function toDetails(lesson: RawLesson, weekday: Weekday, defaultLocation: string,
 }
 
 const sameClass = (a: ClassDetails, b: ClassDetails) =>
-  a.subjectId === b.subjectId && a.startTime === b.startTime && a.endTime === b.endTime && a.room === b.room && a.teacher === b.teacher;
+  a.subjectId === b.subjectId &&
+  a.startTime === b.startTime &&
+  a.endTime === b.endTime &&
+  a.room === b.room &&
+  a.building === b.building &&
+  a.teacher === b.teacher;
 
 export function parseGroupSchedule(raw: unknown): GroupSchedule {
   const data = raw as RawSchedule;

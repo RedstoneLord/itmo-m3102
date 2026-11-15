@@ -15,11 +15,13 @@ import { useScheduleData } from '../schedule/scheduleStore';
 import { useSubjectName } from '../subjects/subjectsStore';
 import type { ClassStatus } from './classStatus';
 import styles from './NextClassBlock.module.css';
+import { ClassChangeAlert } from '../schedule/ScheduleSource';
 
 interface NextClassBlockProps {
   status: ClassStatus;
   /** Все занятия дня, который показывает полоска (сегодня; когда пары кончились — день следующей пары) */
   occurrences: ClassOccurrence[];
+  todayOccurrences?: ClassOccurrence[];
   /** День полоски */
   date: ISODate;
   today: ISODate;
@@ -31,7 +33,7 @@ interface NextClassBlockProps {
  * Главная карточка страницы: что идёт сейчас или что будет дальше. Крупное время (или сколько осталось до конца пары)
  * и полоска дня с метками всех пар — единственное «громкое» место главной, остальное вокруг спокойное.
  */
-export function NextClassBlock({ status, occurrences, date, today, time }: NextClassBlockProps) {
+export function NextClassBlock({ status, occurrences, todayOccurrences = occurrences, date, today, time }: NextClassBlockProps) {
   const isNow = status.kind === 'now';
   const upcoming = status.kind === 'finished' ? status.next?.occurrence : status.occurrence;
   const details = upcoming?.details;
@@ -50,6 +52,12 @@ export function NextClassBlock({ status, occurrences, date, today, time }: NextC
         {status.kind === 'finished' && status.next && <p className={styles.chip}>{status.next.dayLabel}</p>}
       </div>
 
+      {todayOccurrences
+        .filter((item) => !takesPlace(item) && item.sourceChange)
+        .map((item) => (
+          <ClassChangeAlert key={item.key} occurrence={item} subject />
+        ))}
+      {upcoming?.sourceChange && <ClassChangeAlert occurrence={upcoming} />}
       {details ? (
         <div className={styles.main}>
           <p className={styles.big}>{status.kind === 'now' ? <Remaining minutes={status.minutesLeft} /> : <span>{details.startTime}</span>}</p>

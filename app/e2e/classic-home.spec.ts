@@ -6,6 +6,7 @@ async function fixture(
   page: Page,
   options: { identity?: object; layout?: object; fail?: boolean; empty?: boolean; time?: string; deny?: boolean } = {},
 ) {
+  await page.context().route('**/data/timetable-live.json', (route) => route.fulfill({ status: 404 }));
   await page.clock.install({ time: new Date(options.time || '2026-11-14T12:00:00+03:00') });
   await page.context().route(
     (url) => !['127.0.0.1', 'localhost'].includes(url.hostname),

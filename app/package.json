@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:classic": "node --test classic/*.test.mjs",
+    "test:itmo": "node --test classic/live-timetable.test.mjs scripts/sync-itmo-timetable.test.mjs",
     "test:e2e": "playwright test",
     "size": "node scripts/check-size.mjs",
     "ics": "tsx scripts/build-ics.ts",

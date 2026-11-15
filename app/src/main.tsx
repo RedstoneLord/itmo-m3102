@@ -17,6 +17,8 @@ import { useSettingsStore } from './features/settings/settingsStore';
 startClassicSync();
 // Выполненные ДЗ и дедлайны из классической версии тоже подхватываются сами (только чтение её ключей)
 startClassicMarksSync();
+// Загружается отдельно: сайт читает только публичный снимок, личный токен остаётся в Actions.
+void import('./services/liveTimetable').then(({ startLiveTimetableSync }) => startLiveTimetableSync());
 
 /** «Уменьшить движение» в системе или «Анимации: Минимум / Выкл» — framer-motion сам отключает сдвиги и пружины везде */
 function AppMotion({ children }: { children: ReactNode }) {
