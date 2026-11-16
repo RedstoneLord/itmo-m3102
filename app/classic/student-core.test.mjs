@@ -58,15 +58,17 @@ const memory = (initial) => {
 test('backup roundtrip includes plan, marks and games and excludes credentials and caches', () => {
   const storage = memory({
     'm3102-study-plan-v1': '{"tasks":[],"done":{"deadline:x":true}}',
+    'm3102-classic-view-v1': '{"version":1,"view":"classic"}',
     hh_save_v1: '{"berries":17}',
     'm3102-github-token-v1': 'secret',
     'm3102-cache-homework-v1': '{"items":[]}',
   });
   const backup = parsePersonal(JSON.stringify(exportPersonal(storage)));
-  assert.equal(Object.keys(backup.data).length, 2);
+  assert.equal(Object.keys(backup.data).length, 3);
   const target = memory({ 'm3102-bookmarks-v1': '{"old":{}}', 'm3102-github-token-v1': 'kept' });
   restorePersonal(target, backup);
   assert.equal(target.getItem('hh_save_v1'), '{"berries":17}');
+  assert.equal(target.getItem('m3102-classic-view-v1'), '{"version":1,"view":"classic"}');
   assert.equal(target.getItem('m3102-bookmarks-v1'), null);
   assert.equal(target.getItem('m3102-github-token-v1'), 'kept');
 });
@@ -76,6 +78,7 @@ test('backup rejects future versions, foreign keys, malformed JSON and wrong pla
     { ...backup, version: 2 },
     { ...backup, data: { 'm3102-github-token-v1': '{}' } },
     { ...backup, data: { 'm3102-study-plan-v1': '{"tasks":null}' } },
+    { ...backup, data: { 'm3102-classic-view-v1': '{"version":1,"view":"unknown"}' } },
   ])
     assert.throws(() => parsePersonal(JSON.stringify(value)));
   assert.throws(() => parsePersonal('broken'));

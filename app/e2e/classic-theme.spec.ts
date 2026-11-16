@@ -11,6 +11,7 @@ async function openClassic(page: Page, theme: 'auto' | 'light' | 'dark') {
     return route.abort();
   });
   await page.addInitScript(value => {
+    localStorage.setItem('m3102-classic-view-v1', '{"version":1,"view":"classic"}');
     localStorage.setItem('m3102-student-v1', JSON.stringify({login:''}));
     localStorage.setItem('m3102-settings-v1', JSON.stringify({ theme: value, reduceMotion: true }));
   }, theme);

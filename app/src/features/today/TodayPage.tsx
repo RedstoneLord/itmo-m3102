@@ -50,8 +50,8 @@ export function TodayPage() {
   const railOccurrences = railDate === today ? todayOccurrences : getOccurrencesForDate(railDate, scheduleData);
 
   // Гостю очереди не нужны: блока у него нет
-  const guest = useMeStore((state) => state.guest);
-  const visible = arrangeBlocks(homeOrder).filter((id) => !homeHidden.includes(id) && !(id === 'queues' && guest));
+  const hasStudent = useMeStore((state) => state.login !== null);
+  const visible = arrangeBlocks(homeOrder).filter((id) => !homeHidden.includes(id) && !(id === 'queues' && !hasStudent));
 
   const renderBlock = (id: HomeBlockId) => {
     switch (id) {

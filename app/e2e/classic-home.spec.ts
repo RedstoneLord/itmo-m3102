@@ -51,6 +51,7 @@ async function fixture(
   await page.addInitScript(({ identity, layout, deny }) => {
     if (localStorage.getItem('__home_fixture')) return;
     localStorage.setItem('__home_fixture', '1');
+    localStorage.setItem('m3102-classic-view-v1', '{"version":1,"view":"classic"}');
     localStorage.setItem('m3102-settings-v1', JSON.stringify({ theme: 'light' }));
     if (identity) localStorage.setItem('m3102-student-v1', JSON.stringify(identity));
     if (layout) localStorage.setItem('m3102-home-layout-v1', JSON.stringify(layout));
@@ -75,19 +76,27 @@ async function doneGuest(page: Page) {
   await page.locator('[data-home-save]').click();
   await expect(page.locator('[data-home-dialog]')).toHaveCount(0);
 }
+async function openSetup(page: Page) {
+  await page.evaluate(() => { location.hash = '/settings'; });
+  await page.getByRole('button', { name: 'Быстрая настройка', exact: true }).click();
+}
 
-test('первый запуск: явный гость, четыре блока, завершение и запасная копия', async ({ page }) => {
+test('первый запуск без диалога; настройка и выбор гостя только из настроек', async ({ page }) => {
   await fixture(page);
+  await expect(page.locator('[data-home-dialog]')).toHaveCount(0);
+  await openSetup(page);
   const dialog = page.getByRole('dialog', { name: 'Настройте сайт под себя' });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole('button', { name: 'Готово' })).toBeDisabled();
+  await expect(dialog.getByRole('button', { name: 'Готово' })).toBeEnabled();
   await page.keyboard.press('Escape');
-  await expect(dialog).toBeVisible();
+  await expect(dialog).not.toBeVisible();
+  await openSetup(page);
   for (let i = 0; i < 12; i++) {
     await page.keyboard.press('Tab');
     expect(await dialog.evaluate((d) => d.contains(document.activeElement))).toBe(true);
   }
   await doneGuest(page);
+  await page.goto('../');
   await expect(page.locator('[data-home-block]:visible')).toHaveCount(4);
   await page.reload();
   await expect(page.locator('[data-home-dialog]')).toHaveCount(0);
@@ -101,6 +110,7 @@ test('первый запуск: явный гость, четыре блока,
 });
 test('студент: поиск и выбор, отмена предпросмотра, настройки без повторного запроса', async ({ page }) => {
   await fixture(page);
+  await openSetup(page);
   await page.locator('[data-student-search]').fill('Жупиков');
   await page.locator('[data-login="RedstoneLord"]').click();
   await page.locator('[data-home-save]').click();
@@ -134,7 +144,9 @@ test('миграция порядка, скрыть всё, отмена и во
 });
 test('запрет хранения: понятное сообщение и работа в текущей вкладке', async ({ page }) => {
   await fixture(page, { deny: true });
+  await openSetup(page);
   await doneGuest(page);
+  await page.evaluate(() => { location.hash = ''; });
   await expect(page.locator('#student-next')).toContainText('Тест');
   await expect(page.getByRole('status').filter({ hasText: 'Браузер не сохранил' })).toBeVisible();
   await page.evaluate(() => {
@@ -330,6 +342,7 @@ test('ошибка запуска модуля: понятный повтор, �
   test.setTimeout(30000);
   await page.context().route(u => !['127.0.0.1','localhost'].includes(u.hostname),r=>r.fulfill({contentType:'text/javascript',body:r.request().url().includes('/marked/')?'window.marked={use(){}}':''}));
   await page.addInitScript(()=>{
+    localStorage.setItem('m3102-classic-view-v1','{"version":1,"view":"classic"}');
     if(!localStorage.getItem('m3102-student-v1')) {
       localStorage.setItem('m3102-student-v1','{"login":""}');
       localStorage.setItem('m3102-study-plan-v1','{"tasks":[{"id":"keep","name":"Не потерять"}],"done":{}}');

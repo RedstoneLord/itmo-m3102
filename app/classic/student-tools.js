@@ -25,6 +25,7 @@ import { lessonsOn, dateKey, addDays, parseDate } from './schedule.js';
 import { parseQuiz, quizPageSource } from './quiz.js';
 import { plainMathText } from './student-text.js';
 import { ic } from './icons.js';
+import { isClassicView } from './home-preferences.js';
 
 export { directoryResponse };
 let context,
@@ -76,6 +77,11 @@ function identityMarkup() {
   return `<p>${me() ? `Вы: ${esc(context.students.find((s) => s.nick === me())?.name || me())}` : 'Вы просматриваете сайт как гость'}. <a href="#/settings">Изменить профиль в настройках</a></p>`;
 }
 function deadlineList(entries, limit = Infinity) {
+  if (!isClassicView()) return entries.slice(0, limit).map((d) => {
+    const checked = Boolean(done()['deadline:' + d.id]);
+    const date = new Date(d.deadline).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow', day: 'numeric', month: 'short' });
+    return `<label class="deadline-row"><input type="checkbox" data-deadline="${esc(d.id)}" ${checked ? 'checked' : ''} aria-label="Отметить ${esc(d.name)} выполненным"><span class="deadline-day">${esc(date)}</span><span class="deadline-detail"><strong>${esc(d.name)}</strong><small>${esc(d.note || 'Общий дедлайн')}</small></span></label>`;
+  }).join('') || '<p class="empty-line">Нет работ в этой категории.</p>';
   return (
     entries
       .slice(0, limit)

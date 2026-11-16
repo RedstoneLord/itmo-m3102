@@ -52,17 +52,14 @@ it('палитра выключает динамическую тему, ина�
   expect(useSettingsStore.getState().dynamicTheme).toBe('off');
 });
 
-it('пока «Кто вы?» не выбрано, окно не закрыть: нет крестика, Esc не действует, «Готово» неактивна', async () => {
+it('настройку можно закрыть, не выбирая студента или гостя', async () => {
   useMeStore.setState({ login: null, guest: false });
   render(<Harness />);
-  expect(screen.queryByRole('button', { name: 'Закрыть' })).toBeNull();
-  await userEvent.keyboard('{Escape}');
-  expect(screen.getByRole('dialog')).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Готово' })).toHaveProperty('disabled', true);
-  useMeStore.setState({ guest: true });
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Готово' })).toHaveProperty('disabled', false));
+  expect(screen.getByRole('button', { name: 'Закрыть' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Готово' })).toHaveProperty('disabled', false);
   await userEvent.click(screen.getByRole('button', { name: 'Готово' }));
   await closed();
+  expect(useMeStore.getState()).toMatchObject({ login: null, guest: false });
 });
 
 it('закрытое окно ничего не рисует', () => {

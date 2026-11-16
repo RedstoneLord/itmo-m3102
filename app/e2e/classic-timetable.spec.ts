@@ -1,6 +1,7 @@
 import {test,expect,type Page} from '@playwright/test';
 test.use({serviceWorkers:'block'});
 async function open(page:Page,hash='#/month/2026-11-14') {
+  await page.addInitScript(() => localStorage.setItem('m3102-classic-view-v1', '{"version":1,"view":"classic"}'));
   await page.context().route('**/data/timetable-live.json', (route) => route.fulfill({ status: 404 }));
  await page.clock.install({time:new Date('2026-11-14T12:00:00+03:00')});
  await page.context().route(u=>!['127.0.0.1','localhost'].includes(u.hostname),r=>r.fulfill({contentType:'text/javascript',body:r.request().url().includes('/marked/')?'window.marked={use(){}}':''}));

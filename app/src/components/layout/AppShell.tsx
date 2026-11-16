@@ -8,7 +8,6 @@ import { HomeworkDialog } from '../../features/homework/HomeworkDialog';
 import { useSearchShortcut } from '../../features/search/useSearchShortcut';
 import { useApplyAppearance } from '../../features/settings/appearance';
 import { FIRST_RUN_EVENT, useSettingsStore } from '../../features/settings/settingsStore';
-import { useMeStore } from '../../features/group/meStore';
 import { useChangelogStore } from '../../features/changelog/changelogStore';
 import { useApplyTheme } from '../../features/settings/theme';
 import { useMorphLinks } from '../../lib/morph';
@@ -113,20 +112,15 @@ export function AppShell() {
 }
 
 /**
- * Окно «Настройте сайт под себя» открывается само, пока не выбрано «Кто вы?» (FirstRun его тогда не даёт закрыть), и по
- * кнопке в настройках (событие FIRST_RUN_EVENT). Новому посетителю все выпуски «Что нового» — увиденные: ему нечего догонять.
+ * Окно «Настройте сайт под себя» открывается только кнопкой в настройках (событие FIRST_RUN_EVENT).
+ * Новому посетителю все выпуски «Что нового» — увиденные: ему нечего догонять.
  * Закрывается только кнопкой: выбор в окне не должен его захлопнуть, пока человек смотрит палитры.
  * Загруженное окно остаётся в дереве: ему нужно доиграть анимацию закрытия
  */
 function LazyFirstRun() {
   const fresh = useSettingsStore((state) => !state.onboarded);
-  const needsWho = useMeStore((state) => state.login === null && !state.guest);
-  const [open, setOpen] = useState(needsWho);
-  const [used, setUsed] = useState(needsWho);
-  if (needsWho && !open) {
-    setOpen(true);
-    setUsed(true);
-  }
+  const [open, setOpen] = useState(false);
+  const [used, setUsed] = useState(false);
 
   useEffect(() => {
     if (!fresh) return;

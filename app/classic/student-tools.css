@@ -118,11 +118,14 @@ html[data-text-scale='125'] {
 html[data-text-scale='140'] {
   font-size: 140%;
 }
-header .tab,
-header .ss-input {
+:root[data-classic-view='classic'] header .tab,
+:root[data-classic-view='classic'] header .ss-input,
+html[data-text-scale] header .tab,
+html[data-text-scale] header .ss-input {
   font-size: 14px;
 }
-.bottom-nav .bn-item {
+:root[data-classic-view='classic'] .bottom-nav .bn-item,
+html[data-text-scale] .bottom-nav .bn-item {
   font-size: 14px;
 }
 .bottom-nav .bn-item span:last-child {
@@ -342,19 +345,19 @@ input[type='date'],
     font-size: 14px;
     padding: 8px 10px;
   }
-  .home-hero {
+  :root[data-classic-view='classic'] .home-hero {
     padding: 18px 16px 44px;
     margin-block: 12px;
   }
-  .home-hero h1 {
+  :root[data-classic-view='classic'] .home-hero h1 {
     font-size: 1.35rem;
     white-space: normal;
     margin-bottom: 6px;
   }
-  .home-hero .sub {
+  :root[data-classic-view='classic'] .home-hero .sub {
     display: none;
   }
-  .hero-date {
+  :root[data-classic-view='classic'] .hero-date {
     margin-top: 10px;
     padding-top: 8px;
     min-width: 0;
@@ -362,11 +365,11 @@ input[type='date'],
     flex-wrap: wrap;
     gap: 4px 10px;
   }
-  .hero-date strong,
-  .hero-date span {
+  :root[data-classic-view='classic'] .hero-date strong,
+  :root[data-classic-view='classic'] .hero-date span {
     font-size: 0.8rem;
   }
-  .hero-hedgehog {
+  :root[data-classic-view='classic'] .hero-hedgehog {
     left: auto;
     right: 16px;
     bottom: 8px;

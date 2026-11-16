@@ -75,6 +75,7 @@ export const PERSONAL_KEYS = [
   'm3102-settings-v1',
   'm3102-student-v1',
   'm3102-setup-v1',
+  'm3102-classic-view-v1',
   'm3102-bookmarks-v1',
   'm3102-reading-v1',
   'm3102-audio-v1',
@@ -119,6 +120,8 @@ export function parsePersonal(text) {
       throw new Error(`Повреждены данные: ${key}`);
     }
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error(`Неверный формат: ${key}`);
+    if (key === 'm3102-classic-view-v1' && (parsed.version !== 1 || !['legacy', 'classic'].includes(parsed.view)))
+      throw new Error('Неизвестная версия оформления.');
     if (
       key === 'm3102-study-plan-v1' &&
       (!Array.isArray(parsed.tasks) ||
