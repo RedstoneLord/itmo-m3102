@@ -3738,6 +3738,77 @@
        ]
       }
      ]
+    },
+    {
+     "name": "LiveCoding",
+     "path": "Конспекты/Основы_программирования/LiveCoding",
+     "files": [
+      {
+       "name": "Техники_для_осеннего_LiveCoding",
+       "path": "Конспекты/Основы_программирования/LiveCoding/Техники_для_осеннего_LiveCoding.md",
+       "type": "md",
+       "main": true,
+       "headings": [
+        "Autumn LiveCoding: C++ techniques for independent practice",
+        "Scope and how to study",
+        "1. Arrays, pointers, references, and const",
+        "Arrays and pointers",
+        "References and parameter passing",
+        "Where const applies",
+        "sizeof and array parameters",
+        "2. Writing a class and its member functions",
+        "Fields and access",
+        "Complete example: a small class",
+        "Constructors, initialization, and destruction",
+        "Definitions inside and outside",
+        "this and const methods",
+        "3. Dynamic memory and your own vector",
+        "Allocation and ownership",
+        "State and invariants",
+        "Decide the interface before implementing it",
+        "Copy construction and copy assignment",
+        "Allocate before replacing",
+        "Growing and changing length",
+        "4. C strings and arrays of word records",
+        "The terminating zero",
+        "Library functions",
+        "Fixed arrays and pointer members",
+        "Case normalization",
+        "5. Command-line arguments, numbers, and paths",
+        "argc and argv",
+        "Complete example: checked positive integer conversion",
+        "Filepaths and lifetime",
+        "6. File input with FILE, fgetc, fgets, and fread",
+        "Opening and closing",
+        "fgetc: one character at a time",
+        "fgets: a bounded, terminated chunk",
+        "fread: an explicit byte count",
+        "Complete example: count bytes in a file",
+        "7. Recognizing words across buffer boundaries",
+        "Reading and parsing are different layers",
+        "A small state machine",
+        "8. Bounded console input and game state",
+        "Distinguish invalid input from EOF",
+        "Validate before consuming an attempt",
+        "9. Random selection and Wordle comparisons",
+        "Seeding and selecting",
+        "One pass through the dictionary",
+        "Comparing a guess with the target",
+        "10. Searching, counting, and selecting top N",
+        "Linear search first",
+        "Select records by frequency",
+        "11. Output with printf, fwrite, and stream checks",
+        "Text versus explicitly sized bytes",
+        "Buffers and errors",
+        "Complete example: write a short byte sequence",
+        "12. Compilation, debugging, and an independent practice plan",
+        "Build small complete programs",
+        "Small tests before integration",
+        "Implementation order",
+        "Header reference"
+       ]
+      }
+     ]
     }
    ]
   }
