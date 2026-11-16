@@ -4,7 +4,7 @@ import { esc, read, nice, fileHref, CONTENT, validTree } from './student-core.js
 import { json, loadTree, freshnessSnapshot, refreshSources } from './student-data.js';
 import { ensureSchedule, getSchedule, reloadSchedule } from './schedule-ui.js';
 import { lessonsOn, occurrencesOn, addDays, dateKey, weekParity, isVacation } from './schedule.js';
-import { HOME_BLOCKS, campusNow, duration, normalizeRecent } from './home-preferences.js';
+import { HOME_BLOCKS, campusNow, duration, normalizeRecent, isClassicView } from './home-preferences.js';
 import { homeLayout, mountHomeSettings } from './home-setup.js';
 import { plainMathText } from './student-text.js';
 import { ic } from './icons.js';
@@ -33,7 +33,7 @@ const kind = (lesson) => ({ lecture: 'Лекция', practice: 'Практика
 const instant = (date, time) => new Date(`${dateKey(date)}T${time}:00+03:00`);
 export function updateHomeTime() {
   const node = document.querySelector('#student-next');
-  if (!node) return;
+  if (!node && isClassicView()) return;
   const schedule = getSchedule(),
     now = campusNow(),
     realNow = new Date();
@@ -43,6 +43,11 @@ export function updateHomeTime() {
   if (date) date.textContent = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
   if (parity)
     parity.textContent = `${isVacation(now, schedule) ? 'Каникулы' : weekParity(now, schedule) === 'even' ? 'Чётная неделя' : 'Нечётная неделя'} · Москва`;
+  if (!isClassicView()) {
+    if (parity) parity.textContent = parity.textContent.replace(/ · .+$/, '');
+    updateLegacyToday(now, schedule);
+    return;
+  }
   let found;
   for (let offset = 0; offset < 30 && !found; offset++) {
     const date = addDays(now, offset);
@@ -134,7 +139,23 @@ export function updateHomeTime() {
         ) + warning,
   );
 }
+function updateLegacyToday(now, schedule) {
+  const panel = document.querySelector('.dashboard-grid .schedule-panel');
+  if (!panel) return;
+  let box = panel.querySelector('#legacy-today');
+  if (!box) {
+    panel.querySelector('.today-list,.empty-line')?.remove();
+    box = document.createElement('div');
+    box.id = 'legacy-today';
+    panel.append(box);
+  }
+  const lessons = occurrencesOn(now, schedule);
+  setMarkup(box, liveStatusMarkup(schedule, dateKey(now)) + (lessons.length
+    ? `<div class="today-list">${lessons.map((l) => `<div class="today-row${l.break ? ' is-break' : ''}${l.cancelled ? ' live-cancelled' : ''}"><span class="today-time">${esc(l.start)}<br>${esc(l.end)}</span><span class="today-dot" aria-hidden="true"></span><span class="today-detail"><strong>${esc(l.subject)}</strong>${l.break ? '' : `<small>Ауд. ${esc(l.room)} · ${esc(l.teacher)}</small>${liveChangeMarkup(l)}`}</span></div>`).join('')}</div>`
+    : '<p class="empty-line">Сегодня занятий нет. Можно заняться материалами или планом.</p>'));
+}
 export function applyHomeLayout() {
+  if (!isClassicView()) return;
   const grid = document.querySelector('.dashboard-grid');
   if (!grid) return;
   const layout = homeLayout();
@@ -180,6 +201,13 @@ export function mountHome() {
   const grid = document.querySelector('.dashboard-grid');
   if (!grid || grid.dataset.homeMounted) return;
   grid.dataset.homeMounted = 'true';
+  if (!isClassicView()) {
+    ensureSchedule().then(updateHomeTime).catch(() => {
+      const panel = grid.querySelector('.schedule-panel .empty-line');
+      if (panel) panel.textContent = 'Не удалось загрузить расписание. Проверьте соединение.';
+    });
+    return;
+  }
   grid.insertAdjacentHTML(
     'afterbegin',
     '<section class="dash-panel student-next-panel"><div id="student-next" role="region" aria-label="Следующая пара"><p class="home-loading" role="status">Загружаем расписание…</p></div></section><section class="dash-panel student-queues-panel"><div class="panel-head"><h2>Мои очереди</h2><a href="#/deadlines">Дедлайны</a></div><div id="student-my-queues"></div></section>',
@@ -250,6 +278,10 @@ async function recentNotes() {
     const list = normalizeRecent(index.entries, tree).slice(0, 6);
     const h = box.closest('section').querySelector('h2');
     h.textContent = list.some((n) => n.date) ? 'Недавние конспекты' : 'Доступные конспекты';
+    if (!isClassicView()) {
+      setMarkup(box, list.map((n) => `<a class="recent-item" href="${esc(fileHref(n.path))}"><div class="recent-name">${esc(plainMathText(nice(n.path)))}</div><div class="recent-meta">${esc(n.path.split('/')[1].replaceAll('_', ' '))}${n.date ? ' · ' + esc(new Date(n.date).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', year: '2-digit' })) : ''}</div></a>`).join('') || '<p class="empty-line">Пока нет добавленных конспектов.</p>');
+      return;
+    }
     setMarkup(
       box,
       list.length

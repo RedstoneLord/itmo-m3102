@@ -20,10 +20,11 @@ export function patchClassicIndex(html: string): string {
     .replace(/<link[^>]+href="https:\/\/fonts\.googleapis\.com\/css2\?family=Noto[^"]+"[^>]*>/, '<link rel="stylesheet" href="./css/home-fonts.css">')
     .replace(/<link[^>]*rel=["']manifest["'][^>]*>\s*/g, '')
     .replace(/(HIDDEN_FILE_NAMES\s*=\s*\[)([^\]]*)(\])/, (_all, open: string, list: string, close: string) => open + list.toLowerCase() + close)
-    .replace(/<html(\s|>)/, '<html data-site-style="classic"$1')
+    .replace(/<html(\s|>)/, '<html data-site-style="classic" data-classic-view="legacy"$1')
+    .replace(/<head(\s[^>]*)?>/, '$&\n    <script src="./js/classic-view.js"></script>')
     .replace(
       '</head>',
-      `    <style id="classic-light-theme">${CLASSIC_LIGHT_THEME}</style>\n    <link rel="stylesheet" href="./css/classic-plus.css">\n    <script src="./js/classic-boot.js" defer></script>\n    <script src="./switch/site-switch.js" charset="utf-8"></script>\n  </head>`,
+      `    <link rel="stylesheet" href="./css/student-tools.css">\n    <link rel="stylesheet" href="./css/timetable.css">\n    <link rel="stylesheet" href="./css/legacy.css">\n    <style id="classic-light-theme" data-classic-design media="not all">${CLASSIC_LIGHT_THEME}</style>\n    <link rel="stylesheet" href="./css/classic-plus.css" data-classic-design media="not all">\n    <script>window.applyClassicView?.();</script>\n    <script src="./js/classic-boot.js" defer></script>\n    <script src="./switch/site-switch.js" charset="utf-8"></script>\n  </head>`,
     );
   // Small fixtures and upstream pages without our supported router only receive the appearance patch.
   if (!html.includes('function renderRoute()')) return patched;
@@ -33,7 +34,7 @@ export function patchClassicIndex(html: string): string {
   patched = replaceRequired(
     patched,
     '    import { dateKey,',
-    "    import { loadClassicLibrary } from './js/classic-libraries.js';\n    import { installStudentTools, renderStudentRoute, decorateStudentPage, directoryResponse, renderHomeDeadlines } from './js/student-tools.js';\n    import { loadRecentNotes, updateHomeTime } from './js/home-dashboard.js';\n    import { queues, studentFetch } from './js/student-data.js';\n    import { groupArchived, read as readClassicPreference } from './js/student-core.js';\n    import { dateKey,",
+    "    import { isClassicView } from './js/home-preferences.js';\n    import { loadClassicLibrary } from './js/classic-libraries.js';\n    import { installStudentTools, renderStudentRoute, decorateStudentPage, directoryResponse, renderHomeDeadlines } from './js/student-tools.js';\n    import { loadRecentNotes, updateHomeTime } from './js/home-dashboard.js';\n    import { queues, studentFetch } from './js/student-data.js';\n    import { groupArchived, read as readClassicPreference } from './js/student-core.js';\n    import { dateKey,",
   );
   // Эти четыре существующие библиотеки нужны только PDF, экспорту и Mermaid, не главной.
   for (const library of [
@@ -132,12 +133,20 @@ export function patchClassicIndex(html: string): string {
   const scheduleEnd = patched.indexOf('\n}\n    const RECENT_NOTES_LIMIT', scheduleStart);
   if (scheduleStart < 0 || scheduleEnd < 0) throw new Error('Classic home schedule integration changed');
   patched = patched.slice(0, scheduleStart) + '  ensureSchedule().then(updateHomeTime).catch(()=>{});' + patched.slice(scheduleEnd);
-  patched = replaceRequired(patched, '<span>Файлы</span>', '<span>Учёба</span>');
-  patched = replaceRequired(patched, '<span>ДЗ</span>', '<span>Задания</span>');
+  patched = replaceRequired(patched, '<span>Файлы</span>', '<span data-classic-label="Учёба">Файлы</span>');
+  patched = replaceRequired(patched, '<span>ДЗ</span>', '<span data-classic-label="Задания">ДЗ</span>');
   patched = replaceRequired(patched, '<span>Еще</span>', '<span>Ещё</span>');
-  patched = replaceRequired(patched, 'data-icon="folder"></span>Материалы', 'data-icon="folder"></span>Учёба');
-  patched = replaceRequired(patched, 'data-icon="calendar"></span>Расписание', 'data-icon="calendar"></span>Пары');
-  patched = patched.replace(/(<a class="tab" id="tab-homework"[^>]*>[\s\S]*?<\/span>)[^<]+/, '$1Задания');
+  patched = replaceRequired(
+    patched,
+    'data-icon="folder"></span>Материалы',
+    'data-icon="folder"></span><span data-classic-label="Учёба">Материалы</span>',
+  );
+  patched = replaceRequired(
+    patched,
+    'data-icon="calendar"></span>Расписание',
+    'data-icon="calendar"></span><span data-classic-label="Пары">Расписание</span>',
+  );
+  patched = patched.replace(/(<a class="tab" id="tab-homework"[^>]*>[\s\S]*?<\/span>)([^<]+)/, '$1<span data-classic-label="Задания">$2</span>');
   patched = replaceRequired(
     patched,
     "        mountOfflinePanel(c.querySelector('#offline-panel'));",
@@ -155,11 +164,15 @@ export function patchClassicIndex(html: string): string {
   // У исходного HTML одинаковый stylesheet подключён дважды.
   patched = patched.replace('    <link rel="stylesheet" href="./css/shell.css">\n', '');
   // Размер приветствия задаёт иерархия, длинный текст переносится по словам.
-  patched = replaceRequired(patched, "  fitHeroTitle(c.querySelector('.home-hero h1'));", '');
+  patched = replaceRequired(
+    patched,
+    "  fitHeroTitle(c.querySelector('.home-hero h1'));",
+    "  if(!isClassicView())fitHeroTitle(c.querySelector('.home-hero h1'));",
+  );
   patched = replaceRequired(
     patched,
     '\'<p class="empty-line">Пока задач нет. Добавьте первую задачу.</p>\'',
-    '\'<div class="home-empty"><span aria-hidden="true">◇</span><div><strong>План пока свободен</strong><p>Добавьте личную задачу, когда понадобится.</p></div></div>\'',
+    '(isClassicView()?\'<div class="home-empty"><span aria-hidden="true">◇</span><div><strong>План пока свободен</strong><p>Добавьте личную задачу, когда понадобится.</p></div></div>\':\'<p class="empty-line">Пока задач нет. Добавьте первую задачу.</p>\')',
   );
   return patched;
 }
@@ -210,10 +223,10 @@ export function patchClassicModule(path: string, source: string): string {
     result = replaceRequired(
       result,
       'const FONTS = [',
-      "const FONTS = [\n  { id: 'golos', name: 'Golos Text', var: '--ff-golos', note: 'По умолчанию · кириллица и латиница' },",
+      "const FONTS = [\n  { id: 'golos', name: 'Golos Text', var: '--ff-golos', note: 'Кириллица и латиница' },",
     );
     result = replaceRequired(result, "var: '--ff-noto', note: 'По умолчанию'", "var: '--ff-noto', note: 'Кириллица и латиница'");
-    result = replaceRequired(result, "? id : 'noto'", "? id : 'golos'");
+    result = replaceRequired(result, "? id : 'noto'", "? id : document.documentElement.dataset.classicView === 'classic' ? 'golos' : 'noto'");
     return result;
   }
   if (path === 'js/prefs.js') {

@@ -1,0 +1,20 @@
+/* Shared fixes, using the original site's surfaces, fonts and animations. */
+:root[data-classic-view='legacy'] {
+  --link: var(--accent);
+  --inset: var(--card);
+  --control-radius: var(--radius);
+  --subject-color: var(--accent);
+}
+@media (prefers-color-scheme: light) {
+  :root[data-classic-view='legacy']:not([data-theme='dark']) .brand-logo { filter: invert(1); }
+  :root[data-classic-view='legacy']:not([data-theme='dark']) .gh-link img { filter: none; }
+}
+:root[data-classic-view='legacy'][data-theme='light'] .brand-logo { filter: invert(1); }
+:root[data-classic-view='legacy'][data-theme='light'] .gh-link img { filter: none; }
+.classic-view-status:empty { display: none; }
+:root[data-classic-view='legacy'] .home-freshness { margin: 20px 0; color: var(--muted); }
+:root[data-classic-view='legacy'] .home-freshness-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+:root[data-classic-view='legacy'] .live-change,
+:root[data-classic-view='legacy'] .live-change-badge { color: var(--warn); }
+:root[data-classic-view='legacy'] .live-cancelled { opacity: .75; }
+:root[data-classic-view='legacy'] .live-cancelled strong { text-decoration: line-through; }

@@ -12,14 +12,17 @@ test.beforeEach(async ({ page }) => {
   await mockGithub(page);
 });
 
-test('первый вход: окно не закрыть, пока не выбрано «Кто вы?»; «Я гость», потом студент; у студентов появляется «Это вы»', async ({ page }) => {
+test('первый вход без вопросов; выбор гостя и студента доступен в настройках', async ({ page }) => {
   await page.goto('./');
-  await expect(page.getByText('Настройте сайт под себя')).toBeVisible();
-  // Пока не выбрано — ни крестика, ни Esc, «Готово» неактивна
-  await expect(dialog(page).getByRole('button', { name: 'Закрыть' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Сегодня', exact: true })).toBeVisible();
+  await expect(dialog(page)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Кто вы', exact: true })).toHaveCount(0);
+  await page.goto('./#/settings?tab=appearance');
+  await page.getByRole('button', { name: 'Быстрая настройка', exact: true }).click();
+  await expect(dialog(page).getByRole('button', { name: 'Закрыть' })).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(dialog(page)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Готово' })).toBeDisabled();
+  await expect(dialog(page)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Быстрая настройка', exact: true }).click();
 
   await dialog(page).getByRole('button', { name: 'Кто вы' }).click();
   await page.getByRole('option', { name: /Я гость/ }).click();

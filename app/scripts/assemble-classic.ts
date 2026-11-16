@@ -121,8 +121,11 @@ function studentAssets(out: string): void {
   }
   copyFileSync(join(APP, 'classic', 'sw.js'), join(out, 'sw.js'));
   copyFileSync(join(APP, 'classic', 'home-fonts.css'), join(out, 'css', 'home-fonts.css'));
+  writeFileSync(join(out, 'css', 'student-tools.css'), ['student-tools.css', 'home-settings.css'].map(name => readFileSync(join(APP, 'classic', name), 'utf8')).join('\n'));
+  copyFileSync(join(APP, 'classic', 'legacy.css'), join(out, 'css', 'legacy.css'));
+  copyFileSync(join(APP, 'classic', 'timetable.css'), join(out, 'css', 'timetable.css'));
   // Источники разделены по назначению, в браузер идёт один stylesheet без @import-водопада.
-  writeFileSync(join(out, 'css', 'classic-plus.css'), ['student-tools.css', 'classic-system.css', 'subject-colors.css', 'timetable.css', 'home-dashboard.css'].map(name => readFileSync(join(APP, 'classic', name), 'utf8')).join('\n'));
+  writeFileSync(join(out, 'css', 'classic-plus.css'), ['student-tools.css', 'classic-system.css', 'subject-colors.css', 'timetable.css', 'home-settings.css', 'home-dashboard.css'].map(name => readFileSync(join(APP, 'classic', name), 'utf8')).join('\n'));
   copyTree(join(APP, 'classic', 'fonts'), join(out, 'fonts'));
   writeHomeAssets(ROOT, out, content);
   for (const path of ['js/schedule.js', 'js/schedule-ui.js', 'js/homework.js', 'js/lectures.js', 'js/quiz.js', 'js/prefs.js', 'js/settings.js']) writeFileSync(join(out, path), patchClassicModule(path, readFileSync(join(out, path), 'utf8')));

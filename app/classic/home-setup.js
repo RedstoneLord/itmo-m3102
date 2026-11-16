@@ -1,11 +1,10 @@
 import { esc, read, save, remember, forget } from './student-core.js';
-import { HOME_BLOCKS, SETUP_KEY, LAYOUT_KEY, IDENTITY_KEY, normalizeLayout, migrateSetup } from './home-preferences.js';
+import { HOME_BLOCKS, SETUP_KEY, LAYOUT_KEY, IDENTITY_KEY, VIEW_KEY, normalizeLayout, isClassicView } from './home-preferences.js';
 import { applyTheme } from './appearance.js';
 import { applyPalette } from './settings.js';
 import { organizeSettings } from './classic-settings.js';
 
 let students = [],
-  completed = false,
   storageWarning = false;
 export const homeLayout = () => normalizeLayout(read(LAYOUT_KEY));
 const palettes = [
@@ -57,7 +56,8 @@ function rows(layout) {
 }
 export function openHomeSetup(kind = 'setup') {
   if (document.querySelector('[data-home-dialog]')) return;
-  const initial = !completed,
+  // This dialog is an optional settings action, including for a first-time visitor.
+  const initial = false,
     identityOnly = kind === 'setup',
     original = { ...read('m3102-settings-v1') },
     prefs = { ...original };
@@ -178,12 +178,11 @@ export function openHomeSetup(kind = 'setup') {
         }),
       };
       if (identityOnly) {
-        values[IDENTITY_KEY] = { login };
+        if (login !== null) values[IDENTITY_KEY] = { login };
         values[SETUP_KEY] = { version: 1, completed: true };
         values['m3102-settings-v1'] = prefs;
       }
       commit(values);
-      completed = true;
       accepted = true;
       appearance(identityOnly ? prefs : original);
       dialog.close();
@@ -210,6 +209,7 @@ export function openHomeSetup(kind = 'setup') {
     if (opener?.isConnected) opener.focus();
   });
   document.body.append(dialog);
+  if (!isClassicView()) dialog.querySelector('[data-order]')?.closest('section').setAttribute('hidden', '');
   updateIdentity();
   dialog.showModal();
   if (identityOnly) dialog.querySelector('[data-guest]').focus({ preventScroll: true });
@@ -231,7 +231,7 @@ export function mountHomeSettings() {
     data = page.querySelector('#student-settings');
   if (reading && data && reading.nextElementSibling !== data) data.before(reading);
   if (page.querySelector('#home-settings-profile')) {
-    organizeSettings(page);
+    if (isClassicView()) organizeSettings(page);
     return;
   }
   const profile = document.createElement('section');
@@ -242,6 +242,7 @@ export function mountHomeSettings() {
   home.className = 'dash-panel';
   home.innerHTML =
     '<div class="panel-head"><h2>Главная</h2></div><p>Выберите блоки и их порядок.</p><button class="btn2" data-home-config>Настроить главную</button>';
+  home.hidden = !isClassicView();
   page.querySelector('.intro').after(profile, home);
   const heading = document.createElement('h2');
   heading.textContent = 'Оформление и чтение';
@@ -249,15 +250,26 @@ export function mountHomeSettings() {
   profile.querySelector('[data-profile-name]').textContent = read(IDENTITY_KEY).login
     ? `Вы: ${students.find((s) => s.nick === read(IDENTITY_KEY).login)?.name || read(IDENTITY_KEY).login}`
     : 'Вы: гость';
-  organizeSettings(page);
+  const version = document.createElement('section');
+  version.className = 'dash-panel settings-group';
+  version.id = 'classic-view-settings';
+  version.innerHTML = `<div class="panel-head"><h2>Версия сайта</h2></div><label>Оформление <select data-classic-view-choice aria-label="Версия сайта"><option value="legacy">Legacy — прежнее оформление</option><option value="classic">Classic — обновлённое оформление</option></select></label><p>Расписание, личные данные и работа без интернета доступны в обеих версиях.</p><p class="classic-view-status" role="status"></p>`;
+  version.querySelector('select').value = isClassicView() ? 'classic' : 'legacy';
+  version.querySelector('select').onchange = (event) => {
+    const view = event.target.value;
+    if (!save(VIEW_KEY, { version: 1, view })) {
+      version.querySelector('[role=status]').textContent = 'Браузер не сохранил выбор. Разрешите хранение настроек и повторите.';
+      return;
+    }
+    location.reload();
+  };
+  page.querySelector('.settings-group').before(version);
+  if (isClassicView()) organizeSettings(page);
 }
 export function installHomeSetup(list) {
   students = list;
-  completed = migrateSetup(read(SETUP_KEY), read(IDENTITY_KEY, null)).completed;
-  if (completed && !save(SETUP_KEY, { version: 1, completed: true })) showStorageWarning();
   document.addEventListener('click', (e) => {
     if (e.target.closest('[data-home-config]')) openHomeSetup('home');
     if (e.target.closest('[data-quick-setup]')) openHomeSetup();
   });
-  if (!completed) setTimeout(() => openHomeSetup(), 0);
 }

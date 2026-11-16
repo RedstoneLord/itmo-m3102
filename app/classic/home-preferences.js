@@ -12,6 +12,8 @@ export const HOME_BLOCKS = [
 export const SETUP_KEY = 'm3102-setup-v1';
 export const LAYOUT_KEY = 'm3102-home-layout-v1';
 export const IDENTITY_KEY = 'm3102-student-v1';
+export const VIEW_KEY = 'm3102-classic-view-v1';
+export const isClassicView = () => document.documentElement.dataset.classicView === 'classic';
 export function normalizeLayout(value) {
   const ids = HOME_BLOCKS.map((b) => b.id);
   const order = [...new Set((Array.isArray(value?.order) ? value.order : []).filter((id) => ids.includes(id)))];

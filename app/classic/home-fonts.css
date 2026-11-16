@@ -191,6 +191,8 @@
     U+2212, U+2215, U+FEFF, U+FFFD;
 }
 /* Golos Text Variable, OFL; только используемый алфавит, без сетевого запроса. */
+:root { --ff-golos: 'Golos Text', 'Golos Fallback', Arial, sans-serif; }
+:root[data-font='golos'] { --font-ui: var(--ff-golos); }
 @font-face {
   font-family: 'Golos Fallback';
   src: local('Arial');

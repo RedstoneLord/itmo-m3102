@@ -27,6 +27,7 @@ async function prepare(page: Page, theme: string) {
   await page.context().route('https://cdnjs.cloudflare.com/**', (route) => route.fulfill({ contentType: 'text/javascript', body: 'window.marked={use(){}};' }));
   await page.context().route('**/data/schedule.json', (route) => route.fulfill({ json: baseline }));
   await page.addInitScript((theme) => {
+    localStorage.setItem('m3102-classic-view-v1', '{"version":1,"view":"classic"}');
     localStorage.setItem('m3102:settings', JSON.stringify({ state: { onboarded: true, motion: 'off' }, version: 7 }));
     localStorage.setItem('m3102:me', JSON.stringify({ state: { login: null, guest: true }, version: 2 }));
     localStorage.setItem('m3102-student-v1', JSON.stringify({ login: '' }));

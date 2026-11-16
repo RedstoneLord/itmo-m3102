@@ -19,7 +19,7 @@ it('патч классического сайта группы: без мани
   // Его офлайн-режим сохраняем: регистрация воркера остаётся как есть
   expect(html).toContain("navigator.serviceWorker.register('./sw.js')");
   expect(html.indexOf('./switch/site-switch.js')).toBeLessThan(html.indexOf('</head>'));
-  expect(html).toContain('<html data-site-style="classic">');
+  expect(html).toContain('<html data-site-style="classic" data-classic-view="legacy">');
 });
 
 it('патч классического сайта группы: список скрытых файлов приводится к нижнему регистру (иначе AGENTS.md и CLAUDE.md видны)', () => {
@@ -36,7 +36,7 @@ it('патч классического сайта группы: разметк�
 
 it('светлая тема встраивается после исходных стилей в кешируемый HTML, без отдельной загрузки CSS', () => {
   const html = patchClassicIndex(SOURCE.replace('</head>', '<link rel="stylesheet" href="css/reading.css"></head>'));
-  const start = html.indexOf('<style id="classic-light-theme">');
+  const start = html.indexOf('<style id="classic-light-theme"');
   expect(start).toBeGreaterThan(html.indexOf('css/reading.css'));
   expect(start).toBeLessThan(html.indexOf('</head>'));
   // Переключение на светлую тему должно работать и поверх системной тёмной, и без явной настройки.
@@ -44,6 +44,8 @@ it('светлая тема встраивается после исходных
   expect(html).toContain(':root:not([data-theme="dark"])');
   expect(html).toContain(':root[data-theme="light"]');
   expect(html).not.toContain('& .');
+  expect(html).toContain('data-classic-design media="not all"');
+  expect(html.indexOf('./js/classic-view.js')).toBeLessThan(html.indexOf('css/reading.css'));
 });
 
 it('подключения дополнений совместимы с настоящими исходниками классики', () => {
