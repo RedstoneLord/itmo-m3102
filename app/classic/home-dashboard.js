@@ -42,7 +42,7 @@ export function updateHomeTime() {
     parity = document.querySelector('.hero-week');
   if (date) date.textContent = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
   if (parity)
-    parity.textContent = `${isVacation(now, schedule) ? 'Каникулы' : weekParity(now, schedule) === 'even' ? 'Чётная неделя' : 'Нечётная неделя'} · Москва`;
+    parity.textContent = `${isVacation(now, schedule) ? 'Каникулы' : weekParity(now, schedule) === 'even' ? 'Чётная неделя' : 'Нечётная неделя'} · Санкт-Петербург`;
   if (!isClassicView()) {
     if (parity) parity.textContent = parity.textContent.replace(/ · .+$/, '');
     updateLegacyToday(now, schedule);
