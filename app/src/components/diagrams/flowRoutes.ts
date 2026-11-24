@@ -1,4 +1,4 @@
-import type { GraphModel } from './Graph';
+import type { GraphModel } from './graphLayout';
 
 /*
  * Стрелки блок-схемы — перенос routeFlow из js/diagrams/index.js RedstoneLord (коммит 375f12e).
@@ -54,7 +54,7 @@ interface Edge {
   route?: FlowRoute;
 }
 
-const TIP = 2;
+const TIP = 1;
 const LEAD = 30;
 const MARGIN = 26;
 const f = (n: number) => String(Math.round(n * 10) / 10);
@@ -85,7 +85,9 @@ function rounded(raw: Point[], r = 14): FlowRoute {
     if (!i || i === all.length - 1) return true;
     const [px, py] = all[i - 1]!;
     const [nx, ny] = all[i + 1]!;
-    return Math.abs((p[0] - px) * (ny - p[1]) - (p[1] - py) * (nx - p[0])) > 0.5;
+    const [ax, ay] = [p[0] - px, p[1] - py];
+    const [bx, by] = [nx - p[0], ny - p[1]];
+    return Math.abs(ax * by - ay * bx) > 0.5 || ax * bx + ay * by < 0;
   });
   let d = `M${f(q[0]![0])} ${f(q[0]![1])}`;
   for (let i = 1; i < q.length - 1; i++) {
@@ -101,10 +103,17 @@ function rounded(raw: Point[], r = 14): FlowRoute {
   return { d: `${d}L${f(last[0])} ${f(last[1])}`, pts: dense(q, 4) };
 }
 
-const curve = ([p0, p1, p2, p3]: Point[]): FlowRoute => ({
-  d: `M${f(p0![0])} ${f(p0![1])}C${f(p1![0])} ${f(p1![1])} ${f(p2![0])} ${f(p2![1])} ${f(p3![0])} ${f(p3![1])}`,
-  pts: dense(bezier(p0!, p1!, p2!, p3!), 4),
-});
+function curve([p0, p1, p2, p3]: [Point, Point, Point, Point]): FlowRoute {
+  const dx = p3[0] - p2[0];
+  const dy = p3[1] - p2[1];
+  const length = Math.hypot(dx, dy);
+  const lead = Math.min(10, length / 2);
+  const entry: Point = length ? [p3[0] - (dx / length) * lead, p3[1] - (dy / length) * lead] : p3;
+  return {
+    d: `M${f(p0[0])} ${f(p0[1])}C${f(p1[0])} ${f(p1[1])} ${f(p2[0])} ${f(p2[1])} ${f(entry[0])} ${f(entry[1])}L${f(p3[0])} ${f(p3[1])}`,
+    pts: dense([...bezier(p0, p1, p2, entry), p3], 4),
+  };
+}
 
 /**
  * Маршруты всех рёбер блок-схемы и места подписей (null — подписи нет).
@@ -129,30 +138,30 @@ export function routeFlow(
     n.shape === 'diamond'
       ? Math.abs(x - n.x) / (n.w / 2 + m) + Math.abs(y - n.y) / (n.h / 2 + m) < 1
       : n.shape === 'circle'
-        ? Math.hypot(x - n.x, y - n.y) < n.w / 2 + m
+        ? Math.hypot((x - n.x) / (n.w / 2 + m), (y - n.y) / (n.h / 2 + m)) < 1
         : x > n.l - m && x < n.r + m && y > n.t - m && y < n.b + m;
   const hits = (pts: Point[], skip: string[], m = 8) => others(skip).some((n) => pts.some(([x, y]) => inside(n, x, y, m)));
   const lanes: Lane[] = [];
-  const vcurve = (a: Box, b: Box, dir: number, x1 = b.x): Point[] => {
+  const vcurve = (a: Box, b: Box, dir: number, x1 = b.x): [Point, Point, Point, Point] => {
     const y0 = dir > 0 ? a.b : a.t;
     const y1 = dir > 0 ? b.t : b.b;
-    const my = (y0 + y1) / 2;
+    const lead = Math.min(32, Math.abs(y1 - y0) * 0.42);
     return [
       [a.x, y0],
-      [a.x, my],
-      [x1, my],
+      [a.x, y0 + dir * lead],
+      [x1, y1 - dir * lead],
       [x1, y1],
     ];
   };
-  const hcurve = (a: Box, b: Box): Point[] => {
+  const hcurve = (a: Box, b: Box): [Point, Point, Point, Point] => {
     const right = b.x > a.x;
     const x0 = right ? a.r : a.l;
     const x1 = right ? b.l : b.r;
-    const mx = (x0 + x1) / 2;
+    const lead = Math.min(32, Math.abs(x1 - x0) * 0.42) * (right ? 1 : -1);
     return [
       [x0, a.y],
-      [mx, a.y],
-      [mx, b.y],
+      [x0 + lead, a.y],
+      [x1 - lead, b.y],
       [x1, b.y],
     ];
   };
@@ -175,11 +184,11 @@ export function routeFlow(
     if (a === b) e.kind = 'loop';
     else if (b.t >= a.b + 12) {
       e.dir = 1;
-      e.kind = hits(bezier(...(vcurve(a, b, 1) as [Point, Point, Point, Point])), skip) ? 'lane' : 'direct';
+      e.kind = hits(bezier(...vcurve(a, b, 1)), skip) ? 'lane' : 'direct';
     } else if (b.b <= a.t - 12) {
       e.dir = -1;
-      e.kind = hits(bezier(...(vcurve(a, b, -1) as [Point, Point, Point, Point])), skip) ? 'side' : 'direct';
-    } else if (a.r + 24 <= b.l || b.r + 24 <= a.l) e.kind = hits(bezier(...(hcurve(a, b) as [Point, Point, Point, Point])), skip) ? 'side' : 'row';
+      e.kind = hits(bezier(...vcurve(a, b, -1)), skip) ? 'side' : 'direct';
+    } else if (a.r + 12 <= b.l || b.r + 12 <= a.l) e.kind = hits(bezier(...hcurve(a, b)), skip) ? 'side' : 'row';
     else e.kind = 'side';
   }
 
@@ -344,31 +353,50 @@ export function routeFlow(
     }
   }
 
-  // 5. Подписи: у начала линии ищем место рядом с ней без блоков, других линий и подписей
-  const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
-  const labels = edges.map((e): Point | null => {
-    const text = String(model.edges[e.index]!.label ?? '').trim();
+  const routes = edges.map((edge) => edge.route!);
+  return { routes, labels: placeEdgeLabels(model, routes, labelSize, 0.26) };
+}
+
+export function placeEdgeLabels(
+  model: Pick<GraphModel, 'nodes' | 'edges'>,
+  routes: FlowRoute[],
+  labelSize: (text: string) => [number, number],
+  anchor = 0.5,
+): (Point | null)[] {
+  type Rect = { x0: number; y0: number; x1: number; y1: number };
+  const placed: Rect[] = [];
+  const overlaps = (a: Rect, b: Rect) => a.x0 < b.x1 + 2 && a.x1 > b.x0 - 2 && a.y0 < b.y1 + 2 && a.y1 > b.y0 - 2;
+  const nodeBounds = model.nodes.map(({ x, y, w, h }) => ({ x0: x! - w / 2, x1: x! + w / 2, y0: y! - h / 2, y1: y! + h / 2 }));
+  const routeBounds = routes.map(({ pts }) =>
+    pts.reduce((rect, [x, y]) => ({ x0: Math.min(rect.x0, x), y0: Math.min(rect.y0, y), x1: Math.max(rect.x1, x), y1: Math.max(rect.y1, y) }), {
+      x0: Infinity,
+      y0: Infinity,
+      x1: -Infinity,
+      y1: -Infinity,
+    }),
+  );
+  return model.edges.map((edge, index): Point | null => {
+    const text = edge.label?.trim();
     if (!text) return null;
     const [lw, lh] = labelSize(text);
-    const pts = e.route!.pts;
+    const pts = routes[index]!.pts;
     const cumulative = [0];
     for (let i = 1; i < pts.length; i++) cumulative.push(cumulative[i - 1]! + Math.hypot(pts[i]![0] - pts[i - 1]![0], pts[i]![1] - pts[i - 1]![1]));
     const total = cumulative[cumulative.length - 1]!;
-    const wanted: number[] = [];
-    for (let s = 16; s <= Math.min(total * 0.85, 140); s += 8) wanted.push(s);
-    if (!wanted.length) wanted.push(total / 2);
-    let best: { score: number; rect: (typeof placed)[number]; cx: number; cy: number } | null = null;
+    const preferred = Math.min(total * anchor, anchor === 0.5 ? Infinity : 120);
+    const wanted = [...new Set([preferred, ...[0.15, 0.25, 0.36, 0.5, 0.65, 0.78, 0.88].map((ratio) => ratio * total)])];
+    const labelRect = (cx: number, cy: number) => ({ x0: cx - lw / 2, y0: cy - lh / 2, x1: cx + lw / 2, y1: cy + lh / 2 });
+    let best: { score: number; cx: number; cy: number } | null = null;
     for (const s of wanted) {
       const i = Math.max(
-        1,
-        Math.min(
-          pts.length - 2,
-          cumulative.findIndex((c) => c >= s),
-        ),
+        0,
+        cumulative.findIndex((c) => c >= s),
       );
       const [px, py] = pts[i]!;
-      const tx = pts[i + 1]![0] - pts[i - 1]![0];
-      const ty = pts[i + 1]![1] - pts[i - 1]![1];
+      const before = pts[Math.max(0, i - 1)]!;
+      const after = pts[Math.min(pts.length - 1, i + 1)]!;
+      const tx = after[0] - before[0];
+      const ty = after[1] - before[1];
       const length = Math.hypot(tx, ty) || 1;
       // Направления от точки линии: поперёк неё (как раньше) и, запасом, влево/вправо/вверх/вниз — у диагонали между тесными
       // блоками оба «поперёк» упираются в блоки, а сбоку от линии место есть. Вплотную, потом дальше — штраф за каждый шаг
@@ -385,26 +413,39 @@ export function routeFlow(
           const offset = (Math.abs(nx) * lw) / 2 + (Math.abs(ny) * lh) / 2 + 5 + away;
           const cx = px + nx * offset;
           const cy = py + ny * offset;
-          const rect = { x0: cx - lw / 2, y0: cy - lh / 2, x1: cx + lw / 2, y1: cy + lh / 2 };
-          let score = s * 0.4 + extra + away * 3;
-          // Пересечение с блоком — прямоугольником целиком: сетка точек пропускала широкие блоки между узлами сетки
-          if (
-            all.some((n) => rect.x0 < n.x + n.w / 2 + 2 && rect.x1 > n.x - n.w / 2 - 2 && rect.y0 < n.y + n.h / 2 + 2 && rect.y1 > n.y - n.h / 2 - 2)
-          )
-            score += 1000;
-          // Чужая линия под подписью — сильный штраф; своя — слабый: подпись стоит рядом с ней, но не поперёк
-          // (с полным штрафом изгиб кривой отталкивал подпись за соседний блок)
-          for (const other of edges) {
-            const crossing = other.route!.pts.filter(([x, y]) => x > rect.x0 - 2 && x < rect.x1 + 2 && y > rect.y0 - 2 && y < rect.y1 + 2).length;
-            score += other === e ? Math.min(24, 3 * crossing) : Math.min(60, 8 * crossing);
+          const rect = labelRect(cx, cy);
+          let score = Math.abs(s - preferred) * 0.35 + extra + away * 2.4;
+          if (best && score >= best.score) continue;
+          if (nodeBounds.some((box) => overlaps(rect, box)) || placed.some((box) => overlaps(rect, box))) continue;
+          for (let i = 0; i < routes.length; i++) {
+            if (!overlaps(rect, routeBounds[i]!)) continue;
+            if (routes[i]!.pts.some(([x, y]) => x > rect.x0 - 2 && x < rect.x1 + 2 && y > rect.y0 - 2 && y < rect.y1 + 2)) {
+              score += i === index ? 140 : 160;
+            }
           }
-          for (const q of placed) if (rect.x0 < q.x1 + 2 && rect.x1 > q.x0 - 2 && rect.y0 < q.y1 + 2 && rect.y1 > q.y0 - 2) score += 500;
-          if (!best || score < best.score) best = { score, rect, cx, cy };
+          if (!best || score < best.score) best = { score, cx, cy };
         }
     }
-    placed.push(best!.rect);
-    return [best!.cx, best!.cy];
+    if (!best) {
+      // Crowded layouts can use the nearest free margin instead of hiding a label behind a block or another label.
+      const [x, y] =
+        pts[
+          Math.max(
+            0,
+            cumulative.findIndex((length) => length >= preferred),
+          )
+        ]!;
+      const occupied = [...nodeBounds, ...routeBounds, ...placed];
+      const candidates: Point[] = [
+        [Math.min(...occupied.map((box) => box.x0)) - lw / 2 - 5, y],
+        [Math.max(...occupied.map((box) => box.x1)) + lw / 2 + 5, y],
+        [x, Math.min(...occupied.map((box) => box.y0)) - lh / 2 - 5],
+        [x, Math.max(...occupied.map((box) => box.y1)) + lh / 2 + 5],
+      ];
+      const [cx, cy] = candidates.reduce((a, b) => (Math.hypot(a[0] - x, a[1] - y) <= Math.hypot(b[0] - x, b[1] - y) ? a : b));
+      best = { score: 0, cx, cy };
+    }
+    placed.push(labelRect(best.cx, best.cy));
+    return [best.cx, best.cy];
   });
-
-  return { routes: edges.map((e) => e.route!), labels };
 }

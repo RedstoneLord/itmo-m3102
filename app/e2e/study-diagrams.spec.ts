@@ -52,10 +52,12 @@ async function playMatrix(page: Page) {
 }
 
 async function rotateScene(page: Page) {
-  const scene = page.locator('[data-study-kind="geometry3d"]').filter({ has: page.getByText('Плоскость', { exact: true }) }).last();
+  const scene = page.locator('[data-study-kind="geometry3d"]').filter({ has: page.locator('[data-study-plane]') }).last();
   const svg = scene.locator('[data-study-current]');
   const initial = await svg.innerHTML();
+  await scene.getByText('Вид сцены', { exact: true }).click();
   await scene.getByRole('button', { name: 'Вид вдоль оси y' }).click();
+  await scene.getByText('Вид сцены', { exact: true }).click();
   await expect(svg.locator('polyline')).toHaveCount(1);
   await scene.getByRole('button', { name: 'Сбросить вид' }).click();
   expect(await svg.innerHTML()).toBe(initial);
@@ -67,10 +69,7 @@ test('читалка и редактор нового приложения по�
   await page.goto('./' + modernNote);
   const matrix = await playMatrix(page);
   const figure = page.locator('figure[data-lang="matrix"]').filter({ has: matrix });
-  const svgDownload = page.waitForEvent('download');
-  await figure.getByRole('button', { name: 'SVG', exact: true }).click();
-  const svg = readFileSync((await (await svgDownload).path())!, 'utf8');
-  expect(svg).toContain('1, 1, 3, 2. 0, 1, 1, -3');
+  await expect(figure.getByRole('button', { name: 'SVG', exact: true })).toHaveCount(0);
   await expect(matrix.locator('[data-export-frame] svg')).toHaveAttribute('aria-label', '1, 0, 2, 5. 0, 1, 1, -3');
   await page.emulateMedia({ media: 'print' });
   await expect(matrix.locator('[data-export-frame]')).toBeVisible();
@@ -90,6 +89,10 @@ test('читалка и редактор нового приложения по�
   await figure.getByRole('link', { name: 'Редактировать' }).click();
   await expect(page.getByRole('textbox', { name: 'Исходный текст диаграммы' })).toHaveValue(/add 2 1 -2/);
   await playMatrix(page);
+  const svgDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'SVG', exact: true }).click();
+  const svg = readFileSync((await (await svgDownload).path())!, 'utf8');
+  expect(svg).toContain('1, 1, 3, 2. 0, 1, 1, -3');
   await page.getByRole('textbox', { name: 'Исходный текст диаграммы' }).fill('1\nscale 1 0');
   await expect(page.getByRole('alert')).toContainText('Строка 2');
 });
@@ -114,9 +117,14 @@ for (const view of ['legacy', 'classic']) {
     await rotateScene(page);
     const editButton = page.locator('[data-study-figure]').filter({ has: matrix }).getByRole('button', { name: 'Редактировать', exact: true });
     await expect(editButton).toHaveCount(1);
+    await expect(page.locator('[data-study-figure] [data-dgm-copy]')).toHaveCount(0);
     await editButton.click();
     await expect(page.getByRole('textbox', { name: 'Текст диаграммы' })).toHaveValue(/add 2 1 -2/);
     await playMatrix(page);
+    const svgDownload = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Скачать SVG', exact: true }).click();
+    const svg = readFileSync((await (await svgDownload).path())!, 'utf8');
+    expect(svg).toContain('1, 1, 3, 2. 0, 1, 1, -3');
     const language = page.locator('#diagram-language');
     await language.selectOption('geometry3d');
     await expect(language).toHaveValue('geometry3d');

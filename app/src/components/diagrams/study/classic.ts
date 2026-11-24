@@ -1,7 +1,12 @@
+export { applyLayout, separateFlowNodes, classicEdges, sizeNode, NODE_FONT } from '../classicGraph';
 import { mountStudyDiagram, parseStudyDiagram, printStudySvg, studyArt } from './player';
 import { escapeMarkup, isStudyLanguage, STUDY_LANGUAGES, studyTypes, type StudyLanguage } from './source';
 
 export { isStudyLanguage, mountStudyDiagram, parseStudyDiagram, printStudySvg, STUDY_LANGUAGES, studyArt, studyTypes };
+
+export function editDiagramButton() {
+  return `<button class="dgm-edit" type="button" data-dgm-edit data-pdf-hide aria-label="Редактировать" title="Редактировать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11L4 20z"/></svg></button>`;
+}
 
 export function studyFigure(lang: StudyLanguage, source: string) {
   try {
@@ -11,7 +16,7 @@ export function studyFigure(lang: StudyLanguage, source: string) {
       ${title ? `<div class="study-title">${escapeMarkup(title)}</div>` : ''}
       <div class="dgm-art">${studyArt(model)}</div>
       ${caption ? `<figcaption>${escapeMarkup(caption)}</figcaption>` : ''}
-      <div class="dgm-actions" data-pdf-hide><button type="button" data-dgm-copy>Копировать SVG</button><button type="button" data-dgm-save="svg">SVG</button><button type="button" data-dgm-save="png">PNG</button><button type="button" data-dgm-edit>Редактировать</button></div>
+      ${editDiagramButton()}
     </figure>`;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

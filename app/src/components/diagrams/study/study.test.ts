@@ -78,8 +78,18 @@ describe('3D-геометрия', () => {
     const edge = geometrySvg(model, { yaw: 0, pitch: 0, zoom: 1 }, true);
     expect(edge).toContain('<polyline');
     expect(edge).not.toContain('<polygon');
-    expect(edge).toMatch(/M220\.00,150\.00L[\d.]+,72\.43"[^>]+--study-purple/);
-    expect(edge).toMatch(/M220\.00,150\.00L[\d.]+,150\.00"[^>]+--study-blue/);
+    const svg = new DOMParser().parseFromString(edge, 'image/svg+xml').documentElement;
+    const vector = (color: string) =>
+      svg
+        .querySelector(`path[stroke="var(--study-${color})"]`)!
+        .getAttribute('d')!
+        .match(/-?[\d.]+/g)!
+        .map(Number);
+    const [, planeStart, , planeEnd] = vector('blue');
+    const [x, y, tipX, tipY] = vector('purple') as [number, number, number, number];
+    expect(planeEnd).toBe(planeStart);
+    expect(y - tipY).toBeGreaterThan(80);
+    expect((y - tipY) / (tipX - x)).toBeCloseTo(2, 2);
     expect(geometrySvg(model, { yaw: 0, pitch: 90, zoom: 1 }, true)).toContain('<polygon');
   });
 

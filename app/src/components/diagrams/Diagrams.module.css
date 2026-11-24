@@ -23,10 +23,25 @@
 
 .figure {
   position: relative;
-  padding: var(--space-4);
+  padding: var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-bg-elevated);
+}
+
+.figure:has(.corner):not(:has(.title)) {
+  padding-top: 36px;
+}
+
+@media (pointer: coarse) {
+  .figure:has(.corner):not(:has(.title)) {
+    padding-top: 44px;
+  }
+}
+
+.figure:has(.corner) .title {
+  min-height: 28px;
+  padding-inline: 65px;
 }
 
 .title {
@@ -297,19 +312,36 @@
   margin-top: var(--space-2);
 }
 
-/* «Увеличить» в углу карточки: у широких деревьев кнопка внизу уезжает за экран */
-.zoomButton {
+.corner {
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);
   z-index: 1;
-  opacity: 0.7;
+  display: flex;
+  gap: 4px;
 }
 
-@media (hover: hover) {
-  .zoomButton:hover,
-  .figure:hover .zoomButton {
-    opacity: 1;
+.editLink {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--control-bg);
+  color: var(--color-text-muted);
+}
+
+.figure .editLink:hover,
+.figure .editLink:focus-visible {
+  color: var(--color-text);
+  background: var(--color-bg-hover);
+}
+
+@media (pointer: coarse) {
+  .editLink {
+    width: 36px;
+    height: 36px;
   }
 }
 
@@ -324,8 +356,7 @@
   border-top: 1px solid var(--color-border);
 }
 
-.tools button,
-.tools a {
+.tools button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -344,8 +375,7 @@
 }
 
 @media (hover: hover) {
-  .tools button:hover,
-  .tools a:hover {
+  .tools button:hover {
     background: var(--color-bg-hover);
     color: var(--color-text);
   }
@@ -353,14 +383,24 @@
 
 @media print {
   .tools,
-  .zoomButton {
+  .corner {
     display: none;
   }
 
   /* Схема появляется при прокрутке (whileInView): не долистанная до неё стоит невидимой — в печати показать все */
   .figure {
+    padding-top: var(--space-3) !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  .figure .title {
+    padding-inline: 0;
+    min-height: 0;
+  }
+
+  .figure .canvas > svg {
+    min-width: 0 !important;
   }
 }
 
@@ -373,4 +413,19 @@
   .printFrame {
     display: block;
   }
+}
+
+.figure:is([data-lang='graph'], [data-lang='diagram']) .nodeText {
+  font-size: 13px;
+}
+
+.figure:is([data-lang='graph'], [data-lang='diagram']) .edge {
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.figure:is([data-lang='graph'], [data-lang='diagram']) .edgeLabel {
+  fill: var(--color-text);
+  font-size: 12px;
+  font-weight: 600;
 }

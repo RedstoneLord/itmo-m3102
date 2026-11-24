@@ -1,4 +1,4 @@
-import { describeGeometry, geometrySvg, parseGeometry } from './geometry';
+import { geometryObjects, geometrySvg, parseGeometry } from './geometry';
 import { matrixSvg, parseMatrix } from './matrix';
 import { escapeMarkup, type StudyLanguage } from './source';
 
@@ -27,17 +27,35 @@ export function studyArt(model: StudyModel) {
       : '';
   const geometryControls = geometry
     ? `<div class="study-controls" role="group" aria-label="Вид 3D-сцены">
-         ${button('left', '↶', 'Повернуть влево')}${button('right', '↷', 'Повернуть вправо')}
-         ${button('up', '↑', 'Повернуть вверх')}${button('down', '↓', 'Повернуть вниз')}
-         ${button('zoom-in', '+', 'Приблизить сцену')}${button('zoom-out', '−', 'Отдалить сцену')}
-         ${button('x', 'YZ', 'Вид вдоль оси x')}${button('y', 'XZ', 'Вид вдоль оси y')}${button('z', 'XY', 'Вид вдоль оси z')}
-         ${button('reset', 'Сбросить вид')}
-         ${model.shapes.some((shape) => shape.type === 'plane') ? '<label><input type="checkbox" data-study-plane checked> Плоскость</label>' : ''}
+         <div class="study-control-row">
+           <div class="study-button-group">
+             ${button('zoom-out', '−', 'Отдалить сцену')}${button('zoom-in', '+', 'Приблизить сцену')}
+           </div>
+           ${button('reset', '↺', 'Сбросить вид')}
+           <details class="study-views">
+             <summary>Вид сцены</summary>
+             <div class="study-views-panel">
+               <div class="study-button-group">
+                 ${button('left', '↶', 'Повернуть влево')}${button('right', '↷', 'Повернуть вправо')}
+                 ${button('up', '↑', 'Повернуть вверх')}${button('down', '↓', 'Повернуть вниз')}
+               </div>
+               <div class="study-button-group">
+                 ${button('x', 'YZ', 'Вид вдоль оси x')}${button('y', 'XZ', 'Вид вдоль оси y')}${button('z', 'XY', 'Вид вдоль оси z')}
+               </div>
+               ${model.shapes.some((shape) => shape.type === 'plane') ? '<label><input type="checkbox" data-study-plane checked> Плоскость</label>' : ''}
+             </div>
+           </details>
+         </div>
        </div>
-       <details class="study-description"><summary>Координаты объектов</summary>
-       <ul>${describeGeometry(model)
-         .map((line) => `<li>${escapeMarkup(line)}</li>`)
-         .join('')}</ul></details>`
+       <details class="study-description">
+         <summary>Координаты объектов</summary>
+         <ul>${geometryObjects(model)
+           .map(
+             ({ name, description, color }) =>
+               `<li><span class="study-object-dot" style="--study-object-color:var(--study-${color})" aria-hidden="true"></span><div><strong>${escapeMarkup(name)}</strong><span>${escapeMarkup(description)}</span></div></li>`,
+           )
+           .join('')}</ul>
+       </details>`
     : '';
   return `<div class="study-diagram" data-study-kind="${model.kind}">
     <div class="study-live" data-pdf-hide>

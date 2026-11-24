@@ -131,21 +131,23 @@ export function DiagramBlock({ lang, source, editable = true }: DiagramBlockProp
           <InlineMath text={rendered.header.title} />
         </div>
       )}
-      {!rendered.player && <IconButton icon={Maximize2} label="Увеличить" size="sm" className={styles.zoomButton} onClick={openZoom} data-pdf-hide />}
+      {(editable || !rendered.player) && (
+        <div className={styles.corner} data-pdf-hide>
+          {!rendered.player && <IconButton icon={Maximize2} label="Увеличить" size="sm" onClick={openZoom} />}
+          {editable && (
+            <Link className={styles.editLink} to="/diagrams" state={{ lang, source }} aria-label="Редактировать" title="Редактировать">
+              <PencilLine size={15} strokeWidth={1.75} aria-hidden />
+            </Link>
+          )}
+        </div>
+      )}
       <div className={styles.canvas}>{rendered.view}</div>
       {rendered.header.caption && (
         <figcaption className={styles.caption}>
           <InlineMath text={rendered.header.caption} />
         </figcaption>
       )}
-      <DiagramTools
-        figureRef={figureRef}
-        name={fileName(rendered.header.title, lang)}
-        lang={lang}
-        source={source}
-        editable={editable}
-        onZoom={rendered.player ? undefined : openZoom}
-      />
+      {!editable && <DiagramTools figureRef={figureRef} name={fileName(rendered.header.title, lang)} />}
       {!rendered.player && (
         <DiagramViewer
           open={zoom.open}
@@ -161,15 +163,10 @@ export function DiagramBlock({ lang, source, editable = true }: DiagramBlockProp
 interface DiagramToolsProps {
   figureRef: React.RefObject<HTMLElement | null>;
   name: string;
-  lang: DiagramLanguage;
-  source: string;
-  editable: boolean;
-  /** Открыть схему крупно (нет у массива с проигрывателем) */
-  onZoom?: () => void;
 }
 
-/** Под диаграммой, как на сайте группы: копировать SVG, скачать SVG/PNG, открыть в конструкторе */
-export function DiagramTools({ figureRef, name, lang, source, editable, onZoom }: DiagramToolsProps) {
+/** Экспорт текущего кадра из редактора. */
+function DiagramTools({ figureRef, name }: DiagramToolsProps) {
   const [copied, setCopied] = useState(false);
   // Кадр массива с кодом лежит отдельно: в проигрывателе свои svg — иконки кнопок
   const svg = () =>
@@ -181,12 +178,6 @@ export function DiagramTools({ figureRef, name, lang, source, editable, onZoom }
 
   return (
     <div className={styles.tools} data-pdf-hide>
-      {onZoom && (
-        <button type="button" onClick={onZoom}>
-          <Maximize2 size={13} strokeWidth={2} aria-hidden />
-          Увеличить
-        </button>
-      )}
       <button
         type="button"
         onClick={() => {
@@ -209,12 +200,6 @@ export function DiagramTools({ figureRef, name, lang, source, editable, onZoom }
         <Download size={13} strokeWidth={2} aria-hidden />
         PNG
       </button>
-      {editable && (
-        <Link to="/diagrams" state={{ lang, source }}>
-          <PencilLine size={13} strokeWidth={2} aria-hidden />
-          Редактировать
-        </Link>
-      )}
     </div>
   );
 }

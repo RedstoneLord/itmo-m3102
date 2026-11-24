@@ -74,3 +74,36 @@ it('подписи тесно стоящих блоков уходят в сво
     expect(rects.filter((other) => other !== rect && overlap(rect, other))).toEqual([]);
   }
 });
+
+it('смещённый ромб получает прямой участок перед наконечником', () => {
+  const model = {
+    nodes: [node('A', 280, 40, 'round'), node('B', 80, 113, 'diamond')],
+    edges: [{ from: 'A', to: 'B', directed: true }],
+  };
+  const { routes } = routeFlow(model, () => [30, 18]);
+  expect(routes[0]!.d).toMatch(/ 80 [\d.]+L80 92$/);
+  const last = routes[0]!.pts.slice(-2);
+  expect(last[0]![0]).toBe(last[1]![0]);
+  expect(last[0]![1]).toBeLessThan(last[1]![1]);
+});
+
+it('автоматические блоки обходят блок с заданными координатами и вмещают длинные подписи', () => {
+  const source = 'A: box "Первый блок" @ 80, 18\nB: box "ШИРОКАЯ ПОДПИСЬ"\nC: diamond "Условие для перехода к следующему этапу"\nB -> C';
+  const { nodes } = parseGraph(splitLines(source, 'diagram'), 'diagram');
+  const [fixed, first, second] = nodes;
+  expect(fixed).toMatchObject({ x: 80, y: 18 });
+  expect(first!.x! - first!.w / 2).toBeGreaterThan(fixed!.x! + fixed!.w / 2);
+  expect(second!.lines.length).toBeGreaterThan(1);
+  expect(second!.y! - second!.h / 2).toBeGreaterThan(first!.y! + first!.h / 2);
+});
+
+it('пересекающиеся фигуры с ручными координатами расходятся в пределах ряда', () => {
+  const model = parseGraph(
+    splitLines('A: box "Начало вычисления" @ 40, 60\nB: diamond "Проверка результата" @ 120, 60\nA -> B', 'diagram'),
+    'diagram',
+  );
+  const [first, second] = model.nodes;
+  expect(first).toMatchObject({ x: 40, y: 60 });
+  expect(second!.y).toBe(60);
+  expect(second!.x! - second!.w / 2 - (first!.x! + first!.w / 2)).toBeGreaterThanOrEqual(12);
+});

@@ -105,23 +105,56 @@ export function projection({ yaw, pitch }: Camera) {
 const names: Record<ShapeName, string> = { point: 'Точка', vector: 'Вектор', line: 'Прямая', plane: 'Плоскость' };
 const coordinates = (v: Vector) => `(${v.join(', ')})`;
 
-export function describeGeometry(model: GeometryModel) {
-  return model.shapes.map(({ type, label, start, parts }) => {
-    const base = label && label.toLowerCase() !== names[type].toLowerCase() ? `${names[type]} ${label}` : names[type];
+export function geometryObjects(model: GeometryModel) {
+  return model.shapes.map(({ type, label, start, parts, color }) => {
+    const name = label && label.toLowerCase() !== names[type].toLowerCase() ? `${names[type]} ${label}` : names[type];
     const [a, b] = parts;
-    if (type === 'vector') return `${base} из ${coordinates(start)} в ${coordinates(a!)}`;
-    if (type === 'point') return `${base} ${coordinates(start)}`;
-    const direction = b ? `с направлениями ${coordinates(a!)} и ${coordinates(b)}` : `с направлением ${coordinates(a!)}`;
-    return `${base} через ${coordinates(start)} ${direction}`;
+    const at = coordinates(start);
+    const description =
+      type === 'point'
+        ? at
+        : type === 'vector'
+          ? `из ${at} в ${coordinates(a!)}`
+          : b
+            ? `через ${at} с направлениями ${coordinates(a!)} и ${coordinates(b)}`
+            : `через ${at} с направлением ${coordinates(a!)}`;
+    return { name, description, color };
   });
 }
 
+export function describeGeometry(model: GeometryModel) {
+  return geometryObjects(model).map(({ name, description }) => `${name} ${description}`);
+}
+
 export function geometrySvg(model: GeometryModel, camera: Camera, showPlane: boolean, current = false) {
-  const width = 440;
-  const height = 300;
+  const width = 480;
+  const height = 320;
   const { right, up, depth } = projection(camera);
   const extent = model.radius * 0.72;
-  const factor = (95 / model.radius) * camera.zoom;
+  const plane = model.shapes.find((shape) => shape.type === 'plane');
+  const normal = plane ? unit(cross(unit(plane.parts[0]!), unit(plane.parts[1]!))) : origin;
+  const corners = plane
+    ? (() => {
+        const u = scale(unit(plane.parts[0]!), extent);
+        const v = scale(unit(cross(normal, u)), extent);
+        return [plus(u, v), minus(v, u), scale(plus(u, v), -1), minus(u, v)].map((offset) => plus(plane.start, offset));
+      })()
+    : [];
+  const limits = model.shapes.flatMap(({ type, start, parts }) => {
+    if (type === 'vector') return [start, parts[0]!];
+    if (type === 'line') {
+      const offset = scale(unit(parts[0]!), model.radius * 1.13);
+      return [minus(start, offset), plus(start, offset)];
+    }
+    return [start];
+  });
+  if (model.showAxes) limits.push(...axes.flatMap((axis) => [scale(axis, model.radius * 1.15), scale(axis, -model.radius * 1.035)]));
+  // Hiding the plane keeps the zoom level and the positions of the other objects.
+  const fit = [...limits, ...corners].reduce((result, position) => {
+    const v = minus(position, model.center);
+    return Math.max(result, Math.abs(dot(v, right)) / 194, Math.abs(dot(v, up)) / 132);
+  }, model.radius / 155);
+  const factor = camera.zoom / fit;
   const project = (v: Vector) => {
     const relative = minus(v, model.center);
     return [width / 2 + factor * dot(relative, right), height / 2 - factor * dot(relative, up)] as const;
@@ -130,10 +163,8 @@ export function geometrySvg(model: GeometryModel, camera: Camera, showPlane: boo
     project(v)
       .map((item) => item.toFixed(2))
       .join(',');
-  const plane = showPlane ? model.shapes.find((shape) => shape.type === 'plane') : undefined;
-  const normal = plane ? unit(cross(unit(plane.parts[0]!), unit(plane.parts[1]!))) : origin;
   const facing = dot(normal, depth);
-  const distance = (v: Vector) => (plane && Math.abs(facing) > 1e-9 ? dot(minus(v, plane.start), normal) * Math.sign(facing) : 0);
+  const distance = (v: Vector) => (showPlane && plane && Math.abs(facing) > 1e-9 ? dot(minus(v, plane.start), normal) * Math.sign(facing) : 0);
   const behind = (v: Vector) => distance(v) < -model.radius * 1e-8;
   const back: string[] = [];
   const front: string[] = [];
@@ -149,7 +180,7 @@ export function geometrySvg(model: GeometryModel, camera: Camera, showPlane: boo
   };
   const mark = (v: Vector, color: string) => {
     const [x, y] = project(v);
-    (behind(v) ? back : front).push(`<circle cx="${x}" cy="${y}" r="3.5" fill="${color}"/>`);
+    (behind(v) ? back : front).push(`<circle cx="${x}" cy="${y}" r="4.5" fill="${color}"/>`);
   };
   const segment = (a: Vector, b: Vector, color: string, arrow = false, dashed = false) => {
     const [x, y] = project(a);
@@ -160,7 +191,7 @@ export function geometrySvg(model: GeometryModel, camera: Camera, showPlane: boo
       return;
     }
     const line = (from: Vector, to: Vector) =>
-      `<path d="M${point(from)}L${point(to)}" fill="none" stroke="${color}" stroke-width="${arrow ? 2.4 : 1.3}"${dashed ? ' stroke-dasharray="4 3"' : ''}/>`;
+      `<path d="M${point(from)}L${point(to)}" fill="none" stroke="${color}" stroke-width="${arrow ? 2.7 : 1.5}"${dashed ? ' stroke-dasharray="4 3"' : ''}/>`;
     if (behind(a) !== behind(b)) {
       const ratio = Math.max(0, Math.min(1, distance(a) / (distance(a) - distance(b))));
       const middle = plus(a, scale(minus(b, a), ratio));
@@ -216,10 +247,7 @@ export function geometrySvg(model: GeometryModel, camera: Camera, showPlane: boo
   }
 
   let planeSvg = '';
-  if (plane) {
-    const u = scale(unit(plane.parts[0]!), extent);
-    const v = scale(unit(cross(normal, u)), extent);
-    const corners = [plus(u, v), minus(v, u), scale(plus(u, v), -1), minus(u, v)].map((offset) => plus(plane.start, offset));
+  if (plane && showPlane) {
     const ink = `var(--study-${plane.color})`;
     planeSvg =
       Math.abs(facing) < 1e-9
@@ -229,5 +257,5 @@ export function geometrySvg(model: GeometryModel, camera: Camera, showPlane: boo
     label(left, plane.label, true);
   }
   const description = current ? 'Ортографический вид сцены' : describeGeometry(model).join('. ');
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" overflow="hidden" ${current ? 'data-study-current' : ''} role="img" aria-label="${escapeMarkup(description)}"><g>${back.join('')}${planeSvg}${front.join('')}</g><g fill="var(--study-ink)" font-family="system-ui, sans-serif" font-size="14">${labels.join('')}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" overflow="hidden" ${current ? 'data-study-current' : ''} role="img" aria-label="${escapeMarkup(description)}"><g>${back.join('')}${planeSvg}${front.join('')}</g><g fill="var(--study-ink)" font-family="system-ui, sans-serif" font-size="16">${labels.join('')}</g></svg>`;
 }

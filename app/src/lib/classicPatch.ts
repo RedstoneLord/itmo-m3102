@@ -244,6 +244,7 @@ function patchClassicDiagramEditor(source: string): string {
     'graph, plot, chart, tree, array, diagram или canvas.',
     'graph, plot, chart, tree, array, diagram, canvas, geometry3d или matrix.',
   );
+  patched = replaceRequired(patched, "figure.querySelector('svg'); if (!image) return;", "figure.querySelector('.dgm-art svg'); if (!image) return;");
   patched = replaceRequired(patched, '  mountArrayPlayers(container);', '  mountArrayPlayers(container);\n  mountStudyFigures(container);');
   return replaceRequired(
     patched,
@@ -252,10 +253,77 @@ function patchClassicDiagramEditor(source: string): string {
   );
 }
 
+/** Retain the upstream DSL and text formatting. Share edge geometry and flow layout with React. */
+function patchClassicDiagramDrawing(source: string) {
+  const graphStart = source.indexOf('function drawGraph(model) {');
+  const graphNodes = source.indexOf('  const nodes = [...model.nodes.values()].map(node => {', graphStart);
+  const flowStart = source.indexOf('const flowBase =');
+  const flowNodes = source.indexOf('  const shapes = nodes.map(node => {', flowStart);
+  if (graphStart < 0 || graphNodes < 0 || flowStart < 0 || flowNodes < 0) throw new Error('Classic diagram drawing hooks missing');
+  let patched =
+    source.slice(0, graphStart) +
+    `function sizedGraphSvg(model, inner, defs, view) {
+  return svg(model, inner, view.w, view.h, defs, view).replace('<svg ', \`<svg class="dgm-network" style="--dgm-width:\${view.w}px;--dgm-min-width:\${view.w * .8}px" \`);
+}
+function drawGraph(model) {
+  const width = size(model.width, 640), height = size(model.height, 360);
+  const points = graphPositions(model, width, height);
+  const radii = new Map([...model.nodes.values()].map(node => [node.id, nodeRadius(node)]));
+  const nodesWithSizes = [...model.nodes.values()].map(node => ({
+    ...node, ...points.get(node.id), shape: 'circle', w: radii.get(node.id) * 2, h: radii.get(node.id) * 2,
+  }));
+  const { defs, edges, notes, view } = classicEdges({
+    nodes: nodesWithSizes, edges: model.edges.map(edge => ({ ...edge, label: edge.weight })),
+  }, \`dgm-arrow-\${hash(model.source)}\`, fmtLabel);
+` +
+    source.slice(graphNodes, flowStart) +
+    `function drawFlow(model) {
+  const nodes = [...model.nodes.values()].map(node => ({ ...node, ...sizeNode({ ...node, label: symbols(node.label) }, true) }));
+  const flow = { nodes, edges: model.edges, layout: 'layered', flow: true };
+  applyLayout(flow);
+  separateFlowNodes(nodes);
+  const marker = \`dgm-flow-arrow-\${hash(model.source)}\`;
+  const { defs, edges, notes, view } = classicEdges(flow, marker, fmtLabel);
+` +
+    source.slice(flowNodes);
+  patched = replaceRequired(
+    patched,
+    '    extend(bounds, p.x - r, p.y - r, p.x + r, p.y + r);\n    return `<g data-dgm-node=',
+    '    return `<g data-dgm-node=',
+  );
+  patched = replaceRequired(
+    patched,
+    '  const fitted = fitView(model, edges + nodes, bounds, width, height);\n  return svg(model, fitted.inner, width, height, defs, fitted.view);',
+    '  return sizedGraphSvg(model, edges + nodes + notes, defs, view);',
+  );
+  patched = replaceRequired(
+    patched,
+    '    const p = positions.get(node.id), { w, h, fit } = boxes.get(node.id), x =',
+    '    const p = node, { w, h, lines } = node, fit = { lines, size: NODE_FONT, truncated: false }, x =',
+  );
+  patched = replaceRequired(patched, 'textY += 5;', 'textY += 2;');
+  patched = replaceRequired(patched, 'label: chain.weight })); return;', "label: chain.weight, directed: chain.arrows[i] !== '--' })); return;");
+  patched = replaceRequired(patched, 'p.y - h / 2 + 12), bottom = format(p.y + h / 2 - 12)', 'p.y - h / 2 + 6), bottom = format(p.y + h / 2 - 6)');
+  patched = replaceRequired(patched, 'A${format(w / 2)} 12 0 0 1 ${right}', 'A${format(w / 2)} 6 0 0 1 ${right}');
+  patched = replaceRequired(patched, 'A${format(w / 2)} 12 0 0 1 ${left}', 'A${format(w / 2)} 6 0 0 1 ${left}');
+  patched = replaceRequired(patched, 'ry="12"/>`; textY', 'ry="6"/>`; textY');
+  patched = replaceRequired(
+    patched,
+    `fill="var(--card)" stroke="\${node.color || 'var(--accent)'}" stroke-width="2">\${shape}`,
+    `fill="var(--card)" stroke="\${node.color || (node.shape === 'diamond' || node.shape === 'round' ? 'var(--accent)' : 'var(--muted)')}" stroke-width="1.4">\${shape}`,
+  );
+  return replaceRequired(
+    patched,
+    '  const fitted = fitView(model, arrows + shapes, bounds, width, wantedH);\n  return svg(model, fitted.inner, width, wantedH, defs, fitted.view);',
+    '  return sizedGraphSvg(model, edges + shapes + notes, defs, view);',
+  );
+}
+
 /** Only assembled copies of upstream modules change. Missing integration points fail the build. */
 export function patchClassicModule(path: string, source: string): string {
   if (path === 'js/diagrams/index.js') {
-    const imports = "import { STUDY_LANGUAGES, isStudyLanguage, parseStudyDiagram, printStudySvg, studyFigure } from './study.js';\n";
+    const imports =
+      "import { STUDY_LANGUAGES, isStudyLanguage, parseStudyDiagram, printStudySvg, studyFigure, editDiagramButton, applyLayout, separateFlowNodes, classicEdges, sizeNode, NODE_FONT } from './study.js';\n";
     const hook = replaceRequired(
       source,
       'export function codeFigure(lang, text) {',
@@ -263,7 +331,9 @@ export function patchClassicModule(path: string, source: string): string {
     );
     const register =
       '\nfor (const lang of STUDY_LANGUAGES) registerDiagram(lang, { parse: text => parseStudyDiagram(lang, text), render: printStudySvg });\n';
-    return imports + hook + register;
+    const actions =
+      '<div class="dgm-actions"><button type="button" data-dgm-copy>Копировать SVG</button><button type="button" data-dgm-save="svg">SVG</button><button type="button" data-dgm-save="png">PNG</button><button type="button" data-dgm-edit>✎ Редактировать</button></div>';
+    return imports + patchClassicDiagramDrawing(replaceRequired(hook, actions, '${editDiagramButton()}')) + register;
   }
   if (path === 'js/diagrams/editor.js') return patchClassicDiagramEditor(source);
   if (path === 'js/lectures.js') {
