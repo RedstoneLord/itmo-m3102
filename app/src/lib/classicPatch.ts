@@ -200,6 +200,11 @@ function patchClassicDiagramEditor(source: string): string {
   );
   patched = replaceRequired(
     patched,
+    '  if (fromLink && diagramLanguages().includes(fromLink.language) && fromLink.source.length < 12000) { language = fromLink.language; source = fromLink.source; }',
+    "  if (fromLink && diagramLanguages().includes(fromLink.language) && fromLink.source.length < 12000) {\n    language = fromLink.language; source = fromLink.source;\n    saveDraft();\n    history.replaceState(history.state, '', '#/diagrams');\n  }",
+  );
+  patched = replaceRequired(
+    patched,
     '  let errorLine = 0;',
     "  const study = isStudyLanguage(language);\n  preview.toggleAttribute('data-study-preview', study);\n  if (study) editor().querySelector('#diagram-tool-label').textContent = language === 'matrix' ? 'Просмотрите шаги преобразования' : 'Вращайте сцену на холсте или кнопками';\n  let errorLine = 0;",
   );

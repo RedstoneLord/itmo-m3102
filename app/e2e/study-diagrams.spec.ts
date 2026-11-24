@@ -34,7 +34,12 @@ async function prepare(page: Page, classic: boolean, theme: 'light' | 'dark' = '
 }
 
 async function playMatrix(page: Page) {
-  const matrix = page.locator('[data-study-kind="matrix"]').first();
+  // В конспекте есть и статичная схема ФСР. Проигрыватель нужен для матрицы перехода.
+  const matrix = page.locator('[data-study-kind="matrix"]').filter({
+    has: page.locator('[data-study-step]'),
+  });
+  await expect(matrix).toHaveCount(1);
+  await matrix.scrollIntoViewIfNeeded();
   const frame = matrix.locator('[data-study-current]');
   await expect(frame).toHaveAttribute('aria-label', '1, 1, 3, 2. 2, 3, 7, 1');
   await matrix.getByRole('button', { name: 'Далее' }).click();
@@ -61,7 +66,7 @@ test('читалка и редактор нового приложения по�
   await prepare(page, false);
   await page.goto('./' + modernNote);
   const matrix = await playMatrix(page);
-  const figure = page.locator('figure').filter({ has: matrix }).first();
+  const figure = page.locator('figure[data-lang="matrix"]').filter({ has: matrix });
   const svgDownload = page.waitForEvent('download');
   await figure.getByRole('button', { name: 'SVG', exact: true }).click();
   const svg = readFileSync((await (await svgDownload).path())!, 'utf8');
@@ -107,11 +112,14 @@ for (const view of ['legacy', 'classic']) {
     await expect(page.locator('html')).toHaveAttribute('data-classic-view', view);
     const matrix = await playMatrix(page);
     await rotateScene(page);
-    const figure = page.locator('[data-study-figure]').filter({ has: matrix });
-    await figure.getByRole('button', { name: 'Редактировать' }).click();
+    const editButton = page.locator('[data-study-figure]').filter({ has: matrix }).getByRole('button', { name: 'Редактировать', exact: true });
+    await expect(editButton).toHaveCount(1);
+    await editButton.click();
     await expect(page.getByRole('textbox', { name: 'Текст диаграммы' })).toHaveValue(/add 2 1 -2/);
     await playMatrix(page);
-    await page.locator('#diagram-language').selectOption('geometry3d');
+    const language = page.locator('#diagram-language');
+    await language.selectOption('geometry3d');
+    await expect(language).toHaveValue('geometry3d');
     await rotateScene(page);
   });
 }
