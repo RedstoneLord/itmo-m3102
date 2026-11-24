@@ -15,6 +15,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync,
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { build } from 'vite';
 import { writeHomeAssets } from './classic-home-assets';
 import { freezeClassicRelease } from './classic-release';
 import { patchClassicIndex, patchClassicModule } from '../src/lib/classicPatch';
@@ -149,7 +150,7 @@ function shellManifest(out: string): void {
 }
 
 /** Классический сайт из корня репозитория → папка `out`, с правкой index.html и переключателем стиля */
-function assemble(out: string, manifest = true): void {
+async function assemble(out: string, manifest = true): Promise<void> {
   // Папку может держать dev-сервер (Windows не даёт её удалить) — тогда просто перезаписываем файлы поверх
   try {
     rmSync(out, { recursive: true, force: true, maxRetries: 3 });
@@ -163,6 +164,24 @@ function assemble(out: string, manifest = true): void {
   copyTree(join(APP, 'public', 'switch'), join(out, 'switch'));
   writeFileSync(join(out, 'index.html'), patchClassicIndex(readFileSync(join(ROOT, 'index.html'), 'utf8')));
   studentAssets(out);
+  const study = join(APP, 'src', 'components', 'diagrams', 'study');
+  const diagramDir = join(out, 'js', 'diagrams');
+  for (const name of ['index.js', 'editor.js']) {
+    const file = join(diagramDir, name);
+    writeFileSync(file, patchClassicModule(`js/diagrams/${name}`, readFileSync(file, 'utf8')));
+  }
+  copyFileSync(join(study, 'study.css'), join(out, 'css', 'study-diagrams.css'));
+  await build({
+    configFile: false,
+    publicDir: false,
+    logLevel: 'warn',
+    build: {
+      target: 'es2022',
+      outDir: diagramDir,
+      emptyOutDir: false,
+      lib: { entry: join(study, 'classic.ts'), formats: ['es'], fileName: () => 'study.js' },
+    },
+  });
   if (manifest) shellManifest(out);
 }
 
@@ -170,7 +189,7 @@ function assemble(out: string, manifest = true): void {
 async function assembleSite(out: string): Promise<void> {
   const dist = join(APP, 'dist');
   if (!existsSync(join(dist, 'index.html'))) throw new Error('нет app/dist — сначала npm run build');
-  assemble(out, false);
+  await assemble(out, false);
   copyTree(dist, join(out, 'app'));
   // dev-копия классического сайта (app/public/classic) попадает в dist вместе с public/ — в готовом сайте она лишняя
   rmSync(join(out, 'app', 'classic'), { recursive: true, force: true });
@@ -196,7 +215,7 @@ try {
     console.log(`Классический сайт обновлён в корне репозитория: ${paths.length} файлов, дерево ${sha.slice(0, 7)}`);
   } else {
     if (siteMode) await assembleSite(OUT);
-    else assemble(OUT);
+    else await assemble(OUT);
     const where = siteMode ? 'app/site (классический в корне, приложение в /app/)' : 'app/public/classic';
     if (mode === 'fresh') {
       try {

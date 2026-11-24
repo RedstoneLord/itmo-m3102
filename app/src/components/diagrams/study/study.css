@@ -1,0 +1,120 @@
+.study-host {
+  width: 100%;
+  min-width: 0;
+}
+.dgm[data-study-figure] .dgm-art {
+  cursor: auto;
+}
+.dgm[data-study-figure] .dgm-art svg {
+  max-height: none;
+}
+.study-title {
+  font-weight: 650;
+  padding: 12px 18px 0;
+}
+#diagram-preview[data-study-preview] {
+  touch-action: auto;
+  display: block;
+}
+#diagram-preview[data-study-preview] .diagram-image {
+  width: 100%;
+}
+#diagram-editor:has([data-study-preview]) :is([data-diagram-tool], [data-diagram-add], [data-diagram-delete], [data-diagram-layout]) {
+  display: none;
+}
+.study-diagram {
+  --study-ink: var(--color-text, var(--text, #18233a));
+  --study-paper: var(--color-bg, var(--card, #fff));
+  --study-muted: var(--color-text-muted, var(--muted, #64748b));
+  --study-blue: #3778db;
+  --study-green: #258563;
+  --study-purple: #9056dc;
+  --study-red: #df5266;
+  --study-orange: #c66613;
+  --study-gray: var(--study-ink);
+  min-width: 0;
+  width: 100%;
+  color: var(--study-ink);
+}
+
+.study-stage {
+  overflow: auto;
+  padding: 4px;
+}
+.study-stage svg,
+.study-print svg {
+  display: block;
+  margin: auto;
+  height: auto;
+}
+.study-diagram[data-study-kind='geometry3d'] .study-stage {
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.study-diagram[data-study-kind='geometry3d'] .study-stage:active {
+  cursor: grabbing;
+}
+.study-diagram[data-study-kind='geometry3d'] svg,
+.study-print svg {
+  width: auto;
+  max-width: 100%;
+}
+.study-diagram[data-study-kind='matrix'] .study-stage svg {
+  width: auto;
+  max-width: none;
+}
+.study-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 4px;
+}
+.study-controls button {
+  min-height: 36px;
+  min-width: 36px;
+  border: 1px solid var(--study-muted);
+  border-radius: 8px;
+  color: inherit;
+  background: transparent;
+  padding: 3px 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+}
+.study-controls button[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: default;
+}
+.study-controls button:focus-visible,
+.study-stage:focus-visible {
+  outline: 2px solid var(--study-blue);
+  outline-offset: -2px;
+}
+.study-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.study-controls output {
+  width: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.study-description {
+  padding: 0 8px;
+  overflow-wrap: anywhere;
+}
+.study-print {
+  display: none;
+}
+@media print {
+  .study-live {
+    display: none !important;
+  }
+  .study-print {
+    display: block;
+  }
+}

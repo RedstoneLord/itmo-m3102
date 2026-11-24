@@ -19,6 +19,7 @@ import { useLocation, useSearchParams } from 'react-router';
 import { DiagramBlock, diagramError, isDiagramLanguage, type DiagramLanguage } from '../../components/diagrams/DiagramBlock';
 import { parseGraph } from '../../components/diagrams/Graph';
 import { splitLines } from '../../components/diagrams/parse';
+import { isStudyLanguage } from '../../components/diagrams/study/source';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
@@ -113,6 +114,7 @@ export function DiagramEditorPage() {
   const lang = draft.lang;
   const source = draft.sources[lang] ?? template(lang);
   const type = DIAGRAM_TYPES.find((item) => item.value === lang)!;
+  const study = isStudyLanguage(lang);
   const graphLike = lang === 'graph' || lang === 'diagram';
   const canAdd = graphLike || lang === 'canvas';
 
@@ -239,6 +241,7 @@ export function DiagramEditorPage() {
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
     const target = event.target as Element;
+    if (target.closest('.study-diagram, button, a, input, summary')) return;
     const node = target.closest<SVGGElement>('[data-dgm-node]');
     const edge = target.closest<SVGGElement>('[data-dgm-edge]');
     const shape = target.closest<SVGGElement>('[data-dgm-shape]');
@@ -358,8 +361,11 @@ export function DiagramEditorPage() {
   };
 
   const lineCount = source.split('\n').length;
-  const toolHint =
-    tool === 'add'
+  const toolHint = study
+    ? lang === 'matrix'
+      ? 'Просмотрите шаги преобразования'
+      : 'Вращайте сцену на холсте или кнопками'
+    : tool === 'add'
       ? 'Нажмите на холст — там появится новая вершина'
       : tool === 'connect'
         ? connectFrom
@@ -394,14 +400,16 @@ export function DiagramEditorPage() {
       />
 
       <div className={styles.toolbar} role="toolbar" aria-label="Инструменты холста">
-        <div className={styles.toolGroup}>
-          <ToolButton icon={MousePointer2} label="Выбрать" active={tool === 'select'} onClick={() => setTool('select')} />
-          {canAdd && <ToolButton icon={SquarePlus} label="Добавить" active={tool === 'add'} onClick={() => setTool('add')} />}
-          {graphLike && <ToolButton icon={Spline} label="Соединить" active={tool === 'connect'} onClick={() => setTool('connect')} />}
-          {(graphLike || lang === 'canvas') && <ToolButton icon={Trash2} label="Удалить" disabled={!selection} onClick={deleteSelection} />}
-          {graphLike && <ToolButton icon={LayoutGrid} label="Авто-раскладка" onClick={() => setSource(clearPositions(source))} />}
-          {lang === 'graph' && <ToolButton icon={Import} label="Импорт" onClick={() => setImportOpen(true)} />}
-        </div>
+        {!study && (
+          <div className={styles.toolGroup}>
+            <ToolButton icon={MousePointer2} label="Выбрать" active={tool === 'select'} onClick={() => setTool('select')} />
+            {canAdd && <ToolButton icon={SquarePlus} label="Добавить" active={tool === 'add'} onClick={() => setTool('add')} />}
+            {graphLike && <ToolButton icon={Spline} label="Соединить" active={tool === 'connect'} onClick={() => setTool('connect')} />}
+            {(graphLike || lang === 'canvas') && <ToolButton icon={Trash2} label="Удалить" disabled={!selection} onClick={deleteSelection} />}
+            {graphLike && <ToolButton icon={LayoutGrid} label="Авто-раскладка" onClick={() => setSource(clearPositions(source))} />}
+            {lang === 'graph' && <ToolButton icon={Import} label="Импорт" onClick={() => setImportOpen(true)} />}
+          </div>
+        )}
         <div className={styles.toolGroup}>
           <ToolButton icon={Undo2} label="Отменить" title="Отменить (Ctrl+Z)" disabled={!history.undo.length} onClick={undo} />
           <ToolButton icon={Redo2} label="Повторить" title="Повторить (Ctrl+Shift+Z)" disabled={!history.redo.length} onClick={redo} />
@@ -420,7 +428,7 @@ export function DiagramEditorPage() {
           <p className={styles.toolHint}>{toolHint}</p>
           <div
             ref={stageRef}
-            className={cn(styles.stage, tool === 'add' && styles.adding, tool === 'connect' && styles.connecting)}
+            className={cn(styles.stage, study && styles.studyStage, tool === 'add' && styles.adding, tool === 'connect' && styles.connecting)}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}

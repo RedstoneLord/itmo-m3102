@@ -28,6 +28,13 @@ export function patchClassicIndex(html: string): string {
     );
   // Small fixtures and upstream pages without our supported router only receive the appearance patch.
   if (!html.includes('function renderRoute()')) return patched;
+  patched = replaceRequired(patched, '</head>', '  <link rel="stylesheet" href="./css/study-diagrams.css">\n  </head>');
+  patched = replaceRequired(
+    patched,
+    "    import { printifyDiagrams } from './js/diagrams/array-player.js';",
+    "    import { printifyDiagrams } from './js/diagrams/array-player.js';\n    import { printStudyFigures } from './js/diagrams/study.js';",
+  );
+  patched = replaceRequired(patched, '        printifyDiagrams(source);', '        printifyDiagrams(source);\n        printStudyFigures(source);');
   for (const panel of ['schedule-panel', 'deadline-panel', 'homework-panel', 'materials-panel', 'plan-panel', 'notes-panel']) {
     if (!html.includes(`dash-panel ${panel}`)) throw new Error(`Classic integration changed: home panel ${panel}`);
   }
@@ -182,8 +189,78 @@ function replaceRequired(source: string, before: string, after: string): string 
   return source.replace(before, after);
 }
 
+function patchClassicDiagramEditor(source: string): string {
+  let patched =
+    "import { isStudyLanguage, mountStudyDiagram, mountStudyFigures, resolveStudySvg, STUDY_LANGUAGES, studyArt, studyTypes } from './study.js';\n" +
+    source;
+  patched = replaceRequired(
+    patched,
+    'const graphId =',
+    'for (const lang of STUDY_LANGUAGES) { examples[lang] = studyTypes[lang].template; labels[lang] = studyTypes[lang].label; }\nconst graphId =',
+  );
+  patched = replaceRequired(
+    patched,
+    '  let errorLine = 0;',
+    "  const study = isStudyLanguage(language);\n  preview.toggleAttribute('data-study-preview', study);\n  if (study) editor().querySelector('#diagram-tool-label').textContent = language === 'matrix' ? 'Просмотрите шаги преобразования' : 'Вращайте сцену на холсте или кнопками';\n  let errorLine = 0;",
+  );
+  patched = replaceRequired(
+    patched,
+    '    preview.innerHTML = live ?',
+    '    preview.innerHTML = study ? `<div class="diagram-image">${studyArt(result.model)}</div>` : live ?',
+  );
+  patched = replaceRequired(
+    patched,
+    '    if (live) mountArrayPlayers(preview);',
+    '    if (study) mountStudyDiagram(preview, result.model);\n    if (live) mountArrayPlayers(preview);',
+  );
+  patched = replaceRequired(
+    patched,
+    "  if (language === 'graph' && model.edges[selectedEdge])",
+    "  if (isStudyLanguage(language)) { slot.textContent = studyTypes[language].hint; return; }\n  if (language === 'graph' && model.edges[selectedEdge])",
+  );
+  patched = replaceRequired(
+    patched,
+    '  return clone.outerHTML.replace(',
+    "  if (element.hasAttribute('data-study-current')) return resolveStudySvg(element, clone.outerHTML);\n  return clone.outerHTML.replace(",
+  );
+  patched = replaceRequired(patched, "event.target.closest('.arr-live')", "event.target.closest('.arr-live, .study-diagram')");
+  patched = replaceRequired(
+    patched,
+    "if (!event.target.closest('#diagram-preview svg')) return;",
+    "if (event.target.closest('.study-diagram') || !event.target.closest('#diagram-preview svg')) return;",
+  );
+  patched = replaceRequired(
+    patched,
+    "if (!editor()) return;\n    if (event.code === 'Space'",
+    "if (!editor() || event.target.closest('.study-diagram')) return;\n    if (event.code === 'Space'",
+  );
+  patched = replaceRequired(
+    patched,
+    'graph, plot, chart, tree, array, diagram или canvas.',
+    'graph, plot, chart, tree, array, diagram, canvas, geometry3d или matrix.',
+  );
+  patched = replaceRequired(patched, '  mountArrayPlayers(container);', '  mountArrayPlayers(container);\n  mountStudyFigures(container);');
+  return replaceRequired(
+    patched,
+    "if (!live && event.target.closest('.dgm-art'))",
+    "if (!live && !figure.hasAttribute('data-study-figure') && event.target.closest('.dgm-art'))",
+  );
+}
+
 /** Only assembled copies of upstream modules change. Missing integration points fail the build. */
 export function patchClassicModule(path: string, source: string): string {
+  if (path === 'js/diagrams/index.js') {
+    const imports = "import { STUDY_LANGUAGES, isStudyLanguage, parseStudyDiagram, printStudySvg, studyFigure } from './study.js';\n";
+    const hook = replaceRequired(
+      source,
+      'export function codeFigure(lang, text) {',
+      'export function codeFigure(lang, text) {\n  if (isStudyLanguage(lang)) return studyFigure(lang, text);',
+    );
+    const register =
+      '\nfor (const lang of STUDY_LANGUAGES) registerDiagram(lang, { parse: text => parseStudyDiagram(lang, text), render: printStudySvg });\n';
+    return imports + hook + register;
+  }
+  if (path === 'js/diagrams/editor.js') return patchClassicDiagramEditor(source);
   if (path === 'js/lectures.js') {
     let result = "import { plainMathText } from './student-text.js';\n" + source;
     result = replaceRequired(result, 'displayNames[nfc(path)] || unslug(fallback);', 'plainMathText(displayNames[nfc(path)] || unslug(fallback));');

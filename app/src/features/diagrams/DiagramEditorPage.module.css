@@ -299,3 +299,6 @@
 .check input {
   accent-color: var(--color-accent);
 }
+.stage.studyStage {
+  touch-action: auto;
+}

@@ -219,7 +219,7 @@ npm run build && npm run preview   # собранное приложение, к
 | `components/layout` | каркас: `AppShell`, `Sidebar` (сворачивание), `TopBar`, `MobileNav`, `SyncButton`, `UserMenu`, `AppearanceMenu` (стиль и тема) |
 | `components/ui` | свои компоненты на токенах: Button, IconButton, Tooltip, Modal, List, Tabs, SegmentedControl, Checkbox, DateInput, Dropdown(Menu), EmptyState, ErrorBoundary… |
 | `components/markdown` | рендер конспектов: GFM, KaTeX, выноски, подсветка кода, mermaid, `[[wiki-ссылки]]`, картинки, встроенные схемы и тесты |
-| `components/diagrams` | схемы из fenced-блоков группы (`plot`, `graph`, `diagram`, `tree`, `array`, `chart`, `canvas`; список — `languages.ts`); формулы — `expression.ts`, без eval; стрелки блок-схем — `flowRoutes.ts` |
+| `components/diagrams` | схемы из fenced-блоков группы (`plot`, `graph`, `diagram`, `tree`, `array`, `chart`, `canvas`) и учебные блоки `geometry3d` и `matrix` (`study/`); список — `languages.ts`; формулы — `expression.ts`, без eval; стрелки блок-схем — `flowRoutes.ts` |
 | `components/quiz` | тесты: разбор `parseQuiz.ts`, интерфейс `Quiz.tsx` (`QuizRunner`, разбор ответов) |
 | `components/hedgehog` | ёжик: рисунок и сальто (`Hedgehog.tsx`), бег по главной — ёжик из игры (`GameHogLane.tsx`), общие скачки и кувырок (`moves.ts`), выглядывание за закрытый список (`CelebrateHedgehog.tsx`), сезонные детали (`season.ts`), беглец по всему экрану (`RunawayHedgehog.tsx`) |
 | `components/radio` | lo-fi радио (кнопка и панель станций в верхней панели) |
@@ -305,6 +305,7 @@ npm run build && npm run preview   # собранное приложение, к
 
 ### Конспекты, читалка, тесты
 
+- **Написание лекции.** Файл начинается с `#` и лежит в `Конспекты/{Предмет}/Лекция_N/`. Сохраняй последовательность источника, раскрывай обозначения и шаги доказательств, пиши формулы в LaTeX. Для определений используй `:::meaning`, для пошагового разбора — `:::example`, для частых ошибок — `:::warning`. Схемы выбирай по материалу. После самостоятельных разделов — 2–5 вопросов в блоке `quiz`, в конце — 5–8 итоговых, у каждого вопроса есть объяснение. Разбирай по числам из лекции, а исправления исходника перечисляй при передаче файла.
 - **Совместимость с сайтом группы** (`components/markdown/Markdown.tsx` перед разбором): `:::тип … :::` → выноски,
   `$$x$$` одной строкой → формула по центру, `|` в формулах внутри таблиц → `\vert` (`lib/mathCompat.ts`).
   `\[ … \]` в формулы НЕ превращать: в конспектах это `\\[4pt]` внутри LaTeX.
@@ -419,6 +420,8 @@ npm run build && npm run preview   # собранное приложение, к
 
 ### Схемы
 
+- **Учебные блоки `geometry3d` и `matrix`** — единый парсер, SVG и управление в `components/diagrams/study/`. 3D-сцена показывает точки, направленные отрезки, прямые и одну плоскость в ортографической проекции. Матрица поддерживает разбиение через `|`, ведущие столбцы `pivots:`, правую часть `rhs: last` и точные дроби для операций `swap`, `scale`, `add`. В конспектах используй `geometry3d` для пространственных рисунков и `matrix` для преобразований строк и разметки ФСР. Пошаговый `array` предназначен для алгоритмов над одномерным массивом. Синтаксис и шаблоны — в [README.md](README.md).
+- **Две читалки и экспорт.** Реакт-обёртка `StudyDiagram.tsx` монтирует общий проигрыватель внутри ленивого `DiagramBlock`. Сборка Legacy и Classic компилирует `study/classic.ts` в `js/diagrams/study.js` и подключает её через `classicPatch.ts` к копиям реестра и редактора. JS и CSS затем входят в список файлов офлайн-релиза. Экспорт SVG/PNG берёт `svg[data-study-current]`; печать и PDF используют `[data-export-frame]` с авторским ракурсом или `print:`-кадром. Входной текст не исполняется, подписи экранируются. Проверки парсеров, расчётов и состояний проигрывателя — в `study.test.ts`, сценарии обеих читалок и редакторов — в `e2e/study-diagrams.spec.ts`.
 - **DSL группы** (`plot`, `graph`, `diagram`, `tree`, `array`, `chart`, `canvas`) рисует свой рендерер
   (`components/diagrams`, синтаксис — README RedstoneLord и его `js/diagrams/index.js`). У графа `{color: …}`, `{dashed}`, петли, `layout: force`. Формы блок-схемы — `box`, `round`, `diamond`, `circle`, `db`
   и `note` (лист с уголком); рёбра — `->`, `-->`, `--`, `<-` и цепочки `A -> B -> C`. Движок группы понимает больше, чем описано в README, а ИИ и студенты пишут по его разбору: появилось

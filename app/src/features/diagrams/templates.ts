@@ -1,4 +1,5 @@
 import type { DiagramLanguage } from '../../components/diagrams/DiagramBlock';
+import { STUDY_LANGUAGES, studyTypes } from '../../components/diagrams/study/source';
 
 /** Типы конструктора и стартовые шаблоны — синтаксис из README репозитория группы */
 export const DIAGRAM_TYPES: { value: DiagramLanguage; label: string; hint: string; template: string }[] = [
@@ -90,4 +91,5 @@ circle 260 100 r=32 "q1" fill=green
 text 150 88 "a"
 rect 320 70 80 60 "Выход" fill=orange`,
   },
+  ...STUDY_LANGUAGES.map((value) => ({ value, ...studyTypes[value] })),
 ];

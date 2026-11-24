@@ -18,13 +18,20 @@ import { copySvg, downloadPng, downloadSvg, fileName, svgMarkup } from './export
 import styles from './Diagrams.module.css';
 
 import type { DiagramLanguage } from './languages';
+import { parseStudyDiagram } from './study/player';
+import { isStudyLanguage } from './study/source';
+import { StudyDiagram } from './study/StudyDiagram';
 export { DIAGRAM_LANGUAGES, isDiagramLanguage, type DiagramLanguage } from './languages';
 
 /** player — массив с кодом по шагам: у него свой проигрыватель, «Увеличить» не нужно */
-type Rendered = { header: DiagramHeader; view: ReactNode; player?: boolean } | { error: string };
+type Rendered = { header: Pick<DiagramHeader, 'title' | 'caption'>; view: ReactNode; player?: boolean } | { error: string };
 
 function render(lang: DiagramLanguage, source: string): Rendered {
   try {
+    if (isStudyLanguage(lang)) {
+      const model = parseStudyDiagram(lang, source);
+      return { header: model.header, view: <StudyDiagram model={model} />, player: true };
+    }
     const lines = splitLines(source, lang);
     const { header } = lines;
     switch (lang) {
@@ -166,6 +173,7 @@ export function DiagramTools({ figureRef, name, lang, source, editable, onZoom }
   const [copied, setCopied] = useState(false);
   // Кадр массива с кодом лежит отдельно: в проигрывателе свои svg — иконки кнопок
   const svg = () =>
+    figureRef.current?.querySelector<SVGSVGElement>('svg[data-study-current]') ??
     figureRef.current?.querySelector<SVGSVGElement>('[data-export-frame] svg') ??
     figureRef.current?.querySelector<SVGSVGElement>(`.${styles.canvas} svg`) ??
     null;
