@@ -1,15 +1,5 @@
 import type { GraphModel } from './graphLayout';
 
-/*
- * Стрелки блок-схемы — перенос routeFlow из js/diagrams/index.js RedstoneLord (коммит 375f12e).
- * Прямая между центрами пересекает чужие блоки и прячет подписи, поэтому:
- * 1) если плавная S-кривая между нижним и верхним портами никого не задевает — она;
- * 2) иначе стрелка выходит сбоку, идёт по «дорожке» за пределами блоков и входит в цель сверху
- *    (обратные и горизонтальные — в боковой порт); дорожки разных стрелок разнесены на 14 px;
- * 3) входы в широкий блок разводятся по его верхней грани, чтобы стрелки не сливались;
- * 4) подпись — рядом с линией, где нет блоков, линий и других подписей.
- */
-
 type Point = [number, number];
 
 interface Box {
@@ -30,33 +20,18 @@ export interface FlowRoute {
   pts: Point[];
 }
 
-interface Lane {
-  side: 'l' | 'r';
-  x: number;
-  y0: number;
-  y1: number;
+type Side = 'top' | 'bottom' | 'left' | 'right';
+
+interface Port {
+  box: Box;
+  side: Side;
+  offset: number;
 }
 
-interface Edge {
-  index: number;
-  a: Box;
-  b: Box;
-  kind?: 'loop' | 'direct' | 'lane' | 'side' | 'row';
-  dir?: number;
-  s?: 'l' | 'r';
-  px?: number;
-  ya?: number;
-  yb?: number;
-  lane?: number;
-  pa?: number;
-  pb?: number;
-  arr?: number;
-  route?: FlowRoute;
-}
+const outward: Record<Side, Point> = { top: [0, -1], bottom: [0, 1], left: [-1, 0], right: [1, 0] };
+const clearance = 5;
+const add = ([x, y]: Point, [dx, dy]: Point, by: number): Point => [x + by * dx, y + by * dy];
 
-const TIP = 1;
-const LEAD = 30;
-const MARGIN = 26;
 const f = (n: number) => String(Math.round(n * 10) / 10);
 
 const dense = (pts: Point[], step = 6): Point[] => {
@@ -89,6 +64,7 @@ function rounded(raw: Point[], r = 14): FlowRoute {
     const [bx, by] = [nx - p[0], ny - p[1]];
     return Math.abs(ax * by - ay * bx) > 0.5 || ax * bx + ay * by < 0;
   });
+  const pts = [q[0]!];
   let d = `M${f(q[0]![0])} ${f(q[0]![1])}`;
   for (let i = 1; i < q.length - 1; i++) {
     const [px, py] = q[i - 1]!;
@@ -97,10 +73,13 @@ function rounded(raw: Point[], r = 14): FlowRoute {
     const l1 = Math.hypot(x - px, y - py);
     const l2 = Math.hypot(nx - x, ny - y);
     const k = Math.min(r, l1 / 2, l2 / 2);
-    d += `L${f(x + ((px - x) / l1) * k)} ${f(y + ((py - y) / l1) * k)}Q${f(x)} ${f(y)} ${f(x + ((nx - x) / l2) * k)} ${f(y + ((ny - y) / l2) * k)}`;
+    const start: Point = [x + ((px - x) / l1) * k, y + ((py - y) / l1) * k];
+    const end: Point = [x + ((nx - x) / l2) * k, y + ((ny - y) / l2) * k];
+    d += `L${f(start[0])} ${f(start[1])}Q${f(x)} ${f(y)} ${f(end[0])} ${f(end[1])}`;
+    pts.push(...bezier(start, add(start, [x - start[0], y - start[1]], 2 / 3), add(end, [x - end[0], y - end[1]], 2 / 3), end, 6));
   }
   const last = q[q.length - 1]!;
-  return { d: `${d}L${f(last[0])} ${f(last[1])}`, pts: dense(q, 4) };
+  return { d: `${d}L${f(last[0])} ${f(last[1])}`, pts: dense([...pts, last], 4) };
 }
 
 function curve([p0, p1, p2, p3]: [Point, Point, Point, Point]): FlowRoute {
@@ -115,245 +94,186 @@ function curve([p0, p1, p2, p3]: [Point, Point, Point, Point]): FlowRoute {
   };
 }
 
-/**
- * Маршруты всех рёбер блок-схемы и места подписей (null — подписи нет).
- * labelSize — ширина и высота плашки подписи по тексту.
- */
+/** A face coordinate shared by incoming and outgoing edges. */
+function portPoint({ box, side, offset }: Port, outside = false): Point {
+  const vertical = outward[side][0] === 0;
+  const radius = (vertical ? box.h : box.w) / 2;
+  const span = (vertical ? box.w : box.h) / 2;
+  const center: Point = vertical ? [box.x + offset, box.y] : [box.x, box.y + offset];
+  if (outside) return add(center, outward[side], radius + clearance);
+  const ratio = Math.abs(offset) / span;
+  let extent = radius;
+  if (box.shape === 'diamond') extent *= 1 - ratio;
+  if (box.shape === 'circle') extent *= Math.sqrt(1 - ratio ** 2);
+  if (box.shape === 'round') {
+    const corner = Math.min(box.h, box.w) / 2;
+    const inset = Math.max(0, Math.abs(offset) - (span - corner));
+    extent -= corner - Math.sqrt(corner ** 2 - inset ** 2);
+  }
+  // The rounded top and bottom of a database symbol match its drawn ellipse.
+  if (box.shape === 'db' && vertical) extent -= 6 * (1 - Math.sqrt(1 - ratio ** 2));
+  return add(center, outward[side], extent);
+}
+
+function chooseSides(a: Box, b: Box): [Side, Side] {
+  if (a === b) return ['right', 'top'];
+  if (b.t >= a.b + 12) return ['bottom', 'top'];
+  if (a.t >= b.b + 12) return ['top', 'bottom'];
+  return a.x <= b.x ? ['right', 'left'] : ['left', 'right'];
+}
+
+/** Test the complete segment rather than just the points used to draw it. */
+function blocked(a: Point, b: Point, box: Box, padding: number) {
+  const ranges: [number, number][] = [
+    [box.l - padding, box.r + padding],
+    [box.t - padding, box.b + padding],
+  ];
+  let low = 0;
+  let high = 1;
+  for (const axis of [0, 1] as const) {
+    const [min, max] = ranges[axis]!;
+    const delta = b[axis] - a[axis];
+    if (delta === 0) {
+      if (a[axis] <= min || a[axis] >= max) return false;
+    } else {
+      const t0 = (min - a[axis]) / delta;
+      const t1 = (max - a[axis]) / delta;
+      low = Math.max(low, Math.min(t0, t1));
+      high = Math.min(high, Math.max(t0, t1));
+    }
+  }
+  return low < high;
+}
+
+/** Search the grid formed by the ports and the clearance lines around the blocks. */
+function detour(start: Point, finish: Point, boxes: Box[], previous: Point[][]): Point[] | undefined {
+  const xs = [...new Set([start[0], finish[0], ...boxes.flatMap(({ l, r }) => [l - clearance, r + clearance])])].sort((a, b) => a - b);
+  const ys = [...new Set([start[1], finish[1], ...boxes.flatMap(({ t, b }) => [t - clearance, b + clearance])])].sort((a, b) => a - b);
+  type State = { x: number; y: number; axis: number; cost: number; estimate: number; parent?: State };
+  const first: State = { x: xs.indexOf(start[0]), y: ys.indexOf(start[1]), axis: -1, cost: 0, estimate: 0 };
+  const queue = [first];
+  const distances = new Map<number, number>();
+  const point = (state: State): Point => [xs[state.x]!, ys[state.y]!];
+  const id = (state: State) => (state.y * xs.length + state.x) * 3 + state.axis + 1;
+  const distance = (a: Point, b: Point) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+  const useCost = (a: Point, b: Point, axis: 0 | 1) => {
+    const across = axis === 0 ? 1 : 0;
+    return previous.some((route) =>
+      route.some((from, i) => {
+        const to = route[i + 1];
+        return (
+          to &&
+          from[across] === a[across] &&
+          to[across] === a[across] &&
+          Math.min(Math.max(from[axis], to[axis]), Math.max(a[axis], b[axis])) > Math.max(Math.min(from[axis], to[axis]), Math.min(a[axis], b[axis]))
+        );
+      }),
+    )
+      ? distance(a, b) * 2
+      : 0;
+  };
+  while (queue.length) {
+    queue.sort((a, b) => b.estimate - a.estimate);
+    const current = queue.pop()!;
+    if (current.cost > (distances.get(id(current)) ?? Infinity)) continue;
+    const here = point(current);
+    if (distance(here, finish) === 0) {
+      const result: Point[] = [];
+      for (let step: State | undefined = current; step; step = step.parent) result.push(point(step));
+      return result.reverse();
+    }
+    for (const [dx, dy, axis] of [
+      [1, 0, 0],
+      [-1, 0, 0],
+      [0, 1, 1],
+      [0, -1, 1],
+    ] as const) {
+      const x = current.x + dx;
+      const y = current.y + dy;
+      if (x < 0 || x >= xs.length || y < 0 || y >= ys.length) continue;
+      const next: Point = [xs[x]!, ys[y]!];
+      if (boxes.some((box) => blocked(here, next, box, clearance))) continue;
+      const cost = current.cost + distance(here, next) + (current.axis === -1 || current.axis === axis ? 0 : 12) + useCost(here, next, axis);
+      const state: State = { x, y, axis, cost, estimate: cost + distance(next, finish), parent: current };
+      if (cost >= (distances.get(id(state)) ?? Infinity)) continue;
+      distances.set(id(state), cost);
+      queue.push(state);
+    }
+  }
+  return undefined;
+}
+
 export function routeFlow(
   model: Pick<GraphModel, 'nodes' | 'edges'>,
   labelSize: (text: string) => [number, number],
 ): { routes: FlowRoute[]; labels: (Point | null)[] } {
-  const boxes = new Map<string, Box>(
-    model.nodes.map((node) => {
-      const [x, y] = [node.x ?? 0, node.y ?? 0];
-      return [
-        node.id,
-        { id: node.id, shape: node.shape, x, y, w: node.w, h: node.h, l: x - node.w / 2, r: x + node.w / 2, t: y - node.h / 2, b: y + node.h / 2 },
-      ];
-    }),
-  );
-  const all = [...boxes.values()];
-  const others = (skip: string[]) => all.filter((n) => !skip.includes(n.id));
-  const inside = (n: Box, x: number, y: number, m: number) =>
-    n.shape === 'diamond'
-      ? Math.abs(x - n.x) / (n.w / 2 + m) + Math.abs(y - n.y) / (n.h / 2 + m) < 1
-      : n.shape === 'circle'
-        ? Math.hypot((x - n.x) / (n.w / 2 + m), (y - n.y) / (n.h / 2 + m)) < 1
-        : x > n.l - m && x < n.r + m && y > n.t - m && y < n.b + m;
-  const hits = (pts: Point[], skip: string[], m = 8) => others(skip).some((n) => pts.some(([x, y]) => inside(n, x, y, m)));
-  const lanes: Lane[] = [];
-  const vcurve = (a: Box, b: Box, dir: number, x1 = b.x): [Point, Point, Point, Point] => {
-    const y0 = dir > 0 ? a.b : a.t;
-    const y1 = dir > 0 ? b.t : b.b;
-    const lead = Math.min(32, Math.abs(y1 - y0) * 0.42);
-    return [
-      [a.x, y0],
-      [a.x, y0 + dir * lead],
-      [x1, y1 - dir * lead],
-      [x1, y1],
-    ];
+  const boxes = model.nodes.map(({ id, shape, w, h, x = 0, y = 0 }) => ({
+    id,
+    shape,
+    w,
+    h,
+    x,
+    y,
+    l: x - w / 2,
+    r: x + w / 2,
+    t: y - h / 2,
+    b: y + h / 2,
+  }));
+  const byId = new Map(boxes.map((box) => [box.id, box]));
+  const groups = new Map<Box, Map<Side, { port: Port; preferred: number }[]>>();
+  const port = (box: Box, side: Side, other: Box): Port => {
+    const connection = { box, side, offset: 0 };
+    const horizontal = outward[side][0] !== 0;
+    const named = groups.get(box) ?? new Map();
+    const group = named.get(side) ?? [];
+    group.push({ port: connection, preferred: horizontal ? other.y - box.y : other.x - box.x });
+    named.set(side, group);
+    groups.set(box, named);
+    return connection;
   };
-  const hcurve = (a: Box, b: Box): [Point, Point, Point, Point] => {
-    const right = b.x > a.x;
-    const x0 = right ? a.r : a.l;
-    const x1 = right ? b.l : b.r;
-    const lead = Math.min(32, Math.abs(x1 - x0) * 0.42) * (right ? 1 : -1);
-    return [
-      [x0, a.y],
-      [x0 + lead, a.y],
-      [x1 - lead, b.y],
-      [x1, b.y],
-    ];
-  };
-  const allocLane = (side: 'l' | 'r', base: number, y0: number, y1: number) => {
-    const sign = side === 'r' ? 1 : -1;
-    let x = base;
-    while (lanes.some((lane) => lane.side === side && Math.abs(lane.x - x) < 13 && lane.y0 < y1 && lane.y1 > y0)) x += sign * 14;
-    lanes.push({ side, x, y0, y1 });
-    return x;
-  };
-  const laneBase = (side: 'l' | 'r', from: number, obstacles: Box[]) =>
-    side === 'r' ? Math.max(from, ...obstacles.map((n) => n.r)) + MARGIN : Math.min(from, ...obstacles.map((n) => n.l)) - MARGIN;
-
-  const edges: Edge[] = model.edges.map((edge, index) => ({ index, a: boxes.get(edge.from)!, b: boxes.get(edge.to)! }));
-
-  // 1. Тип маршрута
-  for (const e of edges) {
-    const { a, b } = e;
-    const skip = [a.id, b.id];
-    if (a === b) e.kind = 'loop';
-    else if (b.t >= a.b + 12) {
-      e.dir = 1;
-      e.kind = hits(bezier(...vcurve(a, b, 1)), skip) ? 'lane' : 'direct';
-    } else if (b.b <= a.t - 12) {
-      e.dir = -1;
-      e.kind = hits(bezier(...vcurve(a, b, -1)), skip) ? 'side' : 'direct';
-    } else if (a.r + 12 <= b.l || b.r + 12 <= a.l) e.kind = hits(bezier(...hcurve(a, b)), skip) ? 'side' : 'row';
-    else e.kind = 'side';
-  }
-
-  // 2. Дорожки: сначала стрелки из нижних блоков — они занимают внутренние дорожки, верхние идут снаружи
-  for (const e of [...edges].sort((p, q) => q.a.y - p.a.y)) {
-    const { a, b } = e;
-    const skip = [a.id, b.id];
-    if (e.kind === 'lane') {
-      const yb = Math.max(a.y + 14, b.t - LEAD);
-      const sides = (['r', 'l'] as const)
-        .map((s) => {
-          const px = s === 'r' ? a.r : a.l;
-          const base = laneBase(
-            s,
-            px,
-            others(skip).filter((n) => n.t < yb && n.b > a.y),
-          );
-          return {
-            s,
-            px,
-            base,
-            cost: Math.abs(base - px) + Math.abs(base - b.x),
-            ok: !hits(
-              dense([
-                [px, a.y],
-                [base, a.y],
-              ]),
-              skip,
-              4,
-            ),
-          };
-        })
-        .filter((option) => option.ok)
-        .sort((p, q) => p.cost - q.cost);
-      if (sides.length) {
-        const o = sides[0]!;
-        Object.assign(e, { s: o.s, px: o.px, yb, lane: allocLane(o.s, o.base, a.y, yb) });
-      } else {
-        const ya = a.b + Math.min(18, (b.t - a.b) / 3);
-        const o = (['r', 'l'] as const)
-          .map((s) => {
-            const base = laneBase(
-              s,
-              a.x,
-              others(skip).filter((n) => n.t < yb && n.b > ya),
-            );
-            return { s, base, cost: Math.abs(base - a.x) + Math.abs(base - b.x) };
-          })
-          .sort((p, q) => p.cost - q.cost)[0]!;
-        Object.assign(e, { s: o.s, ya, yb, lane: allocLane(o.s, o.base, ya, yb) });
-      }
-    } else if (e.kind === 'side') {
-      const y0 = Math.min(a.y, b.y);
-      const y1 = Math.max(a.y, b.y);
-      const obstacles = others(skip).filter((n) => n.t < y1 && n.b > y0);
-      const options = (['r', 'l'] as const).map((s) => {
-        const base = laneBase(s, s === 'r' ? Math.max(a.r, b.r) : Math.min(a.l, b.l), obstacles);
-        const pa = s === 'r' ? a.r : a.l;
-        const pb = s === 'r' ? b.r : b.l;
-        return {
-          s,
-          base,
-          pa,
-          pb,
-          cost: Math.abs(base - pa) + Math.abs(base - pb),
-          ok:
-            !hits(
-              dense([
-                [pa, a.y],
-                [base, a.y],
-              ]),
-              skip,
-              4,
-            ) &&
-            !hits(
-              dense([
-                [base, b.y],
-                [pb, b.y],
-              ]),
-              skip,
-              4,
-            ),
-        };
+  const edges = model.edges.map(({ from, to }) => {
+    const a = byId.get(from)!;
+    const b = byId.get(to)!;
+    const [out, into] = chooseSides(a, b);
+    return [port(a, out, b), port(b, into, a)] as const;
+  });
+  for (const named of groups.values()) {
+    for (const group of named.values()) {
+      const { box, side } = group[0]!.port;
+      const radius = (outward[side][0] ? box.h : box.w) / 2;
+      const span = Math.max(0, radius - 8);
+      const step = Math.min(14, (2 * span) / Math.max(1, group.length - 1));
+      group.sort((a, b) => a.preferred - b.preferred);
+      // Keep space for later ports while staying as close as possible to the preferred position.
+      group.forEach(({ port, preferred }, i) => {
+        const min = i === 0 ? -span : group[i - 1]!.port.offset + step;
+        const max = span - (group.length - 1 - i) * step;
+        port.offset = group.length === 1 && (box.shape === 'diamond' || box.shape === 'circle') ? 0 : Math.min(max, Math.max(min, preferred));
       });
-      const ok = options.filter((option) => option.ok);
-      const o = (ok.length ? ok : options).sort((p, q) => p.cost - q.cost)[0]!;
-      Object.assign(e, { s: o.s, pa: o.pa, pb: o.pb, lane: allocLane(o.s, o.base, y0, y1) });
     }
   }
 
-  // 3. Точки входа сверху/снизу: у ромба и круга — вершина, у прямоугольных блоков входы разводятся по грани
-  const groups = new Map<string, { e: Edge; ax: number }[]>();
-  for (const e of edges) {
-    if (e.kind !== 'direct' && e.kind !== 'lane') continue;
-    const key = `${e.b.id}:${(e.dir ?? 1) > 0 ? 't' : 'b'}`;
-    const list = groups.get(key) ?? [];
-    list.push({ e, ax: e.kind === 'lane' ? e.lane! : e.a.x });
-    groups.set(key, list);
-  }
-  for (const list of groups.values()) {
-    const b = list[0]!.e.b;
-    const lo = b.l + 14;
-    const hi = b.r - 14;
-    const step = 14;
-    if (b.shape === 'diamond' || b.shape === 'circle' || hi <= lo) {
-      list.forEach((item) => (item.e.arr = b.x));
-      continue;
+  const detours: Point[][] = [];
+  const routes = edges.map(([a, b]) => {
+    const from = portPoint(a);
+    const into = add(portPoint(b), outward[b.side], 1);
+    const axis = outward[a.side][0] ? 0 : 1;
+    const gap = (into[axis] - from[axis]) * outward[a.side][axis];
+    const lead = Math.min(32, gap * 0.42);
+    if (a.box !== b.box && gap >= 11) {
+      const smooth = curve([from, add(from, outward[a.side], lead), add(into, outward[b.side], lead), into]);
+      const obstacles = boxes.filter((box) => box !== a.box && box !== b.box);
+      if (!obstacles.some((box) => smooth.pts.some((point, i, points) => i > 0 && blocked(points[i - 1]!, point, box, clearance)))) return smooth;
     }
-    list.sort((p, q) => p.ax - q.ax);
-    let xs = list.map((item) => Math.max(lo, Math.min(hi, item.ax)));
-    for (let i = 1; i < xs.length; i++) xs[i] = Math.max(xs[i]!, xs[i - 1]! + step);
-    for (let i = xs.length - 1; i >= 0; i--) xs[i] = Math.min(xs[i]!, hi - (xs.length - 1 - i) * step);
-    if (xs[0]! < lo) xs = xs.map((_, i) => (xs.length === 1 ? b.x : lo + ((hi - lo) * i) / (xs.length - 1)));
-    list.forEach((item, i) => (item.e.arr = xs[i]));
-  }
-
-  // 4. Геометрия
-  for (const e of edges) {
-    const { a, b } = e;
-    if (e.kind === 'loop') {
-      e.route = rounded([
-        [a.r, a.y],
-        [a.r + 30, a.y],
-        [a.r + 30, a.t - 18],
-        [a.x, a.t - 18],
-        [a.x, a.t - TIP],
-      ]);
-    } else if (e.kind === 'direct') {
-      const points = vcurve(a, b, e.dir!, e.arr);
-      points[3]![1] -= e.dir! * TIP;
-      e.route = curve(points);
-    } else if (e.kind === 'row') {
-      const points = hcurve(a, b);
-      points[3]![0] += b.x > a.x ? -TIP : TIP;
-      e.route = curve(points);
-    } else if (e.kind === 'lane') {
-      e.route = rounded(
-        e.ya === undefined
-          ? [
-              [e.px!, a.y],
-              [e.lane!, a.y],
-              [e.lane!, e.yb!],
-              [e.arr!, e.yb!],
-              [e.arr!, b.t - TIP],
-            ]
-          : [
-              [a.x, a.b],
-              [a.x, e.ya],
-              [e.lane!, e.ya],
-              [e.lane!, e.yb!],
-              [e.arr!, e.yb!],
-              [e.arr!, b.t - TIP],
-            ],
-      );
-    } else {
-      e.route = rounded([
-        [e.pa!, a.y],
-        [e.lane!, a.y],
-        [e.lane!, b.y],
-        [e.pb! + (e.s === 'r' ? TIP : -TIP), b.y],
-      ]);
+    const start = portPoint(a, true);
+    const finish = portPoint(b, true);
+    const path = detour(start, finish, boxes, detours);
+    if (path) {
+      detours.push(path);
+      return rounded([from, ...path, into], 10);
     }
-  }
-
-  const routes = edges.map((edge) => edge.route!);
+    return rounded([from, start, finish, into], 6);
+  });
   return { routes, labels: placeEdgeLabels(model, routes, labelSize, 0.26) };
 }
 

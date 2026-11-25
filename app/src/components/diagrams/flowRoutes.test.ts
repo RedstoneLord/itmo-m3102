@@ -1,3 +1,4 @@
+import compilerNote from '../../../../Конспекты/Основы_программирования/Лекция_7/Компилятор_и_препроцессор.md?raw';
 import { expect, it } from 'vitest';
 import type { GraphModel } from './Graph';
 import { parseGraph } from './Graph';
@@ -106,4 +107,41 @@ it('пересекающиеся фигуры с ручными координа
   expect(first).toMatchObject({ x: 40, y: 60 });
   expect(second!.y).toBe(60);
   expect(second!.x! - second!.w / 2 - (first!.x! + first!.w / 2)).toBeGreaterThanOrEqual(12);
+});
+
+const compilerPipeline = compilerNote.match(/```diagram\n(title: Конвейер трансляции программы на C\+\+[\s\S]*?)\n```/)![1]!;
+
+it('разводит выходы и входы конвейера C++ и не пересекает посторонние блоки', () => {
+  const model = parseGraph(splitLines(compilerPipeline, 'diagram'), 'diagram');
+  const { routes } = routeFlow(model, () => [100, 18]);
+  for (const [id, expectedIn, expectedOut] of [
+    ['PP', 5, 3],
+    ['COMP', 3, 1],
+    ['ASM', 1, 3],
+    ['LINK', 3, 1],
+  ] as const) {
+    const inputs = routes.flatMap((route, i) => (model.edges[i]!.to === id ? [route.pts.at(-1)![0]] : []));
+    const outputs = routes.flatMap((route, i) => (model.edges[i]!.from === id ? [route.pts[0]![0]] : []));
+    expect(new Set(inputs).size).toBe(expectedIn);
+    expect(new Set(outputs).size).toBe(expectedOut);
+  }
+  for (const [i, route] of routes.entries()) {
+    const edge = model.edges[i]!;
+    const others = model.nodes.filter(({ id }) => id !== edge.from && id !== edge.to);
+    expect(route.pts.some(([x, y]) => others.some((n) => Math.abs(x - n.x!) < n.w / 2 && Math.abs(y - n.y!) < n.h / 2))).toBe(false);
+  }
+});
+
+it('встречные стрелки держатся на разных линиях, а дальняя стрелка обходит блок в том же ряду', () => {
+  const nodes = [node('A', 50, 50), node('B', 205, 50), node('C', 365, 50)];
+  const edges = [
+    { from: 'A', to: 'B', directed: true },
+    { from: 'B', to: 'A', directed: true },
+    { from: 'A', to: 'C', directed: true },
+  ];
+  const { routes } = routeFlow({ nodes, edges }, () => [30, 18]);
+  const [forward, back, detour] = routes;
+  expect(forward!.pts[0]![1]).toBeLessThan(back!.pts.at(-1)![1]);
+  expect(forward!.pts.at(-1)![1]).toBeLessThan(back!.pts[0]![1]);
+  expect(detour!.pts.some(([x, y]) => Math.abs(x - 205) < 60 && Math.abs(y - 50) < 20)).toBe(false);
 });

@@ -278,7 +278,10 @@ function drawGraph(model) {
 ` +
     source.slice(graphNodes, flowStart) +
     `function drawFlow(model) {
-  const nodes = [...model.nodes.values()].map(node => ({ ...node, ...sizeNode({ ...node, label: symbols(node.label) }, true) }));
+  const nodes = [...model.nodes.values()].map(node => ({
+    ...node, x: node.x ?? undefined, y: node.y ?? undefined,
+    ...sizeNode({ ...node, label: symbols(node.label) }, true),
+  }));
   const flow = { nodes, edges: model.edges, layout: 'layered', flow: true };
   applyLayout(flow);
   separateFlowNodes(nodes);

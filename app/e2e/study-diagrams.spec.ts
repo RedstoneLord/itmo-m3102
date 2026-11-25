@@ -3,19 +3,19 @@ import { expect, test, type Page } from '@playwright/test';
 import { mockGithub } from './github';
 
 const notePath = 'Конспекты/Линейная_Алгебра/Лекция_11/Матрица_перехода_СЛАУ_и_векторы_в_пространстве.md';
-const note = readFileSync(new URL('../../' + notePath, import.meta.url), 'utf8');
 const classicNote = '#/note/' + notePath.split('/').map(encodeURIComponent).join('/');
 const modernNote = '#/materials/notes/' + encodeURIComponent('gh:' + notePath);
 
-async function prepare(page: Page, classic: boolean, theme: 'light' | 'dark' = 'light') {
+async function prepare(page: Page, classic: boolean, theme: 'light' | 'dark' = 'light', path = notePath) {
   await mockGithub(page);
-  const entry = { path: notePath, type: 'blob', sha: '11' };
+  const note = readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
+  const entry = { path, type: 'blob', sha: '11' };
   const context = page.context();
   const tree = { truncated: false, tree: [entry] };
   await context.route('https://api.github.com/**/git/trees/**', (route) => route.fulfill({ json: tree }));
   await context.route('https://raw.githubusercontent.com/**', (route) => {
     const url = decodeURIComponent(route.request().url());
-    if (url.endsWith(notePath)) return route.fulfill({ body: note, contentType: 'text/plain; charset=utf-8' });
+    if (url.endsWith(path)) return route.fulfill({ body: note, contentType: 'text/plain; charset=utf-8' });
     if (url.endsWith('/data/tree.json')) return route.fulfill({ json: tree });
     return route.fallback();
   });
@@ -141,3 +141,26 @@ test('матрица прокручивается внутри конспект�
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
   await rotateScene(page);
 });
+
+for (const view of ['legacy', 'classic']) {
+  test('конвейер C++ сохраняет уровни и отдельные входы · ' + view, async ({ page }) => {
+    const path = 'Конспекты/Основы_программирования/Лекция_7/Компилятор_и_препроцессор.md';
+    await prepare(page, true, view === 'classic' ? 'dark' : 'light', path);
+    await page.addInitScript((mode) => localStorage.setItem('m3102-classic-view-v1', JSON.stringify({ view: mode })), view);
+    await page.goto('/#/note/' + path.split('/').map(encodeURIComponent).join('/'));
+    const chart = page.locator('.dgm-network').filter({ has: page.locator('[data-dgm-node="PP"]') });
+    await expect(chart).toBeVisible();
+    const result = await chart.evaluate((svg) => {
+      const y = (id: string) => svg.querySelector<SVGGraphicsElement>(`[data-dgm-node="${id}"]`)!.getBBox().y;
+      const arrows = Array.from(svg.querySelectorAll<SVGPathElement>('path[marker-end]'));
+      return {
+        levels: ['H1', 'PP', 'TU1', 'COMP', 'ASM', 'O1', 'LINK', 'EXE'].map(y),
+        routes: arrows.length,
+        entries: new Set(arrows.slice(0, 5).map((path) => path.getPointAtLength(path.getTotalLength()).x)).size,
+        exits: new Set(arrows.slice(5, 8).map((path) => path.getPointAtLength(0).x)).size,
+      };
+    });
+    expect(result.levels.every((y, i) => i === 0 || y > result.levels[i - 1]!)).toBe(true);
+    expect(result).toMatchObject({ routes: 19, entries: 5, exits: 3 });
+  });
+}
