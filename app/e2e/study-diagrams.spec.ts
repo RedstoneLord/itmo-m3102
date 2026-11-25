@@ -148,7 +148,7 @@ for (const view of ['legacy', 'classic']) {
     await prepare(page, true, view === 'classic' ? 'dark' : 'light', path);
     await page.addInitScript((mode) => localStorage.setItem('m3102-classic-view-v1', JSON.stringify({ view: mode })), view);
     await page.goto('/#/note/' + path.split('/').map(encodeURIComponent).join('/'));
-    const chart = page.locator('.dgm-network').filter({ has: page.locator('[data-dgm-node="PP"]') });
+    const chart = page.getByRole('img', { name: 'Конвейер трансляции программы на C++', exact: true });
     await expect(chart).toBeVisible();
     const result = await chart.evaluate((svg) => {
       const y = (id: string) => svg.querySelector<SVGGraphicsElement>(`[data-dgm-node="${id}"]`)!.getBBox().y;
